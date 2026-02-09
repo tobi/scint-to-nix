@@ -269,7 +269,7 @@ $stderr.puts "#{generated} derivations"
 
 # -- Per-gem selector: nix/gem/<name>/default.nix -------------------------
 #
-# Groups all versions (and later git refs, added by generate-gemset) into a
+# Groups all versions (and later git refs, added by import) into a
 # selector that supports:
 #
 #   gems = import ./nix/modules/gem.nix { inherit pkgs ruby; };
@@ -333,7 +333,7 @@ gems_by_name.each do |name, info|
   sel << "  };\n\n"
 
   sel << "  gitRevs = {\n"
-  # Populated by generate-gemset
+  # Populated by import
   sel << "  };\n"
 
   sel << "in\n"

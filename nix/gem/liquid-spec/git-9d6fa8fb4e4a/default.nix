@@ -3,9 +3,9 @@
 # ║  GENERATED — do not edit.  Run bin/import to refresh ║
 # ╚═══════════════════════════════════════════════════════╝
 #
-# Git: lexxy @ 4f0fc4d5773b
-# URI: https://github.com/basecamp/lexxy
-# Gems: lexxy
+# Git: liquid-spec @ 9d6fa8fb4e4a
+# URI: https://github.com/Shopify/liquid-spec.git
+# Gems: liquid-spec
 #
 {
   lib,
@@ -17,11 +17,11 @@ let
   prefix = "ruby/${rubyVersion}";
 in
 stdenv.mkDerivation {
-  pname = "lexxy";
-  version = "4f0fc4d5773b";
+  pname = "liquid-spec";
+  version = "9d6fa8fb4e4a";
   src = builtins.path {
     path = ./source;
-    name = "lexxy-4f0fc4d5773b-source";
+    name = "liquid-spec-9d6fa8fb4e4a-source";
   };
 
   dontBuild = true;
@@ -30,7 +30,7 @@ stdenv.mkDerivation {
   passthru = { inherit prefix; };
 
   installPhase = ''
-    local dest=$out/${prefix}/bundler/gems/lexxy-4f0fc4d5773b
+    local dest=$out/${prefix}/bundler/gems/liquid-spec-9d6fa8fb4e4a
     mkdir -p $dest
     cp -r . $dest/
   '';

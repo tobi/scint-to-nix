@@ -8,23 +8,25 @@
 # Available versions:
 #   1.44.1
 #   1.48.0
+#   1.49.0
 #
 # Usage:
-#   rubocop-ast { version = "1.48.0"; }
-#   rubocop-ast { }  # latest (1.48.0)
+#   rubocop-ast { version = "1.49.0"; }
+#   rubocop-ast { }  # latest (1.49.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.48.0",
+  version ? "1.49.0",
   git ? { },
 }:
 let
   versions = {
     "1.44.1" = import ./1.44.1 { inherit lib stdenv ruby; };
     "1.48.0" = import ./1.48.0 { inherit lib stdenv ruby; };
+    "1.49.0" = import ./1.49.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -8,23 +8,25 @@
 # Available versions:
 #   1.5.1
 #   1.6.2
+#   2.0.0
 #
 # Usage:
-#   diff-lcs { version = "1.6.2"; }
-#   diff-lcs { }  # latest (1.6.2)
+#   diff-lcs { version = "2.0.0"; }
+#   diff-lcs { }  # latest (2.0.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.6.2",
+  version ? "2.0.0",
   git ? { },
 }:
 let
   versions = {
     "1.5.1" = import ./1.5.1 { inherit lib stdenv ruby; };
     "1.6.2" = import ./1.6.2 { inherit lib stdenv ruby; };
+    "2.0.0" = import ./2.0.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -88,14 +88,17 @@ link:
 generate:
     bin/generate
 
-# Generate an app gemset from a Gemfile.lock
+# Import a project (name or path to Gemfile.lock)
 [group('generate')]
-generate-gemset app lockfile:
-    bin/generate-gemset {{app}} {{lockfile}}
+import *args:
+    bin/import {{args}}
 
-# Full pipeline: generate + gemset
+# Full pipeline: fetch + generate + import
 [group('generate')]
-regenerate app lockfile: generate (generate-gemset app lockfile)
+regenerate app lockfile:
+    bin/fetch gems/
+    bin/generate
+    bin/import {{lockfile}} --name {{app}}
 
 # ── Test & Lint ────────────────────────────────────────────────────
 

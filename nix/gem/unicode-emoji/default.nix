@@ -8,23 +8,25 @@
 # Available versions:
 #   4.0.4
 #   4.1.0
+#   4.2.0
 #
 # Usage:
-#   unicode-emoji { version = "4.1.0"; }
-#   unicode-emoji { }  # latest (4.1.0)
+#   unicode-emoji { version = "4.2.0"; }
+#   unicode-emoji { }  # latest (4.2.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "4.1.0",
+  version ? "4.2.0",
   git ? { },
 }:
 let
   versions = {
     "4.0.4" = import ./4.0.4 { inherit lib stdenv ruby; };
     "4.1.0" = import ./4.1.0 { inherit lib stdenv ruby; };
+    "4.2.0" = import ./4.2.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

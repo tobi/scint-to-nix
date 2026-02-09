@@ -8,23 +8,25 @@
 # Available versions:
 #   3.3.8.0
 #   3.3.10.0
+#   3.3.10.1
 #
 # Usage:
-#   parser { version = "3.3.10.0"; }
-#   parser { }  # latest (3.3.10.0)
+#   parser { version = "3.3.10.1"; }
+#   parser { }  # latest (3.3.10.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "3.3.10.0",
+  version ? "3.3.10.1",
   git ? { },
 }:
 let
   versions = {
     "3.3.8.0" = import ./3.3.8.0 { inherit lib stdenv ruby; };
     "3.3.10.0" = import ./3.3.10.0 { inherit lib stdenv ruby; };
+    "3.3.10.1" = import ./3.3.10.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

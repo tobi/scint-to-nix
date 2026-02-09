@@ -3,7 +3,7 @@
 # ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
-# 524 gems
+# 530 gems
 #
 # Usage:
 #   gems = import ./nix/modules/gem.nix { inherit pkgs ruby; };
@@ -73,6 +73,7 @@ in
   "bcrypt" = args: gem "bcrypt" args;
   "bcrypt_pbkdf" = args: gem "bcrypt_pbkdf" args;
   "benchmark" = args: gem "benchmark" args;
+  "benchmark-ips" = args: gem "benchmark-ips" args;
   "better_errors" = args: gem "better_errors" args;
   "bigdecimal" = args: gem "bigdecimal" args;
   "bindex" = args: gem "bindex" args;
@@ -343,6 +344,7 @@ in
   "parallel_tests" = args: gem "parallel_tests" args;
   "parser" = args: gem "parser" args;
   "pastel" = args: gem "pastel" args;
+  "patience_diff" = args: gem "patience_diff" args;
   "pdf-reader" = args: gem "pdf-reader" args;
   "pg" = args: gem "pg" args;
   "pg_search" = args: gem "pg_search" args;
@@ -435,6 +437,7 @@ in
   "rubocop-rails-omakase" = args: gem "rubocop-rails-omakase" args;
   "rubocop-rspec" = args: gem "rubocop-rspec" args;
   "rubocop-rspec_rails" = args: gem "rubocop-rspec_rails" args;
+  "rubocop-shopify" = args: gem "rubocop-shopify" args;
   "ruby-lsp" = args: gem "ruby-lsp" args;
   "ruby-lsp-rails" = args: gem "ruby-lsp-rails" args;
   "ruby-lsp-rspec" = args: gem "ruby-lsp-rspec" args;
@@ -498,8 +501,11 @@ in
   "stimulus-rails" = args: gem "stimulus-rails" args;
   "stringio" = args: gem "stringio" args;
   "stripe" = args: gem "stripe" args;
+  "strscan" = args: gem "strscan" args;
+  "super_diff" = args: gem "super_diff" args;
   "syntax_tree" = args: gem "syntax_tree" args;
   "telephone_number" = args: gem "telephone_number" args;
+  "terminal-table" = args: gem "terminal-table" args;
   "test-prof" = args: gem "test-prof" args;
   "thor" = args: gem "thor" args;
   "thruster" = args: gem "thruster" args;
@@ -554,4 +560,5 @@ in
   "zeitwerk" = args: gem "zeitwerk" args;
   "zendesk_api" = args: gem "zendesk_api" args;
   "zip_kit" = args: gem "zip_kit" args;
+  "liquid-spec" = args: gem "liquid-spec" args;
 }

@@ -9,17 +9,18 @@
 #   2.13.2
 #   2.17.1
 #   2.18.0
+#   2.18.1
 #
 # Usage:
-#   json { version = "2.18.0"; }
-#   json { }  # latest (2.18.0)
+#   json { version = "2.18.1"; }
+#   json { }  # latest (2.18.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "2.18.0",
+  version ? "2.18.1",
   git ? { },
 }:
 let
@@ -27,6 +28,7 @@ let
     "2.13.2" = import ./2.13.2 { inherit lib stdenv ruby; };
     "2.17.1" = import ./2.17.1 { inherit lib stdenv ruby; };
     "2.18.0" = import ./2.18.0 { inherit lib stdenv ruby; };
+    "2.18.1" = import ./2.18.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

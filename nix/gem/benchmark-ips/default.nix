@@ -3,30 +3,26 @@
 # ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
-# activesupport
+# benchmark-ips
 #
 # Available versions:
-#   7.1.5.2
-#   8.0.4
-#   8.1.2
+#   2.14.0
 #
 # Usage:
-#   activesupport { version = "8.1.2"; }
-#   activesupport { }  # latest (8.1.2)
+#   benchmark-ips { version = "2.14.0"; }
+#   benchmark-ips { }  # latest (2.14.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "8.1.2",
+  version ? "2.14.0",
   git ? { },
 }:
 let
   versions = {
-    "7.1.5.2" = import ./7.1.5.2 { inherit lib stdenv ruby; };
-    "8.0.4" = import ./8.0.4 { inherit lib stdenv ruby; };
-    "8.1.2" = import ./8.1.2 { inherit lib stdenv ruby; };
+    "2.14.0" = import ./2.14.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {
@@ -34,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "activesupport: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "benchmark-ips: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
 else
   versions.${version}
-    or (throw "activesupport: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "benchmark-ips: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")

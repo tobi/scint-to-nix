@@ -8,23 +8,25 @@
 # Available versions:
 #   1.75.6
 #   1.81.7
+#   1.82.1
 #
 # Usage:
-#   rubocop { version = "1.81.7"; }
-#   rubocop { }  # latest (1.81.7)
+#   rubocop { version = "1.82.1"; }
+#   rubocop { }  # latest (1.82.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.81.7",
+  version ? "1.82.1",
   git ? { },
 }:
 let
   versions = {
     "1.75.6" = import ./1.75.6 { inherit lib stdenv ruby; };
     "1.81.7" = import ./1.81.7 { inherit lib stdenv ruby; };
+    "1.82.1" = import ./1.82.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

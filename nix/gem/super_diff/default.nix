@@ -3,30 +3,26 @@
 # ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
-# activesupport
+# super_diff
 #
 # Available versions:
-#   7.1.5.2
-#   8.0.4
-#   8.1.2
+#   0.18.0
 #
 # Usage:
-#   activesupport { version = "8.1.2"; }
-#   activesupport { }  # latest (8.1.2)
+#   super_diff { version = "0.18.0"; }
+#   super_diff { }  # latest (0.18.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "8.1.2",
+  version ? "0.18.0",
   git ? { },
 }:
 let
   versions = {
-    "7.1.5.2" = import ./7.1.5.2 { inherit lib stdenv ruby; };
-    "8.0.4" = import ./8.0.4 { inherit lib stdenv ruby; };
-    "8.1.2" = import ./8.1.2 { inherit lib stdenv ruby; };
+    "0.18.0" = import ./0.18.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {
@@ -34,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "activesupport: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "super_diff: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
 else
   versions.${version}
-    or (throw "activesupport: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "super_diff: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")

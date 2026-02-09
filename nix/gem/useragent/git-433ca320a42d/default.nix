@@ -1,7 +1,7 @@
 #
-# ╔══════════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run bin/generate-gemset to refresh  ║
-# ╚══════════════════════════════════════════════════════════════════╝
+# ╔═══════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/import to refresh ║
+# ╚═══════════════════════════════════════════════════════╝
 #
 # Git: useragent @ 433ca320a42d
 # URI: https://github.com/basecamp/useragent
