@@ -1,95 +1,142 @@
 # gemset2nix
 
-Turn a Ruby app's `Gemfile.lock` into hermetic, individually-cacheable Nix derivations — one per gem. The output is a `BUNDLE_PATH`-compatible directory that `require "bundler/setup"` accepts without modification.
+Turn any Ruby app's `Gemfile.lock` into hermetic, individually-cacheable Nix derivations — one per gem — producing a `BUNDLE_PATH` that `require "bundler/setup"` accepts without modification.
 
-Native extensions are compiled from source inside the Nix sandbox. No bundler install step, no network access, fully reproducible.
+Native extensions compile from source inside the Nix sandbox. No `bundle install`, no network access at build time, fully reproducible across machines.
 
-**Fizzy (Rails 8.2, 161 gems): 1026 tests, 4011 assertions, 0 errors.**
+**1,413 gems × 3,786 versions × 5 Ruby versions (3.1–4.0) — all from one `Gemfile.lock`.**
 
-## Layout
+```
+$ just matrix fizzy
+Building fizzy across all rubies...
+  ruby_3_1.fizzy... /nix/store/...-fizzy-ruby_3_1
+  ruby_3_2.fizzy... /nix/store/...-fizzy-ruby_3_2
+  ruby_3_3.fizzy... /nix/store/...-fizzy-ruby_3_3
+  ruby_3_4.fizzy... /nix/store/...-fizzy-ruby_3_4
+  ruby_4_0.fizzy... /nix/store/...-fizzy-ruby_4_0
+```
+
+## Quick start
+
+```bash
+# Import a project — reads Gemfile.lock, writes gemset + nix config
+bin/import fizzy ~/src/fizzy/Gemfile.lock
+
+# Fetch all gem sources into cache/
+bin/fetch
+
+# Generate per-gem Nix derivations from cache
+bin/generate
+
+# Build everything
+just build fizzy
+
+# Enter devshell
+cd ~/src/fizzy
+nix-shell path/to/gemset2nix/tests/fizzy/devshell.nix
+bundle exec rails test   # 1026 tests, 0 errors
+```
+
+## How it works
+
+```
+Gemfile.lock
+     │
+     ├─ bin/import ──────→ imports/fizzy.gemset     (gem manifest for fetching)
+     │                   → nix/app/fizzy.nix        (gemset config — pure data list)
+     │                   → nix/gem/*/git-*/         (git repo derivations)
+     │
+     ├─ bin/fetch ───────→ cache/gems/              (.gem files)
+     │                   → cache/sources/           (unpacked source trees)
+     │                   → cache/meta/              (extracted metadata JSON)
+     │
+     ├─ bin/generate ────→ nix/gem/<name>/<ver>/    (per-gem derivations)
+     │                   → nix/gem/<name>/          (version selectors)
+     │                   → nix/modules/gem.nix      (catalogue of all gems)
+     │
+     └─ nix-build ───────→ /nix/store/<hash>-<gem>/ (one store path per gem)
+                         → buildEnv merges them into unified BUNDLE_PATH
+```
+
+Git gems use `builtins.fetchGit` — nix fetches the repo at eval time, pinned to the exact commit. No pre-cloning required.
+
+## Architecture
+
+### Three-tier layout
 
 ```
 nix/
-├── gem/                                    # shared gem pool — one directory per gem
+├── gem/                          # 1,413 gems — the shared pool
 │   ├── rack/
-│   │   ├── default.nix                     # selector — pick version or git rev
-│   │   ├── 2.2.21/default.nix             # version derivation
-│   │   ├── 3.2.3/default.nix
+│   │   ├── default.nix           # selector: pick version or git rev
+│   │   ├── 3.2.3/default.nix    # standalone derivation
 │   │   └── 3.2.4/default.nix
 │   ├── rails/
-│   │   ├── default.nix                     # selector (versions + git revs)
-│   │   ├── 7.1.5.2/default.nix
-│   │   └── git-60d92e4e7dfe/default.nix   # git repo derivation
-│   └── ...                                 # 532 gems total
+│   │   ├── default.nix           # selector (versions + git revs)
+│   │   ├── 8.1.2/default.nix
+│   │   └── git-60d92e4e7dfe/    # git repo at pinned commit
+│   └── ...
 │
-├── app/                                    # per-project gemset configs (pure data)
-│   ├── fizzy.nix                           # list of { name; version; } entries
+├── app/                          # per-project gemset configs (pure data)
+│   ├── fizzy.nix                 # [ { name = "rack"; version = "3.2.4"; } ... ]
 │   └── liquid.nix
 │
 ├── modules/
-│   ├── gem.nix                             # catalogue — all gems as callables
-│   └── resolve.nix                         # config → derivations resolver
+│   ├── resolve.nix               # gemset list → attrset of built derivations
+│   └── gem.nix                   # catalogue of all gem selectors
 │
-overlays/                                   # native build deps (hand-maintained)
-├── nokogiri.nix
-├── sqlite3.nix
-├── ffi.nix
-└── ...
+├── matrix.nix                    # ruby version × app build matrix
+└── ruby4.nix                     # Ruby 4.0.1 (until nixpkgs ships it)
+
+overlays/                         # native build customization (hand-maintained)
+├── nokogiri.nix                  # system libxml2/libxslt
+├── sqlite3.nix                   # system sqlite
+├── pg.nix                        # system libpq
+└── ...                           # 32 overlays total
+
+imports/                          # gem manifests (for bin/fetch)
+├── fizzy.gemset
+├── chatwoot.gemset
+└── ...                           # 11 projects
 ```
 
-Everything under `nix/` is generated. Never hand-edit — run `bin/generate` and `bin/generate-gemset` to regenerate. Customization lives in `overlays/`.
+Everything under `nix/` is generated and checked into git. Never hand-edit — regenerate with `bin/generate`. Customization lives exclusively in `overlays/`.
 
-## App gemset configs
+### Gemset configs
 
-A gemset config is a plain Nix list — pure data, no functions, no `pkgs` or `ruby` arguments:
+A gemset is a plain Nix list — pure data, no functions:
 
 ```nix
-# nix/app/fizzy.nix (generated from Gemfile.lock)
+# nix/app/fizzy.nix
 [
   { name = "rack"; version = "3.2.4"; }
   { name = "nokogiri"; version = "1.19.0"; }
   { name = "zeitwerk"; version = "2.7.4"; }
-  # ...
   # git: rails @ 60d92e4e7dfe
-  { name = "rails"; git.rev = "60d92e4e7dfe"; }
+  {
+    name = "rails";
+    git = {
+      rev = "60d92e4e7dfe";
+      url = "https://github.com/rails/rails.git";
+      branch = "main";
+    };
+  }
 ]
 ```
 
-The resolver (`nix/modules/resolve.nix`) turns a config into built derivations:
+### Resolver
+
+The resolver turns a gemset config into built derivations:
 
 ```nix
 resolve = import ./nix/modules/resolve.nix;
 gems = resolve { inherit pkgs ruby; gemset = import ./nix/app/fizzy.nix; };
-# gems is an attrset: { rack = <drv>; nokogiri = <drv>; rails-60d92e4e7dfe = <drv>; ... }
+# → { rack = «derivation»; nokogiri = «derivation»; rails-60d92e4e7dfe = «derivation»; ... }
 ```
 
-## Gem selectors
+Nix's lazy evaluation means only gems in the gemset are built — the other 1,400+ in the pool are never touched.
 
-Each gem has a `default.nix` that selects between available versions and git revs:
-
-```nix
-# nix/gem/rails/default.nix (generated)
-{
-  lib, stdenv, ruby,
-  version ? "7.1.5.2",
-  git ? { },
-}: ...
-```
-
-Use it:
-
-```nix
-# Pick a rubygems version
-gems.rails { version = "7.1.5.2"; }
-
-# Pick a git rev
-gems.rails { git.rev = "60d92e4e7dfe"; }
-
-# Latest (default)
-gems.rack { }
-```
-
-## Devshell
+### Devshell
 
 ```nix
 # tests/fizzy/devshell.nix
@@ -110,154 +157,165 @@ in pkgs.mkShell {
 }
 ```
 
-```bash
-cd fizzy
-nix-shell ../gemset2nix/tests/fizzy/devshell.nix
-bundle exec rails test  # 1026 tests, 0 errors
-```
-
-## Quick start
+The `ruby` parameter makes it trivial to test across versions:
 
 ```bash
-# 1. Fetch gems into cache (rubygems + git sources)
-bin/fetch
-
-# 2. Generate per-gem derivations + selectors
-bin/generate
-
-# 3. Generate app gemset config from a Gemfile.lock
-bin/generate-gemset fizzy ../fizzy/Gemfile.lock
-
-# 4. Build all gems in the pool
-just build
-
-# 5. Build gems for one app
-just build fizzy
-
-# 6. Run lints
-just lint fizzy
-
-# 7. Enter devshell
-cd ../fizzy && nix-shell ../gemset2nix/tests/fizzy/devshell.nix
+nix-shell devshell.nix --arg ruby 'pkgs.ruby_3_3'
 ```
 
-## Justfile commands
+## Ruby version matrix
 
-| Command | Purpose |
-|---------|---------|
-| `just build` | Build every gem derivation in the pool |
-| `just build fizzy` | Build all gems for an app |
-| `just build-gem fizzy rack` | Build a single gem (for debugging) |
-| `just fetch` | Fetch gems into `cache/` |
-| `just generate` | Regenerate all gem derivations + selectors |
-| `just generate-gemset fizzy path/to/Gemfile.lock` | Generate app gemset config |
-| `just regenerate fizzy path/to/Gemfile.lock` | Full pipeline: generate + gemset |
-| `just test fizzy` | Run app test suite in devshell |
-| `just lint fizzy` | Run lint suite |
-| `just fmt-check` | Verify nix files pass nixfmt |
+Build any app across all available Ruby versions:
 
-## Scripts
+```bash
+just matrix fizzy              # all rubies (3.1, 3.2, 3.3, 3.4, 4.0)
+just matrix fizzy ruby_3_3     # single ruby
+just matrix                    # full matrix: all rubies × all apps
+```
 
-| Script | Purpose |
-|--------|---------|
-| `bin/fetch` | Fetch gems from rubygems + git into `cache/` |
-| `bin/generate` | Generate `nix/gem/*/default.nix` from `cache/meta/*.json` |
-| `bin/generate-gemset` | Generate `nix/app/<project>.nix` from `Gemfile.lock` |
-| `bin/build` | Parallel dependency-ordered `nix-build` of all gems |
-| `bin/test-bundle` | Smoke test: build bundle-path, verify `bundler/setup` |
-| `bin/lockfile-to-gems` | Convert `Gemfile.lock` to `.gems` manifest format |
+Or use `nix-build` directly:
+
+```bash
+nix-build nix/matrix.nix -A ruby_3_4.fizzy
+nix-build nix/matrix.nix -A ruby_4_0
+nix-build nix/matrix.nix                      # everything
+```
+
+Ruby 4.0.1 is packaged in `nix/ruby4.nix` using nixpkgs' `mkRuby`. It'll be replaced by `pkgs.ruby_4_0` once upstream ships it.
+
+## Bundle-path layout
+
+The merged output matches what `bundler/setup` expects:
+
+```
+$BUNDLE_PATH/ruby/3.4.0/
+├── gems/
+│   ├── rack-3.2.4/
+│   ├── sqlite3-2.8.0/
+│   └── sqlite3-2.8.0-x86_64-linux-gnu → sqlite3-2.8.0
+├── specifications/
+│   ├── rack-3.2.4.gemspec
+│   ├── sqlite3-2.8.0.gemspec
+│   └── sqlite3-2.8.0-x86_64-linux-gnu.gemspec
+├── extensions/x86_64-linux/3.4.0/
+│   └── sqlite3-2.8.0/sqlite3.so
+└── bundler/gems/
+    ├── rails-60d92e4e7dfe/
+    └── useragent-433ca320a42d/
+```
+
+Native gems get platform symlinks and platform-qualified gemspecs so bundler finds them under arch-specific names.
 
 ## Overlays
 
-Native build dependencies live in `overlays/<gem>.nix`. These are the only hand-maintained files:
+Native build dependencies live in `overlays/<gem>.nix` — the only hand-maintained files. An overlay is a function `{ pkgs, ruby }:` returning deps and build hooks:
 
 ```nix
-# overlays/nokogiri.nix
+# overlays/sqlite3.nix — system sqlite via pkg-config
+{ pkgs, ruby }:
+{
+  deps = with pkgs; [ sqlite pkg-config ];
+  extconfFlags = "--enable-system-libraries";
+}
+```
+
+```nix
+# overlays/nokogiri.nix — system libxml2/libxslt + build-time gem dep
 { pkgs, ruby }:
 let
   mini_portile2 = pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; };
 in {
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
-  buildPhase = ''
+  extconfFlags = "--use-system-libraries";
+  beforeBuild = ''
     export GEM_PATH=${mini_portile2}/${mini_portile2.prefix}
-    cd ext/nokogiri
-    ruby extconf.rb --use-system-libraries
-    make -j$NIX_BUILD_CORES
-    cd ../..
-    mkdir -p lib/nokogiri
-    cp ext/nokogiri/nokogiri.so lib/nokogiri/
   '';
 }
 ```
 
-Current overlays: `extralite-bundle`, `ffi`, `libv8-node`, `mini_racer`, `mittens`, `nokogiri`, `openssl`, `pg`, `psych`, `puma`, `sqlite3`, `tiktoken_ruby`, `tokenizers`, `trilogy`.
+### Overlay contract
 
-## Bundle-path layout
+| Field | Type | Effect |
+|-------|------|--------|
+| `deps` | `[ derivation ]` | Added to `nativeBuildInputs` |
+| `extconfFlags` | `string` | Passed to `ruby extconf.rb $extconfFlags` |
+| `beforeBuild` | `string` | Shell commands before `extconf.rb && make` |
+| `afterBuild` | `string` | Shell commands after `make` |
+| `postInstall` | `string` | Shell commands after install (`$dest` = output prefix) |
+| `buildPhase` | `string` | **Replaces** the entire default build (escape hatch) |
 
-The merged `buildEnv` output matches what `bundler/setup` expects:
+Hooks compose with the default build phase. `buildPhase` is the escape hatch that replaces it entirely. A list return is shorthand for deps-only: `{ pkgs, ruby }: [ pkgs.openssl ]`.
 
+**Rule: always link against system libraries from nixpkgs.** Never use vendored/bundled copies. Use `--use-system-libraries`, `--enable-system-libraries`, or provide paths via pkg-config.
+
+### Current overlays (32)
+
+`charlock_holmes` `commonmarker` `debase` `extralite-bundle` `ffi` `ffi-yajl` `field_test` `google-protobuf` `gpgme` `hiredis` `hiredis-client` `idn-ruby` `libv8` `libv8-node` `libxml-ruby` `mini_racer` `mittens` `mysql2` `nokogiri` `openssl` `pg` `psych` `puma` `rmagick` `rpam2` `rugged` `sqlite3` `therubyracer` `tiktoken_ruby` `tokenizers` `trilogy` `zlib`
+
+## Commands
+
+### Justfile
+
+```bash
+just build                     # build every gem derivation (3,786)
+just build fizzy               # build gems for one app
+just build-gem fizzy rack      # build single gem (debugging)
+just matrix fizzy              # build across all ruby versions
+just matrix fizzy ruby_4_0    # single ruby version
+just import fizzy path/to/Gemfile.lock
+just fetch                     # fetch all gem sources
+just generate                  # regenerate nix/ from cache
+just lint                      # run all 10 lints
+just test fizzy                # run app test suite
 ```
-$BUNDLE_PATH/
-  ruby/3.4.0/
-    gems/
-      rack-3.2.4/
-      sqlite3-2.8.0/
-      sqlite3-2.8.0-x86_64-linux-gnu -> sqlite3-2.8.0   # platform alias
-    specifications/
-      rack-3.2.4.gemspec
-      sqlite3-2.8.0.gemspec
-      sqlite3-2.8.0-x86_64-linux-gnu.gemspec             # platform gemspec
-    extensions/x86_64-linux/3.4.0/
-      sqlite3-2.8.0/*.so
-    bundler/gems/
-      rails-60d92e4e7dfe/                                # git checkout
-      useragent-433ca320a42d/
-```
 
-Platform-only gems (ffi, nokogiri, sqlite3) get symlinks and platform-qualified gemspecs so bundler finds them under their arch-specific names.
+### Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `bin/import` | Import a project: `Gemfile.lock` → gemset + nix config + git derivations |
+| `bin/fetch` | Fetch gems in parallel: `imports/*.gemset` → `cache/` |
+| `bin/fetch-gem` | Fetch a single gem (called by `bin/fetch`) |
+| `bin/generate` | Generate derivations + selectors + catalogue from `cache/meta/` |
+| `bin/generate-gemset` | Generate `nix/app/<project>.nix` from `Gemfile.lock` |
+| `bin/test-bundle` | Smoke test: build bundle-path, verify `bundler/setup` loads |
 
 ## Lint suite
 
-```bash
-just lint fizzy   # 8 passed, 0 failed
-```
+10 automated checks:
 
-| Lint | Checks |
-|------|--------|
-| `nix-eval` | All `.nix` files parse |
-| `dep-completeness` | Every lockfile dep has a derivation |
-| `source-clean` | No pre-built `.so` leaked into sources |
-| `require-paths-vs-gem-metadata` | Generated require_paths match `.gem` metadata |
-| `gemspec-deps` | Gemspec deps resolve within the gemset |
-| `require-paths` | Every require_path directory exists on disk |
-| `native-extensions` | Native gems have compiled `.so` files |
-| `loadable` | Key gems can be `require`'d in nix ruby |
+```bash
+$ just lint
+nix-eval:                     5231 checked, 0 errors
+nixfmt:                       5236 files, all formatted
+statix:                       0 warnings
+dep-completeness:             OK (186 specs in lockfile)
+source-clean:                 OK (no leaked .so files)
+require-paths-vs-gem-metadata: OK (3782 checked)
+gemspec-deps:                 OK (172 gemspecs checked)
+require-paths:                OK (172 specs checked)
+native-extensions:            1 warning out of 53
+loadable:                     7 OK, 0 failed
+── 10 passed, 0 failed ──
+```
 
 ## Tested projects
 
-| Project | Gems | Status |
-|---------|-----:|--------|
-| Fizzy (Rails 8.2) | 161 | ✅ 1026 tests, 0 errors |
-| Liquid | 44 | ✅ 973 tests, 0 errors |
+| Project | Type | Gems | Ruby | Test result |
+|---------|------|-----:|------|-------------|
+| **Fizzy** | Rails 8.2 | 161 | 3.1–4.0 | ✅ 1,026 tests, 4,011 assertions, 0 errors |
+| **Liquid** | Library | 44 | 3.4 | ✅ 973 tests, 0 errors |
+| **Chatwoot** | Rails 7.1 | 364 | 3.4 | ✅ 757 examples, 0 failures |
 
-## How it works
+Import-ready (gemsets generated, gems fetched): Discourse (296), Mastodon (350), Forem (381), Redmine (154), Solidus (200), Spree (222), Rails (217).
 
-```
-Gemfile.lock
-     │
-     ├── bin/fetch           gem fetch + git clone → cache/
-     │
-     ├── bin/generate         cache/meta/*.json → nix/gem/*/default.nix
-     │                                          → nix/gem/*/default.nix (selectors)
-     │                                          → nix/modules/gem.nix (catalogue)
-     │
-     ├── bin/generate-gemset  Gemfile.lock → nix/app/<project>.nix (config list)
-     │                                     → nix/gem/<repo>/git-<rev>/default.nix
-     │
-     │   nix/modules/resolve.nix   config list + pkgs + ruby → attrset of derivations
-     │
-     └── nix-build            each gem → /nix/store/<hash>-<gem>-<ver>/
-                              buildEnv → unified BUNDLE_PATH
-```
+## Design decisions
 
-All generated nix files pass `nixfmt --check`. Regeneration is idempotent and safe — the entire `nix/` tree is disposable.
+- **One derivation per gem** — individually cacheable, parallel builds, content-addressed
+- **Pure data gemsets** — `nix/app/*.nix` is just a list, no logic
+- **Lazy evaluation everywhere** — only selected versions get imported
+- **Overlay-based customization** — generated code never needs hand-editing
+- **System libraries always** — vendored copies are stripped; overlays point to nixpkgs
+- **`builtins.fetchGit` for git gems** — no pre-cloning, nix fetches at eval time
+- **Platform-native mimicry** — source-compiled gems look like prebuilt platform gems to bundler
+- **Parameterized Ruby** — `ruby` flows through every derivation; change once, rebuild
