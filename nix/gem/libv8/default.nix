@@ -24,9 +24,30 @@
 }:
 let
   versions = {
-    "7.3.492.27.1" = import ./7.3.492.27.1 { inherit lib stdenv ruby; };
-    "8.4.255.0" = import ./8.4.255.0 { inherit lib stdenv ruby; };
-    "8.4.255.0.1" = import ./8.4.255.0.1 { inherit lib stdenv ruby; };
+    "7.3.492.27.1" = import ./7.3.492.27.1 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "8.4.255.0" = import ./8.4.255.0 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "8.4.255.0.1" = import ./8.4.255.0.1 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
   };
 
   gitRevs = {

@@ -1,1 +1,6 @@
-{ pkgs, ruby }: with pkgs; [ openssl pkg-config ]
+{ pkgs, ruby }:
+with pkgs;
+[
+  openssl
+  pkg-config
+]

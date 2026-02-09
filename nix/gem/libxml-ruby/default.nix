@@ -22,7 +22,14 @@
 }:
 let
   versions = {
-    "5.0.4" = import ./5.0.4 { inherit lib stdenv ruby; };
+    "5.0.4" = import ./5.0.4 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
   };
 
   gitRevs = {

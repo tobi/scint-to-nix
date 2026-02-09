@@ -1,1 +1,6 @@
-{ pkgs, ruby }: with pkgs; [ libffi pkg-config ]
+{ pkgs, ruby }:
+with pkgs;
+[
+  libffi
+  pkg-config
+]

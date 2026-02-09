@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Run statix linter on all .nix files
+set -euo pipefail
+dir="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$dir/../.." && pwd)"
+
+if ! command -v statix &>/dev/null; then
+  # Try via nix-shell
+  if command -v nix-shell &>/dev/null; then
+    out=$(nix-shell -p statix --run "statix check '$root/nix'" 2>&1)
+  else
+    echo "statix: not found, skipping"
+    exit 2
+  fi
+else
+  out=$(statix check "$root/nix" 2>&1)
+fi
+
+if [ -z "$out" ]; then
+  echo "statix: OK (0 warnings)"
+else
+  echo "$out"
+  count=$(echo "$out" | grep -c 'Warning:\|Error:' || true)
+  echo "statix: $count issues"
+  exit 1
+fi

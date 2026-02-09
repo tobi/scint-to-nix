@@ -3,7 +3,7 @@
 # ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
-# 1410 gems
+# 1411 gems
 #
 # Usage:
 #   gems = import ./nix/modules/gem.nix { inherit pkgs ruby; };
@@ -1025,6 +1025,7 @@ in
   "pgvector" = args: gem "pgvector" args;
   "phonelib" = args: gem "phonelib" args;
   "pitchfork" = args: gem "pitchfork" args;
+  "pkg-config" = args: gem "pkg-config" args;
   "platform_agent" = args: gem "platform_agent" args;
   "playwright-ruby-client" = args: gem "playwright-ruby-client" args;
   "plist" = args: gem "plist" args;

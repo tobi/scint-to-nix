@@ -1,1 +1,6 @@
-{ pkgs, ruby }: with pkgs; [ libyaml pkg-config ]
+{ pkgs, ruby }:
+with pkgs;
+[
+  libyaml
+  pkg-config
+]

@@ -28,13 +28,62 @@
 }:
 let
   versions = {
-    "3.25.5" = import ./3.25.5 { inherit lib stdenv ruby; };
-    "3.25.7" = import ./3.25.7 { inherit lib stdenv ruby; };
-    "4.29.3" = import ./4.29.3 { inherit lib stdenv ruby; };
-    "4.33.2" = import ./4.33.2 { inherit lib stdenv ruby; };
-    "4.33.3" = import ./4.33.3 { inherit lib stdenv ruby; };
-    "4.33.4" = import ./4.33.4 { inherit lib stdenv ruby; };
-    "4.33.5" = import ./4.33.5 { inherit lib stdenv ruby; };
+    "3.25.5" = import ./3.25.5 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "3.25.7" = import ./3.25.7 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "4.29.3" = import ./4.29.3 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "4.33.2" = import ./4.33.2 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "4.33.3" = import ./4.33.3 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "4.33.4" = import ./4.33.4 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "4.33.5" = import ./4.33.5 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
   };
 
   gitRevs = {

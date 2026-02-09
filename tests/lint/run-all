@@ -8,6 +8,8 @@ project="${1:-fizzy}"
 
 checks=(
   nix-eval
+  nixfmt
+  statix
   dep-completeness
   source-clean
   require-paths-vs-gem-metadata

@@ -11,5 +11,8 @@
 #
 { pkgs, ruby }:
 {
-  deps = with pkgs; [ sqlite pkg-config ];
+  deps = with pkgs; [
+    sqlite
+    pkg-config
+  ];
 }

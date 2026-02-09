@@ -24,9 +24,30 @@
 }:
 let
   versions = {
-    "2.7.6" = import ./2.7.6 { inherit lib stdenv ruby; };
-    "2.7.7" = import ./2.7.7 { inherit lib stdenv ruby; };
-    "3.0.0" = import ./3.0.0 { inherit lib stdenv ruby; };
+    "2.7.6" = import ./2.7.6 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "2.7.7" = import ./2.7.7 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "3.0.0" = import ./3.0.0 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
   };
 
   gitRevs = {

@@ -282,12 +282,205 @@ After writing an overlay, always run `just lint` to verify the gem is complete.
 
 | Overlay | Type | What it provides |
 |---------|------|-----------------|
-| `psych.nix` | deps list | libyaml, pkg-config |
-| `openssl.nix` | deps list | openssl, pkg-config |
-| `puma.nix` | deps list | openssl |
+| `charlock_holmes.nix` | attrset | icu, zlib, pkg-config, which + `beforeBuild` (C++17 flags for ICU 76+) |
+| `commonmarker.nix` | attrset | rustc, cargo, libclang + `beforeBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
+| `debase.nix` | attrset | skipped build (incompatible with Ruby 3.4) |
+| `extralite-bundle.nix` | attrset | sqlite, pkg-config (uses system sqlite via pkg-config) |
+| `ffi-yajl.nix` | attrset | yajl, pkg-config + `beforeBuild` (GEM_PATH for libyajl2) |
 | `ffi.nix` | deps list | libffi, pkg-config |
-| `pg.nix` | deps list | libpq, pkg-config |
-| `trilogy.nix` | deps list | openssl, zlib |
+| `field_test.nix` | attrset | `beforeBuild` (GEM_PATH for rice gem — mkmf-rice at build time) |
+| `google-protobuf.nix` | attrset | `beforeBuild` (disable -Werror=format-security) |
+| `gpgme.nix` | attrset | gpgme, libgpg-error, libassuan, pkg-config + `extconfFlags = "--use-system-libraries"` + `beforeBuild` (GEM_PATH for mini_portile2) |
+| `hiredis-client.nix` | deps list | openssl, pkg-config |
+| `hiredis.nix` | attrset | hiredis C library + custom `buildPhase` (vendor/hiredis from system lib) |
+| `idn-ruby.nix` | deps list | libidn, pkg-config |
+| `libv8-node.nix` | attrset | custom `buildPhase` (symlinks nixpkgs nodejs libv8 into vendor/) |
+| `libv8.nix` | attrset | skipped build (use libv8-node instead) |
+| `libxml-ruby.nix` | attrset | libxml2, pkg-config + `beforeBuild` (C_INCLUDE_PATH for libxml2 headers) |
+| `mini_racer.nix` | attrset | skipped build (libv8_monolith.a relocation error) |
 | `mittens.nix` | deps list | perl |
+| `mysql2.nix` | deps list | libmysqlclient, openssl, pkg-config, zlib |
+| `nokogiri.nix` | attrset | libxml2, libxslt, pkg-config, zlib + `extconfFlags = "--use-system-libraries"` + `beforeBuild` (GEM_PATH for mini_portile2) |
+| `openssl.nix` | deps list | openssl, pkg-config |
+| `pg.nix` | deps list | libpq, pkg-config |
+| `psych.nix` | deps list | libyaml, pkg-config |
+| `puma.nix` | deps list | openssl |
+| `rmagick.nix` | attrset | imagemagick, pkg-config + `beforeBuild` (GEM_PATH for pkg-config gem) |
+| `rpam2.nix` | deps list | pam |
+| `rugged.nix` | deps list | cmake, pkg-config, openssl, zlib, libssh2 |
 | `sqlite3.nix` | attrset | sqlite, pkg-config + `extconfFlags = "--enable-system-libraries"` |
-| `nokogiri.nix` | attrset | libxml2, libxslt + `beforeBuild` (GEM_PATH for mini_portile2) + `extconfFlags = "--use-system-libraries"` |
+| `therubyracer.nix` | attrset | skipped build (abandoned, use mini_racer) |
+| `tiktoken_ruby.nix` | attrset | rustc, cargo, libclang + `beforeBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
+| `tokenizers.nix` | attrset | rustc, cargo, libclang + `beforeBuild` (GEM_PATH for rb_sys, CARGO_HOME, LIBCLANG_PATH) |
+| `trilogy.nix` | deps list | openssl, zlib |
+| `zlib.nix` | deps list | zlib, pkg-config |
+
+## nixpkgs gem-config reference
+
+When a gem fails and you need to write an overlay, check this reference first. It's extracted from
+[nixpkgs gem-config](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/ruby-modules/gem-config/default.nix)
+and maps gem names to the deps and build tweaks that nixpkgs uses. Our overlay contract differs
+(see "Writing overlays" above), so adapt — don't copy verbatim.
+
+### Quick lookup: gem → system deps
+
+| Gem | System deps (nixpkgs attr names) | Notes |
+|-----|----------------------------------|-------|
+| `atk` | gobject-introspection, wrapGAppsHook3, atk, rake, bundler, pkg-config | propagatedBuildInputs |
+| `cairo` | cairo, expat, glib, pcre2, pkg-config, libsysprof-capture, libpthread-stubs, libxdmcp | |
+| `cairo-gobject` | cairo, expat, pcre2, pkg-config, libsysprof-capture, libpthread-stubs, libxdmcp | |
+| `charlock_holmes` | icu, zlib, which | |
+| `cld3` | protobuf, pkg-config | |
+| `curb` | curl | |
+| `curses` | ncurses | Patch for clang 16 on older versions |
+| `dep-selector-libgecode` | gecode_3 | `USE_SYSTEM_GECODE=true` |
+| `do_sqlite3` | sqlite | |
+| `eventmachine` | openssl | Patch `::bind` namespace |
+| `exif` | libexif | `--with-exif-dir` |
+| `exiv2` | exiv2 | `--with-exiv2-lib/include` |
+| `ffi` | libffi, pkg-config | |
+| `fiddle` | libffi | |
+| `gdk_pixbuf2` | gobject-introspection, wrapGAppsHook3, gdk-pixbuf, rake, bundler, pkg-config | |
+| `gdk3` | gobject-introspection, wrapGAppsHook3, gdk-pixbuf, cairo, rake, bundler, pkg-config | |
+| `gio2` | glib, pcre2, pkg-config, gobject-introspection, libsysprof-capture + Linux: util-linux, libselinux, libsepol | |
+| `glib2` | glib, pcre2, pkg-config, libsysprof-capture | |
+| `gobject-introspection` | gobject-introspection, wrapGAppsHook3, glib, pcre2, pkg-config, libsysprof-capture | |
+| `gpgme` | gpgme, pkg-config | `--use-system-libraries` |
+| `grpc` | openssl, pkg-config | `hardeningDisable = ["format"]`; patches for gcc-14/boringssl |
+| `gtk3` | many GTK deps, binutils, pkg-config | Complex propagated deps |
+| `h3` | h3_3 (from nixpkgs) | Patch extconf to skip cmake, point at system lib |
+| `hiredis-client` | openssl | |
+| `iconv` | libiconv (macOS) | `--with-iconv-dir` |
+| `idn-ruby` | libidn | |
+| `libxml-ruby` | libxml2 | `--with-xml2-lib/include` |
+| `mathematical` | cairo, fribidi, gdk-pixbuf, glib, libxml2, pango, cmake, bison, flex, python3, patchelf | Complex postFixup RPATH patching |
+| `magic` | file (libmagic) | Patches lib path in ruby source |
+| `maxmind_geoip2` | libmaxminddb | `--with-maxminddb-lib/include` |
+| `mysql` / `mysql2` | libmysqlclient, zlib, openssl | |
+| `ncursesw` | ncurses | `--with-cflags/ldflags` |
+| `nokogiri` | libxml2, libxslt, zlib (+ libiconv on macOS) | `--use-system-libraries` with explicit `--with-*-lib/include` |
+| `openssl` | openssl (or openssl_1_1 for < 3.0.0) | |
+| `opus-ruby` | libopus | Patches FFI lib path |
+| `ovirt-engine-sdk` | curl, libxml2 | Disable several `-Werror` flags |
+| `pango` | libdatrie, libthai, fribidi, harfbuzz, pcre2, pkg-config + Linux: libselinux, libsepol, util-linux | propagatedBuildInputs: gobject-introspection, wrapGAppsHook3 |
+| `patron` | curl | |
+| `pcaprub` | libpcap | |
+| `pg` | libpq, pkg-config | `--with-pg-config=ignore` forces pkg-config |
+| `psych` | libyaml | |
+| `puma` | openssl | |
+| `pygments.rb` | python3 | |
+| `rbczmq` | zeromq, czmq | `--with-system-libs` |
+| `re2` | re2 | `--enable-system-libraries` |
+| `rdiscount` | discount | Patch to use system libmarkdown |
+| `rmagick` | imagemagick, which, pkg-config | |
+| `rpam2` | linux-pam | |
+| `rugged` | cmake, pkg-config, openssl, libssh2, zlib (+ libiconv on macOS) | `--with-ssh`; `dontUseCmakeConfigure` |
+| `sassc` | libsass, rake | Patches native lib path |
+| `sass-embedded` | dart-sass | Patches Rakefile to use system dart-sass |
+| `semian` | openssl | |
+| `sequel_pg` | libpq | |
+| `snappy` | snappy | |
+| `sqlite3` | sqlite, pkg-config | `--enable-system-libraries` (≥1.5.0) or `--with-sqlite3-lib/include` (older) |
+| `taglib-ruby` | taglib | |
+| `timfel-krb5-auth` | libkrb5 | |
+| `tiny_tds` | freetds, openssl, pkg-config | |
+| `typhoeus` | curl | |
+| `xapian-ruby` | xapian, zlib, rake, bundler, pkg-config | Custom Rakefile |
+| `zlib` | zlib | |
+| `zookeeper` | cctools (macOS) | |
+
+### Patterns worth knowing
+
+#### FFI gems that hardcode library paths
+
+Gems using FFI (`ffi_lib "name"`) need the absolute nix store path substituted at build time.
+nixpkgs uses `substituteInPlace` to replace the library name with the full `.so` path:
+
+```nix
+# Example: opus-ruby
+postPatch = ''
+  substituteInPlace lib/opus-ruby.rb \
+    --replace "ffi_lib 'opus'" \
+              "ffi_lib '${libopus}/lib/libopus.so'"
+'';
+```
+
+Other gems that need this pattern: `ethon` (curl), `ffi-rzmq-core` (zeromq), `rbnacl` (libsodium),
+`ruby-vips` (vips, glib, gobject), `h3` (h3_3).
+
+In our overlay contract, use `beforeBuild` or `buildPhase` to do the substitution.
+
+#### Gems that download during build
+
+These gems try to fetch source/binaries during `extconf.rb` and fail in the Nix sandbox:
+
+| Gem | What it downloads | nixpkgs fix |
+|-----|-------------------|-------------|
+| `gitlab-pg_query` / `pg_query` | libpg_query tarball | `fetchurl` + `sed` to replace URL with local path |
+| `mini_racer` | V8 via libv8 | `--with-v8-dir` pointing at nodejs.libv8 |
+| `h3` | h3 source for cmake build | Skip cmake, substitute system lib path |
+| `sass-embedded` | dart-sass binary | Replace Rakefile to use nixpkgs `dart-sass` |
+
+#### Disabling hardening flags
+
+Some gems fail with GCC/Clang security hardening. nixpkgs disables specific flags:
+
+```nix
+# google-protobuf (>= 3.25.0)
+hardeningDisable = [ "format" ];
+
+# grpc
+hardeningDisable = [ "format" ];
+```
+
+In our overlay contract, use `beforeBuild` to set `NIX_CFLAGS_COMPILE` or `CFLAGS`:
+```nix
+beforeBuild = ''
+  export CFLAGS="$CFLAGS -Wno-error=format-security"
+'';
+```
+
+#### Gems with Rust extensions
+
+Modern gems increasingly use Rust via `rb_sys`. Pattern (already used for commonmarker, tiktoken_ruby, tokenizers):
+
+```nix
+{ pkgs, ruby }:
+let
+  rb_sys = pkgs.callPackage ../nix/gem/rb_sys/<version> { inherit ruby; };
+in {
+  deps = with pkgs; [ rustc cargo libclang ];
+  beforeBuild = ''
+    export GEM_PATH=${rb_sys}/${rb_sys.prefix}
+    export CARGO_HOME="$TMPDIR/cargo"
+    mkdir -p "$CARGO_HOME"
+    export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
+    export BINDGEN_EXTRA_CLANG_ARGS="-isystem ${pkgs.stdenv.cc.cc}/lib/gcc/${pkgs.stdenv.hostPlatform.config}/${pkgs.stdenv.cc.cc.version}/include"
+  '';
+}
+```
+
+`prometheus-client-mmap` (≥1.0) also needs Rust + `cargoSetupHook` + `fetchCargoVendor` — the most
+complex Rust overlay in nixpkgs.
+
+#### GNOME/GTK gems
+
+GNOME binding gems (`atk`, `cairo`, `gdk_pixbuf2`, `gdk3`, `gio2`, `glib2`, `gobject-introspection`,
+`gtk3`, `pango`) all need:
+- `pkg-config` in nativeBuildInputs
+- `gobject-introspection` + `wrapGAppsHook3` in propagatedBuildInputs
+- `DarwinTools` on macOS
+- `rake` + `bundler` for some
+
+These are heavyweight overlays. If a project uses them, expect a cascade of deps.
+
+#### Version-conditional fixes
+
+nixpkgs often applies different fixes per gem version. When writing overlays, check
+`cache/meta/<gem>.json` for the exact version and tailor accordingly:
+
+```nix
+# sqlite3: different approach before/after 1.5.0
+# openssl: uses openssl_1_1 for versions < 3.0.0
+# grpc: different patches for < 1.53, < 1.65, < 1.68.1
+```

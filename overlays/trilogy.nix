@@ -1,1 +1,6 @@
-{ pkgs, ruby }: with pkgs; [ openssl zlib ]
+{ pkgs, ruby }:
+with pkgs;
+[
+  openssl
+  zlib
+]
