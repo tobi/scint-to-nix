@@ -1,4 +1,4 @@
-# scint-to-nix — Justfile
+# gem2nix — Justfile
 #
 # Usage:
 #   just build                   # build every gem derivation
@@ -62,7 +62,7 @@ build-gem app gem:
 # Fetch all gem sources into cache/
 [group('generate')]
 fetch:
-    bin/fetch gemsets/
+    bin/fetch imports/
 
 # Recreate source symlinks (after fresh clone)
 [group('generate')]
@@ -96,7 +96,7 @@ import *args:
 # Full pipeline: fetch + generate + import
 [group('generate')]
 regenerate app lockfile:
-    bin/fetch gemsets/
+    bin/fetch imports/
     bin/generate
     bin/import {{lockfile}} --name {{app}}
 

@@ -1,7 +1,7 @@
 # Mastodon dev/test shell — PostgreSQL + Redis via local tmpdir services.
 #
 # Usage:
-#   cd ~/src/ruby-tests/mastodon && nix-shell ../../tries/2026-02-07-scint/scint-to-nix/tests/mastodon/devshell.nix
+#   cd ~/src/ruby-tests/mastodon && nix-shell ../../tries/2026-02-07-scint/gem2nix/tests/mastodon/devshell.nix
 #
 { pkgs ? import <nixpkgs> {}
 , ruby ? pkgs.ruby_3_4

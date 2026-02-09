@@ -1,7 +1,7 @@
 # Forem dev/test shell — PostgreSQL + Redis via local tmpdir services.
 #
 # Usage:
-#   cd ~/src/ruby-tests/forem && nix-shell ../../tries/2026-02-07-scint/scint-to-nix/tests/forem/devshell.nix
+#   cd ~/src/ruby-tests/forem && nix-shell ../../tries/2026-02-07-scint/gem2nix/tests/forem/devshell.nix
 #
 { pkgs ? import <nixpkgs> {}
 , ruby ? pkgs.ruby_3_3

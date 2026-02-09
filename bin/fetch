@@ -7,10 +7,10 @@ set -euo pipefail
 # dedupes, and fetches each gem in parallel via bin/fetch-gem.
 #
 # Usage:
-#   fetch                          # all gemsets/*.gemset
-#   fetch gemsets/fizzy.gemset     # single file
-#   fetch gemsets/                 # all files in directory
-#   cat gemsets/*.gemset | fetch - # from stdin
+#   fetch                          # all imports/*.gemset
+#   fetch imports/fizzy.gemset     # single file
+#   fetch imports/                 # all files in directory
+#   cat imports/*.gemset | fetch - # from stdin
 
 dir="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$dir/.." && pwd)"
@@ -19,7 +19,7 @@ jobs="${JOBS:-20}"
 
 # Resolve input to a stream of lines
 if [ $# -eq 0 ]; then
-  input="$root/gemsets"
+  input="$root/imports"
 fi
 input="${input:-${1}}"
 
@@ -31,7 +31,7 @@ elif [ -d "$input" ]; then
 elif [ -f "$input" ]; then
   lines=$(cat "$input")
 else
-  echo "Usage: fetch [gemsets/ | file.gemset | -]" >&2
+  echo "Usage: fetch [imports/ | file.gemset | -]" >&2
   exit 1
 fi
 

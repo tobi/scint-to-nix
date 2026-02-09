@@ -1,7 +1,7 @@
 # Solidus dev/test shell — SQLite for testing.
 #
 # Usage:
-#   cd ~/src/ruby-tests/solidus && nix-shell ../../tries/2026-02-07-scint/scint-to-nix/tests/solidus/devshell.nix
+#   cd ~/src/ruby-tests/solidus && nix-shell ../../tries/2026-02-07-scint/gem2nix/tests/solidus/devshell.nix
 #
 { pkgs ? import <nixpkgs> {}
 , ruby ? pkgs.ruby_3_4

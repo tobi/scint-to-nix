@@ -1,4 +1,4 @@
-# scint-to-nix
+# gem2nix
 
 Turn a Ruby app's `Gemfile.lock` into hermetic, individually-cacheable Nix derivations — one per gem. The output is a `BUNDLE_PATH`-compatible directory that `require "bundler/setup"` accepts without modification.
 
@@ -10,7 +10,7 @@ Native extensions are compiled from source inside the Nix sandbox. No bundler in
 
 ```
 nix/
-├── gem/                                    # one directory per gem
+├── gem/                                    # shared gem pool — one directory per gem
 │   ├── rack/
 │   │   ├── default.nix                     # selector — pick version or git rev
 │   │   ├── 2.2.21/default.nix             # version derivation
@@ -20,14 +20,15 @@ nix/
 │   │   ├── default.nix                     # selector (versions + git revs)
 │   │   ├── 7.1.5.2/default.nix
 │   │   └── git-60d92e4e7dfe/default.nix   # git repo derivation
-│   └── ...                                 # 524 gems total
+│   └── ...                                 # 532 gems total
 │
-├── app/                                    # per-project gemsets
-│   ├── fizzy.nix                           # 161 gems from fizzy's Gemfile.lock
-│   └── chatwoot.nix
+├── app/                                    # per-project gemset configs (pure data)
+│   ├── fizzy.nix                           # list of { name; version; } entries
+│   └── liquid.nix
 │
 ├── modules/
-│   └── gem.nix                             # catalogue — all 524 gems as callables
+│   ├── gem.nix                             # catalogue — all gems as callables
+│   └── resolve.nix                         # config → derivations resolver
 │
 overlays/                                   # native build deps (hand-maintained)
 ├── nokogiri.nix
@@ -37,6 +38,30 @@ overlays/                                   # native build deps (hand-maintained
 ```
 
 Everything under `nix/` is generated. Never hand-edit — run `bin/generate` and `bin/generate-gemset` to regenerate. Customization lives in `overlays/`.
+
+## App gemset configs
+
+A gemset config is a plain Nix list — pure data, no functions, no `pkgs` or `ruby` arguments:
+
+```nix
+# nix/app/fizzy.nix (generated from Gemfile.lock)
+[
+  { name = "rack"; version = "3.2.4"; }
+  { name = "nokogiri"; version = "1.19.0"; }
+  { name = "zeitwerk"; version = "2.7.4"; }
+  # ...
+  # git: rails @ 60d92e4e7dfe
+  { name = "rails"; git.rev = "60d92e4e7dfe"; }
+]
+```
+
+The resolver (`nix/modules/resolve.nix`) turns a config into built derivations:
+
+```nix
+resolve = import ./nix/modules/resolve.nix;
+gems = resolve { inherit pkgs ruby; gemset = import ./nix/app/fizzy.nix; };
+# gems is an attrset: { rack = <drv>; nokogiri = <drv>; rails-60d92e4e7dfe = <drv>; ... }
+```
 
 ## Gem selectors
 
@@ -64,34 +89,14 @@ gems.rails { git.rev = "60d92e4e7dfe"; }
 gems.rack { }
 ```
 
-## App gemsets
-
-A gemset wires up the exact versions from a `Gemfile.lock`:
-
-```nix
-# nix/app/fizzy.nix (generated from Gemfile.lock)
-{ pkgs, ruby }:
-let
-  inherit (pkgs) lib stdenv;
-  gem = name: args: pkgs.callPackage (../gem + "/${name}") ({ inherit lib stdenv ruby; } // args);
-in
-{
-  "rack" = gem "rack" { version = "3.2.4"; };
-  "rails-60d92e4e7dfe" = gem "rails" { git.rev = "60d92e4e7dfe"; };
-  "nokogiri" = gem "nokogiri" { version = "1.19.0"; pkgs = pkgs; };
-  # ... 161 gems
-}
-```
-
-Overlay gems (like nokogiri) get `pkgs` passed through so they can access native build dependencies.
-
 ## Devshell
 
 ```nix
 # tests/fizzy/devshell.nix
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
 let
-  gems = import ../../nix/app/fizzy.nix { inherit pkgs ruby; };
+  resolve = import ../../nix/modules/resolve.nix;
+  gems = resolve { inherit pkgs ruby; gemset = import ../../nix/app/fizzy.nix; };
   bundlePath = pkgs.buildEnv {
     name = "fizzy-bundle-path";
     paths = builtins.attrValues gems;
@@ -107,7 +112,7 @@ in pkgs.mkShell {
 
 ```bash
 cd fizzy
-nix-shell ../scint-to-nix/tests/fizzy/devshell.nix
+nix-shell ../gem2nix/tests/fizzy/devshell.nix
 bundle exec rails test  # 1026 tests, 0 errors
 ```
 
@@ -120,18 +125,36 @@ bin/fetch
 # 2. Generate per-gem derivations + selectors
 bin/generate
 
-# 3. Generate app gemset from a Gemfile.lock
+# 3. Generate app gemset config from a Gemfile.lock
 bin/generate-gemset fizzy ../fizzy/Gemfile.lock
 
-# 4. Build all gems
-bin/build
+# 4. Build all gems in the pool
+just build
 
-# 5. Run lints
-tests/lint/run-all fizzy
+# 5. Build gems for one app
+just build fizzy
 
-# 6. Enter devshell
-cd ../fizzy && nix-shell ../scint-to-nix/tests/fizzy/devshell.nix
+# 6. Run lints
+just lint fizzy
+
+# 7. Enter devshell
+cd ../fizzy && nix-shell ../gem2nix/tests/fizzy/devshell.nix
 ```
+
+## Justfile commands
+
+| Command | Purpose |
+|---------|---------|
+| `just build` | Build every gem derivation in the pool |
+| `just build fizzy` | Build all gems for an app |
+| `just build-gem fizzy rack` | Build a single gem (for debugging) |
+| `just fetch` | Fetch gems into `cache/` |
+| `just generate` | Regenerate all gem derivations + selectors |
+| `just generate-gemset fizzy path/to/Gemfile.lock` | Generate app gemset config |
+| `just regenerate fizzy path/to/Gemfile.lock` | Full pipeline: generate + gemset |
+| `just test fizzy` | Run app test suite in devshell |
+| `just lint fizzy` | Run lint suite |
+| `just fmt-check` | Verify nix files pass nixfmt |
 
 ## Scripts
 
@@ -167,7 +190,7 @@ in {
 }
 ```
 
-Current overlays: `ffi`, `mittens`, `nokogiri`, `openssl`, `pg`, `psych`, `puma`, `sqlite3`, `trilogy`.
+Current overlays: `extralite-bundle`, `ffi`, `libv8-node`, `mini_racer`, `mittens`, `nokogiri`, `openssl`, `pg`, `psych`, `puma`, `sqlite3`, `tiktoken_ruby`, `tokenizers`, `trilogy`.
 
 ## Bundle-path layout
 
@@ -196,7 +219,7 @@ Platform-only gems (ffi, nokogiri, sqlite3) get symlinks and platform-qualified 
 ## Lint suite
 
 ```bash
-tests/lint/run-all fizzy   # 8 passed, 0 failed
+just lint fizzy   # 8 passed, 0 failed
 ```
 
 | Lint | Checks |
@@ -215,8 +238,7 @@ tests/lint/run-all fizzy   # 8 passed, 0 failed
 | Project | Gems | Status |
 |---------|-----:|--------|
 | Fizzy (Rails 8.2) | 161 | ✅ 1026 tests, 0 errors |
-| Chatwoot (Rails 7.1) | 364 | ✅ 757 specs, 0 failures |
-| Discourse | 296 | ✅ builds |
+| Liquid | 44 | ✅ 973 tests, 0 errors |
 
 ## How it works
 
@@ -229,8 +251,10 @@ Gemfile.lock
      │                                          → nix/gem/*/default.nix (selectors)
      │                                          → nix/modules/gem.nix (catalogue)
      │
-     ├── bin/generate-gemset  Gemfile.lock → nix/app/<project>.nix
+     ├── bin/generate-gemset  Gemfile.lock → nix/app/<project>.nix (config list)
      │                                     → nix/gem/<repo>/git-<rev>/default.nix
+     │
+     │   nix/modules/resolve.nix   config list + pkgs + ruby → attrset of derivations
      │
      └── nix-build            each gem → /nix/store/<hash>-<gem>-<ver>/
                               buildEnv → unified BUNDLE_PATH
