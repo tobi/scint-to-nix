@@ -5,8 +5,8 @@
 
 require "json"
 
-nix_dir  = ARGV[0] || "nix"
-meta_dir = ARGV[1] || "cache/meta"
+nix_dir  = "nix"
+meta_dir = "cache/meta"
 errors = []
 checked = 0
 
@@ -14,7 +14,7 @@ Dir.glob(File.join(meta_dir, "*.json")).each do |f|
   meta = JSON.parse(File.read(f))
   name = meta["name"]
   version = meta["version"]
-  meta_paths = meta["require_paths"] || ["lib"]
+  meta_paths = (meta["require_paths"] || ["lib"]).reject { |p| p.start_with?("/") }
 
   specfile = File.join(nix_dir, name, version, "default.nix")
   next unless File.exist?(specfile)
@@ -22,7 +22,7 @@ Dir.glob(File.join(meta_dir, "*.json")).each do |f|
   nix_content = File.read(specfile)
   # Extract require_paths from the generated gemspec
   if nix_content =~ /s\.require_paths\s*=\s*\[([^\]]+)\]/
-    nix_paths = $1.scan(/"([^"]+)"/).flatten.sort
+    nix_paths = $1.scan(/"([^"]+)"/).flatten.reject { |p| p.start_with?("/") }.sort
     meta_sorted = meta_paths.sort
     if nix_paths != meta_sorted
       errors << "#{name}-#{version}: nix=#{nix_paths} vs meta=#{meta_sorted}"

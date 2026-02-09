@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-nix_dir="${1:-nix}"
+nix_dir="nix"
 errors=0
 checked=0
 
