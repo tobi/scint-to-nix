@@ -554,5 +554,4 @@ in
   "zeitwerk" = args: gem "zeitwerk" args;
   "zendesk_api" = args: gem "zendesk_api" args;
   "zip_kit" = args: gem "zip_kit" args;
-  "lexxy" = args: gem "lexxy" args;
 }

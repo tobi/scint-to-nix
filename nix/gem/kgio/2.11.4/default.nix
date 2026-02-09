@@ -26,10 +26,11 @@ stdenv.mkDerivation {
   nativeBuildInputs = [ ruby ];
 
   buildPhase = ''
+    extconfFlags=""
     for extconf in $(find ext -name extconf.rb 2>/dev/null); do
       dir=$(dirname "$extconf")
       echo "Building extension in $dir"
-      (cd "$dir" && ruby extconf.rb && make -j$NIX_BUILD_CORES)
+      (cd "$dir" && ruby extconf.rb $extconfFlags && make -j$NIX_BUILD_CORES)
     done
     for makefile in $(find ext -name Makefile 2>/dev/null); do
       dir=$(dirname "$makefile")

@@ -19,6 +19,14 @@ let
   overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [ ];
   overlayBuildPhase =
     if builtins.isAttrs overlay && overlay ? buildPhase then overlay.buildPhase else null;
+  overlayBeforeBuild =
+    if builtins.isAttrs overlay && overlay ? beforeBuild then overlay.beforeBuild else "";
+  overlayAfterBuild =
+    if builtins.isAttrs overlay && overlay ? afterBuild then overlay.afterBuild else "";
+  overlayPostInstall =
+    if builtins.isAttrs overlay && overlay ? postInstall then overlay.postInstall else "";
+  overlayExtconfFlags =
+    if builtins.isAttrs overlay && overlay ? extconfFlags then overlay.extconfFlags else "";
 in
 stdenv.mkDerivation {
   pname = "nokogiri";
@@ -35,10 +43,12 @@ stdenv.mkDerivation {
       overlayBuildPhase
     else
       ''
+        extconfFlags="${overlayExtconfFlags}"
+        ${overlayBeforeBuild}
         for extconf in $(find ext -name extconf.rb 2>/dev/null); do
           dir=$(dirname "$extconf")
           echo "Building extension in $dir"
-          (cd "$dir" && ruby extconf.rb && make -j$NIX_BUILD_CORES)
+          (cd "$dir" && ruby extconf.rb $extconfFlags && make -j$NIX_BUILD_CORES)
         done
         for makefile in $(find ext -name Makefile 2>/dev/null); do
           dir=$(dirname "$makefile")
@@ -50,6 +60,7 @@ stdenv.mkDerivation {
             echo "Installed $dir/$target_name.so -> lib$target_prefix/$target_name.so"
           fi
         done
+        ${overlayAfterBuild}
       '';
 
   dontConfigure = true;
@@ -102,5 +113,6 @@ stdenv.mkDerivation {
     load Gem.bin_path("nokogiri", "nokogiri", "1.18.9")
     BINSTUB
         chmod +x $dest/bin/nokogiri
+        ${overlayPostInstall}
   '';
 }

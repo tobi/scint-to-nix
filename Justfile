@@ -2,7 +2,7 @@
 #
 # Usage:
 #   just build                   # build every gem derivation
-#   just build fizzy             # build all gems for an app + bundle-path
+#   just build fizzy             # build all gems for an app
 #   just test fizzy              # run app test suite
 
 #   just lint fizzy              # run lint suite

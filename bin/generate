@@ -127,6 +127,14 @@ meta_by_key.each_value do |meta|
     nix << "  overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [ ];\n"
     nix << "  overlayBuildPhase =\n"
     nix << "    if builtins.isAttrs overlay && overlay ? buildPhase then overlay.buildPhase else null;\n"
+    nix << "  overlayBeforeBuild =\n"
+    nix << "    if builtins.isAttrs overlay && overlay ? beforeBuild then overlay.beforeBuild else \"\";\n"
+    nix << "  overlayAfterBuild =\n"
+    nix << "    if builtins.isAttrs overlay && overlay ? afterBuild then overlay.afterBuild else \"\";\n"
+    nix << "  overlayPostInstall =\n"
+    nix << "    if builtins.isAttrs overlay && overlay ? postInstall then overlay.postInstall else \"\";\n"
+    nix << "  overlayExtconfFlags =\n"
+    nix << "    if builtins.isAttrs overlay && overlay ? extconfFlags then overlay.extconfFlags else \"\";\n"
   end
 
   nix << "in\n"
@@ -139,11 +147,12 @@ meta_by_key.each_value do |meta|
   nix << "  };\n\n"
 
   if has_ext
-    build_lines = [
+    # Default build: find all extconf.rb, build each, copy .so to lib/
+    default_build_lines = [
       "for extconf in $(find ext -name extconf.rb 2>/dev/null); do",
       "  dir=$(dirname \"$extconf\")",
       "  echo \"Building extension in $dir\"",
-      "  (cd \"$dir\" && ruby extconf.rb && make -j$NIX_BUILD_CORES)",
+      "  (cd \"$dir\" && ruby extconf.rb $extconfFlags && make -j$NIX_BUILD_CORES)",
       "done",
       "for makefile in $(find ext -name Makefile 2>/dev/null); do",
       "  dir=$(dirname \"$makefile\")",
@@ -163,12 +172,16 @@ meta_by_key.each_value do |meta|
       nix << "      overlayBuildPhase\n"
       nix << "    else\n"
       nix << "      ''\n"
-      build_lines.each { |l| nix << "        #{l}\n" }
+      nix << "        extconfFlags=\"${overlayExtconfFlags}\"\n"
+      nix << "        ${overlayBeforeBuild}\n"
+      default_build_lines.each { |l| nix << "        #{l}\n" }
+      nix << "        ${overlayAfterBuild}\n"
       nix << "      '';\n\n"
     else
       nix << "  nativeBuildInputs = [ ruby ];\n\n"
       nix << "  buildPhase = ''\n"
-      build_lines.each { |l| nix << "    #{l}\n" }
+      nix << "    extconfFlags=\"\"\n"
+      default_build_lines.each { |l| nix << "    #{l}\n" }
       nix << "  '';\n\n"
     end
   else
@@ -242,6 +255,9 @@ meta_by_key.each_value do |meta|
     end
   end
 
+  if has_overlay
+    nix << "#{si}${overlayPostInstall}\n"
+  end
   nix << "  '';\n"
   nix << "}\n"
 

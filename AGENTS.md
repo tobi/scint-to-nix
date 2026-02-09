@@ -63,38 +63,23 @@ The gem's `extconf.rb` calls `pkg-config` or `find_header` for a system library 
 
 The generated derivation imports this and adds the list to `nativeBuildInputs`. The default build phase runs `ruby extconf.rb && make` automatically — if that works with the deps present, a bare list is all you need.
 
-### 2. Custom build phase needed
+### 2. Needs extconf flags (system libraries)
 
-The gem's extension build doesn't follow the standard `extconf.rb` + `make` pattern, or needs special flags (like `--use-system-libraries`).
+The gem bundles its own copy of a library but supports a flag to use the system version instead.
 
-**Symptom:** Build runs but produces wrong output, or the gem bundles its own copy of a library you want to use from nixpkgs.
+**Symptom:** Build succeeds but links against a vendored library, or you see it downloading/compiling a bundled copy.
 
-**Fix:** Return an attrset with `deps` and `buildPhase`:
+**Fix:** Use `extconfFlags` — appended to every `ruby extconf.rb` call:
 
 ```nix
 # overlays/sqlite3.nix
 { pkgs, ruby }: {
   deps = with pkgs; [ sqlite pkg-config ];
-  buildPhase = ''
-    cd ext/sqlite3
-    ruby extconf.rb --enable-system-libraries
-    make -j$NIX_BUILD_CORES
-    cd ../..
-    mkdir -p lib/sqlite3
-    cp ext/sqlite3/sqlite3_native.so lib/sqlite3/
-  '';
+  extconfFlags = "--enable-system-libraries";
 }
 ```
 
-The `buildPhase` replaces the default one entirely. You must:
-- Compile the `.so` yourself
-- Copy it to the right place under `lib/` (the `installPhase` picks up `.so` files from `lib/`)
-
-Look at the gem's source to figure out the extension name and where it expects the `.so`:
-```bash
-ls cache/sources/<gem>-<version>/ext/
-grep TARGET cache/sources/<gem>-<version>/ext/*/Makefile
-```
+The default build phase handles finding `extconf.rb`, running it with the flags, `make`, and copying the `.so`. No custom `buildPhase` needed.
 
 ### 3. Build-time gem dependency
 
@@ -102,7 +87,7 @@ The gem's `extconf.rb` requires another gem at build time (not runtime).
 
 **Symptom:** `require': cannot load such file -- some_gem (LoadError)` during `extconf.rb`.
 
-**Fix:** Import the dependency gem directly in the overlay and set `GEM_PATH`:
+**Fix:** Import the dependency and use `beforeBuild` to set `GEM_PATH`:
 
 ```nix
 # overlays/nokogiri.nix
@@ -111,17 +96,14 @@ let
   mini_portile2 = pkgs.callPackage ../nix/gem/mini_portile2/2.8.9 { inherit ruby; };
 in {
   deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
-  buildPhase = ''
+  extconfFlags = "--use-system-libraries";
+  beforeBuild = ''
     export GEM_PATH=${mini_portile2}/${mini_portile2.prefix}
-    cd ext/nokogiri
-    ruby extconf.rb --use-system-libraries
-    make -j$NIX_BUILD_CORES
-    cd ../..
-    mkdir -p lib/nokogiri
-    cp ext/nokogiri/nokogiri.so lib/nokogiri/
   '';
 }
 ```
+
+This composes with the default build phase — `beforeBuild` runs first, sets up `GEM_PATH`, then the default `extconf.rb` + `make` runs with `--use-system-libraries`. No need to write a custom `buildPhase`.
 
 Note: `mini_portile2` is referenced by a pinned version path (`../nix/gem/mini_portile2/2.8.9`), not through the selector, because overlays run at build time and must be deterministic.
 
@@ -158,23 +140,34 @@ An overlay file `overlays/<name>.nix` is a function `{ pkgs, ruby }:` that retur
 | Return type | Meaning |
 |-------------|---------|
 | `[ pkg1 pkg2 ... ]` | Extra `nativeBuildInputs` only; default build phase |
-| `{ deps = [...]; buildPhase = "..."; }` | Custom deps + custom build phase |
+| `{ deps = [...]; ... }` | Attrset with deps and optional hooks (see below) |
 
-The generated derivation does:
-```nix
-overlay = import ../../../../overlays/<name>.nix { inherit pkgs ruby; };
-overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [];
-overlayBuildPhase = if builtins.isAttrs overlay && overlay ? buildPhase then overlay.buildPhase else null;
-```
+**Attrset fields:**
 
-If `overlayBuildPhase` is set, it replaces the default. Otherwise the default build phase runs:
+| Field | Type | Description |
+|-------|------|-------------|
+| `deps` | list | Extra `nativeBuildInputs` |
+| `extconfFlags` | string | Flags appended to every `ruby extconf.rb` call |
+| `beforeBuild` | string | Shell commands run before the default build phase |
+| `afterBuild` | string | Shell commands run after the default build phase |
+| `buildPhase` | string | **Replaces** the entire default build phase |
+| `postInstall` | string | Shell commands run at the end of `installPhase` (with `$dest` set to `$out/ruby/3.4.0`) |
+
+Hooks compose with the default build phase. You only need `buildPhase` when the default `extconf.rb` + `make` approach won't work at all.
+
+The default build phase (when `buildPhase` is not set) runs:
 ```bash
+extconfFlags="<overlayExtconfFlags>"   # from overlay, or ""
+<overlayBeforeBuild>                    # from overlay, or ""
 for extconf in $(find ext -name extconf.rb); do
   dir=$(dirname "$extconf")
-  (cd "$dir" && ruby extconf.rb && make -j$NIX_BUILD_CORES)
+  (cd "$dir" && ruby extconf.rb $extconfFlags && make -j$NIX_BUILD_CORES)
 done
-# then copies .so from ext/ to lib/
+# copies built .so from ext/ to lib/
+<overlayAfterBuild>                     # from overlay, or ""
 ```
+
+The `$dest` variable (`$out/ruby/3.4.0`) is available in `postInstall` and contains the full BUNDLE_PATH prefix — `gems/`, `specifications/`, `extensions/` are all under `$dest`.
 
 ### Passing `pkgs` to overlay gems
 
@@ -296,5 +289,5 @@ After writing an overlay, always run `just lint` to verify the gem is complete.
 | `pg.nix` | deps list | libpq, pkg-config |
 | `trilogy.nix` | deps list | openssl, zlib |
 | `mittens.nix` | deps list | perl |
-| `sqlite3.nix` | attrset | sqlite, pkg-config + custom buildPhase |
-| `nokogiri.nix` | attrset | libxml2, libxslt + mini_portile2 as build-time dep |
+| `sqlite3.nix` | attrset | sqlite, pkg-config + `extconfFlags = "--enable-system-libraries"` |
+| `nokogiri.nix` | attrset | libxml2, libxslt + `beforeBuild` (GEM_PATH for mini_portile2) + `extconfFlags = "--use-system-libraries"` |
