@@ -9,30 +9,40 @@ in
     cargo
     libclang
   ];
-  beforeBuild = ''
+  buildPhase = ''
     export GEM_PATH=${rb_sys}/${rb_sys.prefix}
     export CARGO_HOME="$TMPDIR/cargo"
     mkdir -p "$CARGO_HOME"
     export LIBCLANG_PATH="${pkgs.libclang.lib}/lib"
     export BINDGEN_EXTRA_CLANG_ARGS="-isystem ${pkgs.stdenv.cc.cc}/lib/gcc/${pkgs.stdenv.hostPlatform.config}/${pkgs.stdenv.cc.cc.version}/include"
 
-    # Pin darling to 0.20.x if 0.23+ is resolved (requires rustc >= 1.88)
+    # Pin crates that require newer rustc than nixpkgs provides
     for d in $(find ext -name Cargo.toml -not -path '*/target/*'); do
       dir=$(dirname "$d")
-      if [ ! -f "$dir/Cargo.lock" ]; then
-        (cd "$dir" && cargo generate-lockfile 2>/dev/null || true)
-      fi
-      if [ -f "$dir/Cargo.lock" ] && grep -q 'name = "darling"' "$dir/Cargo.lock" 2>/dev/null; then
-        darling_ver=$(grep -A1 'name = "darling"' "$dir/Cargo.lock" | grep version | head -1 | sed 's/.*"\(.*\)".*/\1/')
-        if [ "''${darling_ver%%.*}" = "0" ] && [ "''${darling_ver#0.}" != "''${darling_ver}" ]; then
-          minor=$(echo "$darling_ver" | cut -d. -f2)
-          if [ "$minor" -ge 23 ] 2>/dev/null; then
-            echo "Pinning darling $darling_ver -> 0.20.10 for rustc compatibility"
-            (cd "$dir" && cargo update darling@$darling_ver --precise 0.20.10 2>/dev/null || true)
-            (cd "$dir" && cargo update darling_core@$darling_ver --precise 0.20.10 2>/dev/null || true)
-            (cd "$dir" && cargo update darling_macro@$darling_ver --precise 0.20.10 2>/dev/null || true)
-          fi
-        fi
+      echo "Generating lockfile in $dir..."
+      (cd "$dir" && cargo generate-lockfile)
+      echo "Pinning darling and time crates for rustc compatibility..."
+      (cd "$dir" && cargo update darling --precise 0.20.10 2>&1 || true)
+      (cd "$dir" && cargo update darling_core --precise 0.20.10 2>&1 || true)
+      (cd "$dir" && cargo update darling_macro --precise 0.20.10 2>&1 || true)
+      (cd "$dir" && cargo update time --precise 0.3.36 2>&1 || true)
+      (cd "$dir" && cargo update time-core --precise 0.1.2 2>&1 || true)
+      echo "Lockfile ready."
+    done
+
+    for extconf in $(find ext -name extconf.rb 2>/dev/null); do
+      dir=$(dirname "$extconf")
+      echo "Building extension in $dir"
+      (cd "$dir" && ruby extconf.rb && make -j$NIX_BUILD_CORES)
+    done
+
+    for makefile in $(find ext -name Makefile 2>/dev/null); do
+      dir=$(dirname "$makefile")
+      target_name=$(sed -n 's/^TARGET = //p' "$makefile")
+      target_prefix=$(sed -n 's/^target_prefix = //p' "$makefile")
+      if [ -n "$target_name" ] && [ -f "$dir/$target_name.so" ]; then
+        mkdir -p "lib$target_prefix"
+        cp "$dir/$target_name.so" "lib$target_prefix/$target_name.so"
       fi
     done
   '';

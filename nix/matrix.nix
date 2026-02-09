@@ -11,7 +11,13 @@
 {
   pkgs ? import <nixpkgs> { },
   rubies ? {
-    inherit (pkgs) ruby_3_3 ruby_3_4;
+    inherit (pkgs)
+      ruby_3_1
+      ruby_3_2
+      ruby_3_3
+      ruby_3_4
+      ;
+    ruby_4_0 = import ./ruby4.nix { inherit pkgs; };
   },
   apps ? [
     "fizzy"
