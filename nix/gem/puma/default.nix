@@ -6,23 +6,36 @@
 # puma
 #
 # Available versions:
+#   5.6.9
 #   6.4.3
+#   6.5.0
+#   7.0.0.pre1
+#   7.0.4
 #   7.1.0
+#   7.2.0
 #
 # Usage:
-#   puma { version = "7.1.0"; }
-#   puma { }  # latest (7.1.0)
+#   puma { version = "7.2.0"; }
+#   puma { }  # latest (7.2.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "7.1.0",
+  version ? "7.2.0",
   git ? { },
 }:
 let
   versions = {
+    "5.6.9" = import ./5.6.9 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
     "6.4.3" = import ./6.4.3 {
       inherit
         lib
@@ -31,7 +44,39 @@ let
         pkgs
         ;
     };
+    "6.5.0" = import ./6.5.0 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "7.0.0.pre1" = import ./7.0.0.pre1 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "7.0.4" = import ./7.0.4 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
     "7.1.0" = import ./7.1.0 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "7.2.0" = import ./7.2.0 {
       inherit
         lib
         stdenv

@@ -6,6 +6,8 @@
 # lograge
 #
 # Available versions:
+#   0.12.0
+#   0.13.0
 #   0.14.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.12.0" = import ./0.12.0 { inherit lib stdenv ruby; };
+    "0.13.0" = import ./0.13.0 { inherit lib stdenv ruby; };
     "0.14.0" = import ./0.14.0 { inherit lib stdenv ruby; };
   };
 

@@ -7,6 +7,9 @@
 #
 # Available versions:
 #   3.4.1
+#   3.5.2
+#   3.6.1
+#   3.6.2
 #   3.7.0
 #
 # Usage:
@@ -24,6 +27,9 @@
 let
   versions = {
     "3.4.1" = import ./3.4.1 { inherit lib stdenv ruby; };
+    "3.5.2" = import ./3.5.2 { inherit lib stdenv ruby; };
+    "3.6.1" = import ./3.6.1 { inherit lib stdenv ruby; };
+    "3.6.2" = import ./3.6.2 { inherit lib stdenv ruby; };
     "3.7.0" = import ./3.7.0 { inherit lib stdenv ruby; };
   };
 

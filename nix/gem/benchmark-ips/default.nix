@@ -6,6 +6,9 @@
 # benchmark-ips
 #
 # Available versions:
+#   2.10.0
+#   2.12.0
+#   2.13.0
 #   2.14.0
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "2.10.0" = import ./2.10.0 { inherit lib stdenv ruby; };
+    "2.12.0" = import ./2.12.0 { inherit lib stdenv ruby; };
+    "2.13.0" = import ./2.13.0 { inherit lib stdenv ruby; };
     "2.14.0" = import ./2.14.0 { inherit lib stdenv ruby; };
   };
 

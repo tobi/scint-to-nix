@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   1.72.0
+#   1.75.0
+#   1.76.0
+#   1.78.0
 #
 # Usage:
-#   grpc { version = "1.72.0"; }
-#   grpc { }  # latest (1.72.0)
+#   grpc { version = "1.78.0"; }
+#   grpc { }  # latest (1.78.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.72.0",
+  version ? "1.78.0",
   git ? { },
 }:
 let
   versions = {
     "1.72.0" = import ./1.72.0 { inherit lib stdenv ruby; };
+    "1.75.0" = import ./1.75.0 { inherit lib stdenv ruby; };
+    "1.76.0" = import ./1.76.0 { inherit lib stdenv ruby; };
+    "1.78.0" = import ./1.78.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

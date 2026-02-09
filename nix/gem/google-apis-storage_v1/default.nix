@@ -7,22 +7,30 @@
 #
 # Available versions:
 #   0.47.0
+#   0.49.0
+#   0.58.0
+#   0.59.0
+#   0.60.0
 #
 # Usage:
-#   google-apis-storage_v1 { version = "0.47.0"; }
-#   google-apis-storage_v1 { }  # latest (0.47.0)
+#   google-apis-storage_v1 { version = "0.60.0"; }
+#   google-apis-storage_v1 { }  # latest (0.60.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.47.0",
+  version ? "0.60.0",
   git ? { },
 }:
 let
   versions = {
     "0.47.0" = import ./0.47.0 { inherit lib stdenv ruby; };
+    "0.49.0" = import ./0.49.0 { inherit lib stdenv ruby; };
+    "0.58.0" = import ./0.58.0 { inherit lib stdenv ruby; };
+    "0.59.0" = import ./0.59.0 { inherit lib stdenv ruby; };
+    "0.60.0" = import ./0.60.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

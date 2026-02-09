@@ -6,6 +6,9 @@
 # simplecov-html
 #
 # Available versions:
+#   0.12.3
+#   0.13.0
+#   0.13.1
 #   0.13.2
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "0.12.3" = import ./0.12.3 { inherit lib stdenv ruby; };
+    "0.13.0" = import ./0.13.0 { inherit lib stdenv ruby; };
+    "0.13.1" = import ./0.13.1 { inherit lib stdenv ruby; };
     "0.13.2" = import ./0.13.2 { inherit lib stdenv ruby; };
   };
 

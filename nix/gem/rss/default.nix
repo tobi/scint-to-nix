@@ -6,6 +6,7 @@
 # rss
 #
 # Available versions:
+#   0.2.9
 #   0.3.1
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "0.2.9" = import ./0.2.9 { inherit lib stdenv ruby; };
     "0.3.1" = import ./0.3.1 { inherit lib stdenv ruby; };
   };
 

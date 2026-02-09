@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   5.19.0
+#   6.1.2
+#   6.2.0
+#   6.3.0
 #
 # Usage:
-#   sentry-rails { version = "5.19.0"; }
-#   sentry-rails { }  # latest (5.19.0)
+#   sentry-rails { version = "6.3.0"; }
+#   sentry-rails { }  # latest (6.3.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "5.19.0",
+  version ? "6.3.0",
   git ? { },
 }:
 let
   versions = {
     "5.19.0" = import ./5.19.0 { inherit lib stdenv ruby; };
+    "6.1.2" = import ./6.1.2 { inherit lib stdenv ruby; };
+    "6.2.0" = import ./6.2.0 { inherit lib stdenv ruby; };
+    "6.3.0" = import ./6.3.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -6,6 +6,8 @@
 # simplecov_json_formatter
 #
 # Available versions:
+#   0.1.2
+#   0.1.3
 #   0.1.4
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.1.2" = import ./0.1.2 { inherit lib stdenv ruby; };
+    "0.1.3" = import ./0.1.3 { inherit lib stdenv ruby; };
     "0.1.4" = import ./0.1.4 { inherit lib stdenv ruby; };
   };
 

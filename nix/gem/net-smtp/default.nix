@@ -7,6 +7,8 @@
 #
 # Available versions:
 #   0.3.4
+#   0.4.0.1
+#   0.5.0
 #   0.5.1
 #
 # Usage:
@@ -24,6 +26,8 @@
 let
   versions = {
     "0.3.4" = import ./0.3.4 { inherit lib stdenv ruby; };
+    "0.4.0.1" = import ./0.4.0.1 { inherit lib stdenv ruby; };
+    "0.5.0" = import ./0.5.0 { inherit lib stdenv ruby; };
     "0.5.1" = import ./0.5.1 { inherit lib stdenv ruby; };
   };
 

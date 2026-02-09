@@ -6,6 +6,7 @@
 # rqrcode
 #
 # Available versions:
+#   3.1.0
 #   3.1.1
 #   3.2.0
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "3.1.0" = import ./3.1.0 { inherit lib stdenv ruby; };
     "3.1.1" = import ./3.1.1 { inherit lib stdenv ruby; };
     "3.2.0" = import ./3.2.0 { inherit lib stdenv ruby; };
   };

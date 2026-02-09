@@ -7,6 +7,7 @@
 #
 # Available versions:
 #   2.8.2
+#   3.0.0
 #   3.0.1
 #
 # Usage:
@@ -24,6 +25,7 @@
 let
   versions = {
     "2.8.2" = import ./2.8.2 { inherit lib stdenv ruby; };
+    "3.0.0" = import ./3.0.0 { inherit lib stdenv ruby; };
     "3.0.1" = import ./3.0.1 { inherit lib stdenv ruby; };
   };
 

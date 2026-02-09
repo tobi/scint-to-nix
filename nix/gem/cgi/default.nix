@@ -6,6 +6,8 @@
 # cgi
 #
 # Available versions:
+#   0.3.6
+#   0.4.2
 #   0.5.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.3.6" = import ./0.3.6 { inherit lib stdenv ruby; };
+    "0.4.2" = import ./0.4.2 { inherit lib stdenv ruby; };
     "0.5.0" = import ./0.5.0 { inherit lib stdenv ruby; };
   };
 

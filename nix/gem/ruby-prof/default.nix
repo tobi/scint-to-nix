@@ -6,6 +6,8 @@
 # ruby-prof
 #
 # Available versions:
+#   1.7.0
+#   1.7.1
 #   1.7.2
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.7.0" = import ./1.7.0 { inherit lib stdenv ruby; };
+    "1.7.1" = import ./1.7.1 { inherit lib stdenv ruby; };
     "1.7.2" = import ./1.7.2 { inherit lib stdenv ruby; };
   };
 

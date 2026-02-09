@@ -6,6 +6,7 @@
 # redis-namespace
 #
 # Available versions:
+#   1.9.0
 #   1.10.0
 #   1.11.0
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "1.9.0" = import ./1.9.0 { inherit lib stdenv ruby; };
     "1.10.0" = import ./1.10.0 { inherit lib stdenv ruby; };
     "1.11.0" = import ./1.11.0 { inherit lib stdenv ruby; };
   };

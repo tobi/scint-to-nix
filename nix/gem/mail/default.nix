@@ -6,6 +6,7 @@
 # mail
 #
 # Available versions:
+#   2.8.0.1
 #   2.8.1
 #   2.9.0
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "2.8.0.1" = import ./2.8.0.1 { inherit lib stdenv ruby; };
     "2.8.1" = import ./2.8.1 { inherit lib stdenv ruby; };
     "2.9.0" = import ./2.9.0 { inherit lib stdenv ruby; };
   };

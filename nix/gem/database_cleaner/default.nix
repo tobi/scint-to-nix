@@ -6,23 +6,27 @@
 # database_cleaner
 #
 # Available versions:
+#   2.0.1
 #   2.0.2
+#   2.1.0
 #
 # Usage:
-#   database_cleaner { version = "2.0.2"; }
-#   database_cleaner { }  # latest (2.0.2)
+#   database_cleaner { version = "2.1.0"; }
+#   database_cleaner { }  # latest (2.1.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "2.0.2",
+  version ? "2.1.0",
   git ? { },
 }:
 let
   versions = {
+    "2.0.1" = import ./2.0.1 { inherit lib stdenv ruby; };
     "2.0.2" = import ./2.0.2 { inherit lib stdenv ruby; };
+    "2.1.0" = import ./2.1.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -6,6 +6,8 @@
 # childprocess
 #
 # Available versions:
+#   4.1.0
+#   5.0.0
 #   5.1.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "4.1.0" = import ./4.1.0 { inherit lib stdenv ruby; };
+    "5.0.0" = import ./5.0.0 { inherit lib stdenv ruby; };
     "5.1.0" = import ./5.1.0 { inherit lib stdenv ruby; };
   };
 

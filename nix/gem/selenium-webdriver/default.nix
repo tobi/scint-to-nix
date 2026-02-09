@@ -6,23 +6,29 @@
 # selenium-webdriver
 #
 # Available versions:
+#   4.32.0
+#   4.38.0
 #   4.39.0
+#   4.40.0
 #
 # Usage:
-#   selenium-webdriver { version = "4.39.0"; }
-#   selenium-webdriver { }  # latest (4.39.0)
+#   selenium-webdriver { version = "4.40.0"; }
+#   selenium-webdriver { }  # latest (4.40.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "4.39.0",
+  version ? "4.40.0",
   git ? { },
 }:
 let
   versions = {
+    "4.32.0" = import ./4.32.0 { inherit lib stdenv ruby; };
+    "4.38.0" = import ./4.38.0 { inherit lib stdenv ruby; };
     "4.39.0" = import ./4.39.0 { inherit lib stdenv ruby; };
+    "4.40.0" = import ./4.40.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

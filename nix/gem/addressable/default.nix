@@ -6,6 +6,7 @@
 # addressable
 #
 # Available versions:
+#   2.8.6
 #   2.8.7
 #   2.8.8
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "2.8.6" = import ./2.8.6 { inherit lib stdenv ruby; };
     "2.8.7" = import ./2.8.7 { inherit lib stdenv ruby; };
     "2.8.8" = import ./2.8.8 { inherit lib stdenv ruby; };
   };

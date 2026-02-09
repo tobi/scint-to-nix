@@ -6,6 +6,7 @@
 # thruster
 #
 # Available versions:
+#   0.1.16
 #   0.1.17
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "0.1.16" = import ./0.1.16 { inherit lib stdenv ruby; };
     "0.1.17" = import ./0.1.17 { inherit lib stdenv ruby; };
   };
 

@@ -6,6 +6,8 @@
 # strscan
 #
 # Available versions:
+#   3.1.5
+#   3.1.6
 #   3.1.7
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "3.1.5" = import ./3.1.5 { inherit lib stdenv ruby; };
+    "3.1.6" = import ./3.1.6 { inherit lib stdenv ruby; };
     "3.1.7" = import ./3.1.7 { inherit lib stdenv ruby; };
   };
 

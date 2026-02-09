@@ -6,6 +6,7 @@
 # websocket-driver
 #
 # Available versions:
+#   0.7.6
 #   0.7.7
 #   0.8.0
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "0.7.6" = import ./0.7.6 { inherit lib stdenv ruby; };
     "0.7.7" = import ./0.7.7 { inherit lib stdenv ruby; };
     "0.8.0" = import ./0.8.0 { inherit lib stdenv ruby; };
   };

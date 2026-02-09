@@ -6,6 +6,7 @@
 # date
 #
 # Available versions:
+#   3.3.4
 #   3.4.1
 #   3.5.0
 #   3.5.1
@@ -24,6 +25,7 @@
 }:
 let
   versions = {
+    "3.3.4" = import ./3.3.4 { inherit lib stdenv ruby; };
     "3.4.1" = import ./3.4.1 { inherit lib stdenv ruby; };
     "3.5.0" = import ./3.5.0 { inherit lib stdenv ruby; };
     "3.5.1" = import ./3.5.1 { inherit lib stdenv ruby; };

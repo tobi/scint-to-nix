@@ -6,6 +6,8 @@
 # warden
 #
 # Available versions:
+#   1.2.7
+#   1.2.8
 #   1.2.9
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.2.7" = import ./1.2.7 { inherit lib stdenv ruby; };
+    "1.2.8" = import ./1.2.8 { inherit lib stdenv ruby; };
     "1.2.9" = import ./1.2.9 { inherit lib stdenv ruby; };
   };
 

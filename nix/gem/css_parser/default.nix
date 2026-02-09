@@ -6,6 +6,8 @@
 # css_parser
 #
 # Available versions:
+#   1.20.0
+#   1.21.0
 #   1.21.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.20.0" = import ./1.20.0 { inherit lib stdenv ruby; };
+    "1.21.0" = import ./1.21.0 { inherit lib stdenv ruby; };
     "1.21.1" = import ./1.21.1 { inherit lib stdenv ruby; };
   };
 

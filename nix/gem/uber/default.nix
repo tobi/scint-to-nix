@@ -6,6 +6,8 @@
 # uber
 #
 # Available versions:
+#   0.0.14
+#   0.0.15
 #   0.1.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.0.14" = import ./0.0.14 { inherit lib stdenv ruby; };
+    "0.0.15" = import ./0.0.15 { inherit lib stdenv ruby; };
     "0.1.0" = import ./0.1.0 { inherit lib stdenv ruby; };
   };
 

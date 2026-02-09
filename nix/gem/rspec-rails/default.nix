@@ -6,7 +6,11 @@
 # rspec-rails
 #
 # Available versions:
+#   6.0.4
+#   6.1.1
 #   7.0.1
+#   8.0.0
+#   8.0.1
 #   8.0.2
 #
 # Usage:
@@ -23,7 +27,11 @@
 }:
 let
   versions = {
+    "6.0.4" = import ./6.0.4 { inherit lib stdenv ruby; };
+    "6.1.1" = import ./6.1.1 { inherit lib stdenv ruby; };
     "7.0.1" = import ./7.0.1 { inherit lib stdenv ruby; };
+    "8.0.0" = import ./8.0.0 { inherit lib stdenv ruby; };
+    "8.0.1" = import ./8.0.1 { inherit lib stdenv ruby; };
     "8.0.2" = import ./8.0.2 { inherit lib stdenv ruby; };
   };
 

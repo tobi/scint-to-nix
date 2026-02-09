@@ -6,6 +6,8 @@
 # pastel
 #
 # Available versions:
+#   0.7.3
+#   0.7.4
 #   0.8.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.7.3" = import ./0.7.3 { inherit lib stdenv ruby; };
+    "0.7.4" = import ./0.7.4 { inherit lib stdenv ruby; };
     "0.8.0" = import ./0.8.0 { inherit lib stdenv ruby; };
   };
 

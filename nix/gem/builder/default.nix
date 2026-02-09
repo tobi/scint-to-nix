@@ -6,6 +6,8 @@
 # builder
 #
 # Available versions:
+#   3.2.3
+#   3.2.4
 #   3.3.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "3.2.3" = import ./3.2.3 { inherit lib stdenv ruby; };
+    "3.2.4" = import ./3.2.4 { inherit lib stdenv ruby; };
     "3.3.0" = import ./3.3.0 { inherit lib stdenv ruby; };
   };
 

@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   2.1.1
+#   3.0.0
+#   3.0.1
+#   3.0.2
 #
 # Usage:
-#   reverse_markdown { version = "2.1.1"; }
-#   reverse_markdown { }  # latest (2.1.1)
+#   reverse_markdown { version = "3.0.2"; }
+#   reverse_markdown { }  # latest (3.0.2)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "2.1.1",
+  version ? "3.0.2",
   git ? { },
 }:
 let
   versions = {
     "2.1.1" = import ./2.1.1 { inherit lib stdenv ruby; };
+    "3.0.0" = import ./3.0.0 { inherit lib stdenv ruby; };
+    "3.0.1" = import ./3.0.1 { inherit lib stdenv ruby; };
+    "3.0.2" = import ./3.0.2 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

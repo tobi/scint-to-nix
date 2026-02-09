@@ -6,6 +6,9 @@
 # capybara
 #
 # Available versions:
+#   3.37.1
+#   3.39.1
+#   3.39.2
 #   3.40.0
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "3.37.1" = import ./3.37.1 { inherit lib stdenv ruby; };
+    "3.39.1" = import ./3.39.1 { inherit lib stdenv ruby; };
+    "3.39.2" = import ./3.39.2 { inherit lib stdenv ruby; };
     "3.40.0" = import ./3.40.0 { inherit lib stdenv ruby; };
   };
 

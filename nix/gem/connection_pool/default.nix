@@ -6,8 +6,12 @@
 # connection_pool
 #
 # Available versions:
+#   2.4.1
 #   2.5.3
+#   2.5.4
 #   2.5.5
+#   3.0.0
+#   3.0.1
 #   3.0.2
 #
 # Usage:
@@ -24,8 +28,12 @@
 }:
 let
   versions = {
+    "2.4.1" = import ./2.4.1 { inherit lib stdenv ruby; };
     "2.5.3" = import ./2.5.3 { inherit lib stdenv ruby; };
+    "2.5.4" = import ./2.5.4 { inherit lib stdenv ruby; };
     "2.5.5" = import ./2.5.5 { inherit lib stdenv ruby; };
+    "3.0.0" = import ./3.0.0 { inherit lib stdenv ruby; };
+    "3.0.1" = import ./3.0.1 { inherit lib stdenv ruby; };
     "3.0.2" = import ./3.0.2 { inherit lib stdenv ruby; };
   };
 

@@ -6,6 +6,8 @@
 # tty-reader
 #
 # Available versions:
+#   0.7.0
+#   0.8.0
 #   0.9.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.7.0" = import ./0.7.0 { inherit lib stdenv ruby; };
+    "0.8.0" = import ./0.8.0 { inherit lib stdenv ruby; };
     "0.9.0" = import ./0.9.0 { inherit lib stdenv ruby; };
   };
 

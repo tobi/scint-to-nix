@@ -6,6 +6,8 @@
 # lru_redux
 #
 # Available versions:
+#   0.8.3
+#   0.8.4
 #   1.1.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.8.3" = import ./0.8.3 { inherit lib stdenv ruby; };
+    "0.8.4" = import ./0.8.4 { inherit lib stdenv ruby; };
     "1.1.0" = import ./1.1.0 { inherit lib stdenv ruby; };
   };
 

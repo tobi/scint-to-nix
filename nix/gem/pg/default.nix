@@ -7,18 +7,21 @@
 #
 # Available versions:
 #   1.5.3
+#   1.5.6
+#   1.6.1
 #   1.6.2
+#   1.6.3
 #
 # Usage:
-#   pg { version = "1.6.2"; }
-#   pg { }  # latest (1.6.2)
+#   pg { version = "1.6.3"; }
+#   pg { }  # latest (1.6.3)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.6.2",
+  version ? "1.6.3",
   git ? { },
 }:
 let
@@ -31,7 +34,31 @@ let
         pkgs
         ;
     };
+    "1.5.6" = import ./1.5.6 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "1.6.1" = import ./1.6.1 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
     "1.6.2" = import ./1.6.2 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "1.6.3" = import ./1.6.3 {
       inherit
         lib
         stdenv

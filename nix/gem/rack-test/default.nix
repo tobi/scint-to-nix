@@ -6,6 +6,7 @@
 # rack-test
 #
 # Available versions:
+#   2.0.2
 #   2.1.0
 #   2.2.0
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "2.0.2" = import ./2.0.2 { inherit lib stdenv ruby; };
     "2.1.0" = import ./2.1.0 { inherit lib stdenv ruby; };
     "2.2.0" = import ./2.2.0 { inherit lib stdenv ruby; };
   };

@@ -6,6 +6,8 @@
 # sass
 #
 # Available versions:
+#   3.7.2
+#   3.7.3
 #   3.7.4
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "3.7.2" = import ./3.7.2 { inherit lib stdenv ruby; };
+    "3.7.3" = import ./3.7.3 { inherit lib stdenv ruby; };
     "3.7.4" = import ./3.7.4 { inherit lib stdenv ruby; };
   };
 

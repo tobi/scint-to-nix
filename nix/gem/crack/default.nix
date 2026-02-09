@@ -6,6 +6,7 @@
 # crack
 #
 # Available versions:
+#   0.4.6
 #   1.0.0
 #   1.0.1
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "0.4.6" = import ./0.4.6 { inherit lib stdenv ruby; };
     "1.0.0" = import ./1.0.0 { inherit lib stdenv ruby; };
     "1.0.1" = import ./1.0.1 { inherit lib stdenv ruby; };
   };

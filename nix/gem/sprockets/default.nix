@@ -6,23 +6,29 @@
 # sprockets
 #
 # Available versions:
+#   4.1.1
+#   4.2.0
 #   4.2.1
+#   4.2.2
 #
 # Usage:
-#   sprockets { version = "4.2.1"; }
-#   sprockets { }  # latest (4.2.1)
+#   sprockets { version = "4.2.2"; }
+#   sprockets { }  # latest (4.2.2)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "4.2.1",
+  version ? "4.2.2",
   git ? { },
 }:
 let
   versions = {
+    "4.1.1" = import ./4.1.1 { inherit lib stdenv ruby; };
+    "4.2.0" = import ./4.2.0 { inherit lib stdenv ruby; };
     "4.2.1" = import ./4.2.1 { inherit lib stdenv ruby; };
+    "4.2.2" = import ./4.2.2 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

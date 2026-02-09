@@ -6,6 +6,7 @@
 # solid_queue
 #
 # Available versions:
+#   1.1.2
 #   1.2.4
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "1.1.2" = import ./1.1.2 { inherit lib stdenv ruby; };
     "1.2.4" = import ./1.2.4 { inherit lib stdenv ruby; };
   };
 

@@ -7,22 +7,24 @@
 #
 # Available versions:
 #   1.0.0
+#   1.1.1
 #
 # Usage:
-#   hairtrigger { version = "1.0.0"; }
-#   hairtrigger { }  # latest (1.0.0)
+#   hairtrigger { version = "1.1.1"; }
+#   hairtrigger { }  # latest (1.1.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.0.0",
+  version ? "1.1.1",
   git ? { },
 }:
 let
   versions = {
     "1.0.0" = import ./1.0.0 { inherit lib stdenv ruby; };
+    "1.1.1" = import ./1.1.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

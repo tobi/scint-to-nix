@@ -6,6 +6,8 @@
 # securerandom
 #
 # Available versions:
+#   0.3.2
+#   0.4.0
 #   0.4.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.3.2" = import ./0.3.2 { inherit lib stdenv ruby; };
+    "0.4.0" = import ./0.4.0 { inherit lib stdenv ruby; };
     "0.4.1" = import ./0.4.1 { inherit lib stdenv ruby; };
   };
 

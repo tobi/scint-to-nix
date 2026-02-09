@@ -6,6 +6,9 @@
 # aws-sigv4
 #
 # Available versions:
+#   1.8.0
+#   1.11.0
+#   1.12.0
 #   1.12.1
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "1.8.0" = import ./1.8.0 { inherit lib stdenv ruby; };
+    "1.11.0" = import ./1.11.0 { inherit lib stdenv ruby; };
+    "1.12.0" = import ./1.12.0 { inherit lib stdenv ruby; };
     "1.12.1" = import ./1.12.1 { inherit lib stdenv ruby; };
   };
 

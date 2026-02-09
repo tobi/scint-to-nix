@@ -24,7 +24,7 @@ require "uri"
 
 ROOT         = File.expand_path(File.join(__dir__, ".."))
 OVERLAYS_DIR = File.join(ROOT, "overlays")
-GEMS_DIR     = File.join(ROOT, "imports"))
+GEMS_DIR     = File.join(ROOT, "imports")
 OUTPUT_DIR   = File.join(ROOT, "nix", "gem")
 APP_DIR      = File.join(ROOT, "nix", "app")
 

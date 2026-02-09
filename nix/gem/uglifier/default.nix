@@ -6,23 +6,27 @@
 # uglifier
 #
 # Available versions:
+#   4.1.20
 #   4.2.0
+#   4.2.1
 #
 # Usage:
-#   uglifier { version = "4.2.0"; }
-#   uglifier { }  # latest (4.2.0)
+#   uglifier { version = "4.2.1"; }
+#   uglifier { }  # latest (4.2.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "4.2.0",
+  version ? "4.2.1",
   git ? { },
 }:
 let
   versions = {
+    "4.1.20" = import ./4.1.20 { inherit lib stdenv ruby; };
     "4.2.0" = import ./4.2.0 { inherit lib stdenv ruby; };
+    "4.2.1" = import ./4.2.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

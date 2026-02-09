@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   5.3.1
+#   6.0.0
+#   6.1.0
+#   6.2.0
 #
 # Usage:
-#   browser { version = "5.3.1"; }
-#   browser { }  # latest (5.3.1)
+#   browser { version = "6.2.0"; }
+#   browser { }  # latest (6.2.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "5.3.1",
+  version ? "6.2.0",
   git ? { },
 }:
 let
   versions = {
     "5.3.1" = import ./5.3.1 { inherit lib stdenv ruby; };
+    "6.0.0" = import ./6.0.0 { inherit lib stdenv ruby; };
+    "6.1.0" = import ./6.1.0 { inherit lib stdenv ruby; };
+    "6.2.0" = import ./6.2.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

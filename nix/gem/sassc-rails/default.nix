@@ -6,6 +6,8 @@
 # sassc-rails
 #
 # Available versions:
+#   2.1.0
+#   2.1.1
 #   2.1.2
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "2.1.0" = import ./2.1.0 { inherit lib stdenv ruby; };
+    "2.1.1" = import ./2.1.1 { inherit lib stdenv ruby; };
     "2.1.2" = import ./2.1.2 { inherit lib stdenv ruby; };
   };
 

@@ -6,23 +6,27 @@
 # parallel_tests
 #
 # Available versions:
+#   5.4.0
 #   5.5.0
+#   5.6.0
 #
 # Usage:
-#   parallel_tests { version = "5.5.0"; }
-#   parallel_tests { }  # latest (5.5.0)
+#   parallel_tests { version = "5.6.0"; }
+#   parallel_tests { }  # latest (5.6.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "5.5.0",
+  version ? "5.6.0",
   git ? { },
 }:
 let
   versions = {
+    "5.4.0" = import ./5.4.0 { inherit lib stdenv ruby; };
     "5.5.0" = import ./5.5.0 { inherit lib stdenv ruby; };
+    "5.6.0" = import ./5.6.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

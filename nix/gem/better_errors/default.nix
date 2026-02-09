@@ -6,6 +6,8 @@
 # better_errors
 #
 # Available versions:
+#   2.9.1
+#   2.10.0
 #   2.10.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "2.9.1" = import ./2.9.1 { inherit lib stdenv ruby; };
+    "2.10.0" = import ./2.10.0 { inherit lib stdenv ruby; };
     "2.10.1" = import ./2.10.1 { inherit lib stdenv ruby; };
   };
 

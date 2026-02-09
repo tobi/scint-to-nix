@@ -6,8 +6,12 @@
 # net-imap
 #
 # Available versions:
+#   0.4.10
 #   0.4.20
+#   0.5.5
 #   0.5.12
+#   0.6.0
+#   0.6.1
 #   0.6.2
 #
 # Usage:
@@ -24,8 +28,12 @@
 }:
 let
   versions = {
+    "0.4.10" = import ./0.4.10 { inherit lib stdenv ruby; };
     "0.4.20" = import ./0.4.20 { inherit lib stdenv ruby; };
+    "0.5.5" = import ./0.5.5 { inherit lib stdenv ruby; };
     "0.5.12" = import ./0.5.12 { inherit lib stdenv ruby; };
+    "0.6.0" = import ./0.6.0 { inherit lib stdenv ruby; };
+    "0.6.1" = import ./0.6.1 { inherit lib stdenv ruby; };
     "0.6.2" = import ./0.6.2 { inherit lib stdenv ruby; };
   };
 

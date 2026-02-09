@@ -7,22 +7,24 @@
 #
 # Available versions:
 #   3.8.0
+#   3.9.2
 #
 # Usage:
-#   vite_ruby { version = "3.8.0"; }
-#   vite_ruby { }  # latest (3.8.0)
+#   vite_ruby { version = "3.9.2"; }
+#   vite_ruby { }  # latest (3.9.2)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "3.8.0",
+  version ? "3.9.2",
   git ? { },
 }:
 let
   versions = {
     "3.8.0" = import ./3.8.0 { inherit lib stdenv ruby; };
+    "3.9.2" = import ./3.9.2 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

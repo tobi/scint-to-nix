@@ -1,0 +1,46 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# sys-filesystem 1.5.4
+#
+{
+  lib,
+  stdenv,
+  ruby,
+}:
+let
+  rubyVersion = "${ruby.version.majMin}.0";
+  arch = stdenv.hostPlatform.system;
+  prefix = "ruby/${rubyVersion}";
+in
+stdenv.mkDerivation {
+  pname = "sys-filesystem";
+  version = "1.5.4";
+  src = builtins.path {
+    path = ./source;
+    name = "sys-filesystem-1.5.4-source";
+  };
+
+  dontBuild = true;
+  dontConfigure = true;
+
+  passthru = { inherit prefix; };
+
+  installPhase = ''
+        local dest=$out/${prefix}
+        mkdir -p $dest/gems/sys-filesystem-1.5.4
+        cp -r . $dest/gems/sys-filesystem-1.5.4/
+        mkdir -p $dest/specifications
+        cat > $dest/specifications/sys-filesystem-1.5.4.gemspec <<'EOF'
+    Gem::Specification.new do |s|
+      s.name = "sys-filesystem"
+      s.version = "1.5.4"
+      s.summary = "sys-filesystem"
+      s.require_paths = ["lib"]
+      s.files = []
+    end
+    EOF
+  '';
+}

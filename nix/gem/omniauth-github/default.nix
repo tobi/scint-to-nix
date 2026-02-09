@@ -6,23 +6,27 @@
 # omniauth-github
 #
 # Available versions:
+#   1.4.0
 #   2.0.0
+#   2.0.1
 #
 # Usage:
-#   omniauth-github { version = "2.0.0"; }
-#   omniauth-github { }  # latest (2.0.0)
+#   omniauth-github { version = "2.0.1"; }
+#   omniauth-github { }  # latest (2.0.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "2.0.0",
+  version ? "2.0.1",
   git ? { },
 }:
 let
   versions = {
+    "1.4.0" = import ./1.4.0 { inherit lib stdenv ruby; };
     "2.0.0" = import ./2.0.0 { inherit lib stdenv ruby; };
+    "2.0.1" = import ./2.0.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

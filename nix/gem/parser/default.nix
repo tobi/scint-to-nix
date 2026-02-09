@@ -6,7 +6,9 @@
 # parser
 #
 # Available versions:
+#   3.3.1.0
 #   3.3.8.0
+#   3.3.9.0
 #   3.3.10.0
 #   3.3.10.1
 #
@@ -24,7 +26,9 @@
 }:
 let
   versions = {
+    "3.3.1.0" = import ./3.3.1.0 { inherit lib stdenv ruby; };
     "3.3.8.0" = import ./3.3.8.0 { inherit lib stdenv ruby; };
+    "3.3.9.0" = import ./3.3.9.0 { inherit lib stdenv ruby; };
     "3.3.10.0" = import ./3.3.10.0 { inherit lib stdenv ruby; };
     "3.3.10.1" = import ./3.3.10.1 { inherit lib stdenv ruby; };
   };

@@ -6,6 +6,8 @@
 # stimulus-rails
 #
 # Available versions:
+#   1.3.2
+#   1.3.3
 #   1.3.4
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.3.2" = import ./1.3.2 { inherit lib stdenv ruby; };
+    "1.3.3" = import ./1.3.3 { inherit lib stdenv ruby; };
     "1.3.4" = import ./1.3.4 { inherit lib stdenv ruby; };
   };
 

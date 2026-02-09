@@ -6,7 +6,11 @@
 # jwt
 #
 # Available versions:
+#   2.8.1
 #   2.10.1
+#   2.10.2
+#   3.1.0
+#   3.1.1
 #   3.1.2
 #
 # Usage:
@@ -23,7 +27,11 @@
 }:
 let
   versions = {
+    "2.8.1" = import ./2.8.1 { inherit lib stdenv ruby; };
     "2.10.1" = import ./2.10.1 { inherit lib stdenv ruby; };
+    "2.10.2" = import ./2.10.2 { inherit lib stdenv ruby; };
+    "3.1.0" = import ./3.1.0 { inherit lib stdenv ruby; };
+    "3.1.1" = import ./3.1.1 { inherit lib stdenv ruby; };
     "3.1.2" = import ./3.1.2 { inherit lib stdenv ruby; };
   };
 

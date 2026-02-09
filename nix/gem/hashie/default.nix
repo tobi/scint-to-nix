@@ -6,23 +6,27 @@
 # hashie
 #
 # Available versions:
+#   4.1.0
 #   5.0.0
+#   5.1.0
 #
 # Usage:
-#   hashie { version = "5.0.0"; }
-#   hashie { }  # latest (5.0.0)
+#   hashie { version = "5.1.0"; }
+#   hashie { }  # latest (5.1.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "5.0.0",
+  version ? "5.1.0",
   git ? { },
 }:
 let
   versions = {
+    "4.1.0" = import ./4.1.0 { inherit lib stdenv ruby; };
     "5.0.0" = import ./5.0.0 { inherit lib stdenv ruby; };
+    "5.1.0" = import ./5.1.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

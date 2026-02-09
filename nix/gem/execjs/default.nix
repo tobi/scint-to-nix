@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   2.8.1
+#   2.9.0
+#   2.9.1
+#   2.10.0
 #
 # Usage:
-#   execjs { version = "2.8.1"; }
-#   execjs { }  # latest (2.8.1)
+#   execjs { version = "2.10.0"; }
+#   execjs { }  # latest (2.10.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "2.8.1",
+  version ? "2.10.0",
   git ? { },
 }:
 let
   versions = {
     "2.8.1" = import ./2.8.1 { inherit lib stdenv ruby; };
+    "2.9.0" = import ./2.9.0 { inherit lib stdenv ruby; };
+    "2.9.1" = import ./2.9.1 { inherit lib stdenv ruby; };
+    "2.10.0" = import ./2.10.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

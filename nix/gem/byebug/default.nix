@@ -7,22 +7,26 @@
 #
 # Available versions:
 #   11.1.3
+#   12.0.0
+#   13.0.0
 #
 # Usage:
-#   byebug { version = "11.1.3"; }
-#   byebug { }  # latest (11.1.3)
+#   byebug { version = "13.0.0"; }
+#   byebug { }  # latest (13.0.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "11.1.3",
+  version ? "13.0.0",
   git ? { },
 }:
 let
   versions = {
     "11.1.3" = import ./11.1.3 { inherit lib stdenv ruby; };
+    "12.0.0" = import ./12.0.0 { inherit lib stdenv ruby; };
+    "13.0.0" = import ./13.0.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

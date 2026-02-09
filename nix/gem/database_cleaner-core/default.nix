@@ -6,6 +6,7 @@
 # database_cleaner-core
 #
 # Available versions:
+#   2.0.0
 #   2.0.1
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "2.0.0" = import ./2.0.0 { inherit lib stdenv ruby; };
     "2.0.1" = import ./2.0.1 { inherit lib stdenv ruby; };
   };
 

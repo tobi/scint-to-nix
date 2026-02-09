@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   5.4.0
+#   5.9.0
+#   5.10.0
+#   5.11.0
 #
 # Usage:
-#   liquid { version = "5.4.0"; }
-#   liquid { }  # latest (5.4.0)
+#   liquid { version = "5.11.0"; }
+#   liquid { }  # latest (5.11.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "5.4.0",
+  version ? "5.11.0",
   git ? { },
 }:
 let
   versions = {
     "5.4.0" = import ./5.4.0 { inherit lib stdenv ruby; };
+    "5.9.0" = import ./5.9.0 { inherit lib stdenv ruby; };
+    "5.10.0" = import ./5.10.0 { inherit lib stdenv ruby; };
+    "5.11.0" = import ./5.11.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

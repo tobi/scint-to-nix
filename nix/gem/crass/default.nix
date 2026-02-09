@@ -6,6 +6,8 @@
 # crass
 #
 # Available versions:
+#   1.0.4
+#   1.0.5
 #   1.0.6
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.0.4" = import ./1.0.4 { inherit lib stdenv ruby; };
+    "1.0.5" = import ./1.0.5 { inherit lib stdenv ruby; };
     "1.0.6" = import ./1.0.6 { inherit lib stdenv ruby; };
   };
 

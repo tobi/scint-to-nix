@@ -6,6 +6,8 @@
 # binding_of_caller
 #
 # Available versions:
+#   0.8.0
+#   1.0.0
 #   1.0.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.8.0" = import ./0.8.0 { inherit lib stdenv ruby; };
+    "1.0.0" = import ./1.0.0 { inherit lib stdenv ruby; };
     "1.0.1" = import ./1.0.1 { inherit lib stdenv ruby; };
   };
 

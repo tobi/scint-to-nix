@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   6.1.0
+#   6.3.0
+#   6.3.1
+#   6.4.0
 #
 # Usage:
-#   devise-two-factor { version = "6.1.0"; }
-#   devise-two-factor { }  # latest (6.1.0)
+#   devise-two-factor { version = "6.4.0"; }
+#   devise-two-factor { }  # latest (6.4.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "6.1.0",
+  version ? "6.4.0",
   git ? { },
 }:
 let
   versions = {
     "6.1.0" = import ./6.1.0 { inherit lib stdenv ruby; };
+    "6.3.0" = import ./6.3.0 { inherit lib stdenv ruby; };
+    "6.3.1" = import ./6.3.1 { inherit lib stdenv ruby; };
+    "6.4.0" = import ./6.4.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -7,22 +7,26 @@
 #
 # Available versions:
 #   1.20.0
+#   1.21.0
+#   1.22.0
 #
 # Usage:
-#   googleapis-common-protos-types { version = "1.20.0"; }
-#   googleapis-common-protos-types { }  # latest (1.20.0)
+#   googleapis-common-protos-types { version = "1.22.0"; }
+#   googleapis-common-protos-types { }  # latest (1.22.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.20.0",
+  version ? "1.22.0",
   git ? { },
 }:
 let
   versions = {
     "1.20.0" = import ./1.20.0 { inherit lib stdenv ruby; };
+    "1.21.0" = import ./1.21.0 { inherit lib stdenv ruby; };
+    "1.22.0" = import ./1.22.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

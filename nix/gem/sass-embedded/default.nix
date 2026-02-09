@@ -6,6 +6,7 @@
 # sass-embedded
 #
 # Available versions:
+#   1.83.4
 #   1.91.0
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "1.83.4" = import ./1.83.4 { inherit lib stdenv ruby; };
     "1.91.0" = import ./1.91.0 { inherit lib stdenv ruby; };
   };
 

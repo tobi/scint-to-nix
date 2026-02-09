@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   1.12.0
+#   2.2.0
+#   2.3.0
+#   2.3.1
 #
 # Usage:
-#   sidekiq-cron { version = "1.12.0"; }
-#   sidekiq-cron { }  # latest (1.12.0)
+#   sidekiq-cron { version = "2.3.1"; }
+#   sidekiq-cron { }  # latest (2.3.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.12.0",
+  version ? "2.3.1",
   git ? { },
 }:
 let
   versions = {
     "1.12.0" = import ./1.12.0 { inherit lib stdenv ruby; };
+    "2.2.0" = import ./2.2.0 { inherit lib stdenv ruby; };
+    "2.3.0" = import ./2.3.0 { inherit lib stdenv ruby; };
+    "2.3.1" = import ./2.3.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

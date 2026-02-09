@@ -6,6 +6,8 @@
 # mini_mime
 #
 # Available versions:
+#   1.1.2
+#   1.1.4
 #   1.1.5
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.1.2" = import ./1.1.2 { inherit lib stdenv ruby; };
+    "1.1.4" = import ./1.1.4 { inherit lib stdenv ruby; };
     "1.1.5" = import ./1.1.5 { inherit lib stdenv ruby; };
   };
 

@@ -6,6 +6,8 @@
 # mini_portile2
 #
 # Available versions:
+#   2.8.7
+#   2.8.8
 #   2.8.9
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "2.8.7" = import ./2.8.7 { inherit lib stdenv ruby; };
+    "2.8.8" = import ./2.8.8 { inherit lib stdenv ruby; };
     "2.8.9" = import ./2.8.9 { inherit lib stdenv ruby; };
   };
 

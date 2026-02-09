@@ -6,6 +6,8 @@
 # bindex
 #
 # Available versions:
+#   0.7.0
+#   0.8.0
 #   0.8.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.7.0" = import ./0.7.0 { inherit lib stdenv ruby; };
+    "0.8.0" = import ./0.8.0 { inherit lib stdenv ruby; };
     "0.8.1" = import ./0.8.1 { inherit lib stdenv ruby; };
   };
 

@@ -7,22 +7,30 @@
 #
 # Available versions:
 #   1.52.0
+#   1.54.0
+#   1.57.0
+#   1.57.1
+#   1.58.0
 #
 # Usage:
-#   google-cloud-storage { version = "1.52.0"; }
-#   google-cloud-storage { }  # latest (1.52.0)
+#   google-cloud-storage { version = "1.58.0"; }
+#   google-cloud-storage { }  # latest (1.58.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.52.0",
+  version ? "1.58.0",
   git ? { },
 }:
 let
   versions = {
     "1.52.0" = import ./1.52.0 { inherit lib stdenv ruby; };
+    "1.54.0" = import ./1.54.0 { inherit lib stdenv ruby; };
+    "1.57.0" = import ./1.57.0 { inherit lib stdenv ruby; };
+    "1.57.1" = import ./1.57.1 { inherit lib stdenv ruby; };
+    "1.58.0" = import ./1.58.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

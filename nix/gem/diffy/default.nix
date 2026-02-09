@@ -6,6 +6,8 @@
 # diffy
 #
 # Available versions:
+#   3.4.2
+#   3.4.3
 #   3.4.4
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "3.4.2" = import ./3.4.2 { inherit lib stdenv ruby; };
+    "3.4.3" = import ./3.4.3 { inherit lib stdenv ruby; };
     "3.4.4" = import ./3.4.4 { inherit lib stdenv ruby; };
   };
 

@@ -6,6 +6,8 @@
 # drb
 #
 # Available versions:
+#   2.2.0
+#   2.2.1
 #   2.2.3
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "2.2.0" = import ./2.2.0 { inherit lib stdenv ruby; };
+    "2.2.1" = import ./2.2.1 { inherit lib stdenv ruby; };
     "2.2.3" = import ./2.2.3 { inherit lib stdenv ruby; };
   };
 

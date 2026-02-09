@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   0.15.1
+#   1.0.0
+#   1.0.1
+#   1.0.2
 #
 # Usage:
-#   google-apis-core { version = "0.15.1"; }
-#   google-apis-core { }  # latest (0.15.1)
+#   google-apis-core { version = "1.0.2"; }
+#   google-apis-core { }  # latest (1.0.2)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.15.1",
+  version ? "1.0.2",
   git ? { },
 }:
 let
   versions = {
     "0.15.1" = import ./0.15.1 { inherit lib stdenv ruby; };
+    "1.0.0" = import ./1.0.0 { inherit lib stdenv ruby; };
+    "1.0.1" = import ./1.0.1 { inherit lib stdenv ruby; };
+    "1.0.2" = import ./1.0.2 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

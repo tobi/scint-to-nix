@@ -6,25 +6,31 @@
 # net-http
 #
 # Available versions:
+#   0.4.1
 #   0.6.0
 #   0.8.0
+#   0.9.0
+#   0.9.1
 #
 # Usage:
-#   net-http { version = "0.8.0"; }
-#   net-http { }  # latest (0.8.0)
+#   net-http { version = "0.9.1"; }
+#   net-http { }  # latest (0.9.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.8.0",
+  version ? "0.9.1",
   git ? { },
 }:
 let
   versions = {
+    "0.4.1" = import ./0.4.1 { inherit lib stdenv ruby; };
     "0.6.0" = import ./0.6.0 { inherit lib stdenv ruby; };
     "0.8.0" = import ./0.8.0 { inherit lib stdenv ruby; };
+    "0.9.0" = import ./0.9.0 { inherit lib stdenv ruby; };
+    "0.9.1" = import ./0.9.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

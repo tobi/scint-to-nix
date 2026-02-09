@@ -1,0 +1,46 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# tins 1.51.1
+#
+{
+  lib,
+  stdenv,
+  ruby,
+}:
+let
+  rubyVersion = "${ruby.version.majMin}.0";
+  arch = stdenv.hostPlatform.system;
+  prefix = "ruby/${rubyVersion}";
+in
+stdenv.mkDerivation {
+  pname = "tins";
+  version = "1.51.1";
+  src = builtins.path {
+    path = ./source;
+    name = "tins-1.51.1-source";
+  };
+
+  dontBuild = true;
+  dontConfigure = true;
+
+  passthru = { inherit prefix; };
+
+  installPhase = ''
+        local dest=$out/${prefix}
+        mkdir -p $dest/gems/tins-1.51.1
+        cp -r . $dest/gems/tins-1.51.1/
+        mkdir -p $dest/specifications
+        cat > $dest/specifications/tins-1.51.1.gemspec <<'EOF'
+    Gem::Specification.new do |s|
+      s.name = "tins"
+      s.version = "1.51.1"
+      s.summary = "tins"
+      s.require_paths = ["lib"]
+      s.files = []
+    end
+    EOF
+  '';
+}

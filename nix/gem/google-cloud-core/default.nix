@@ -6,23 +6,27 @@
 # google-cloud-core
 #
 # Available versions:
+#   1.7.0
 #   1.7.1
+#   1.8.0
 #
 # Usage:
-#   google-cloud-core { version = "1.7.1"; }
-#   google-cloud-core { }  # latest (1.7.1)
+#   google-cloud-core { version = "1.8.0"; }
+#   google-cloud-core { }  # latest (1.8.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.7.1",
+  version ? "1.8.0",
   git ? { },
 }:
 let
   versions = {
+    "1.7.0" = import ./1.7.0 { inherit lib stdenv ruby; };
     "1.7.1" = import ./1.7.1 { inherit lib stdenv ruby; };
+    "1.8.0" = import ./1.8.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -6,6 +6,8 @@
 # gli
 #
 # Available versions:
+#   2.22.0
+#   2.22.1
 #   2.22.2
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "2.22.0" = import ./2.22.0 { inherit lib stdenv ruby; };
+    "2.22.1" = import ./2.22.1 { inherit lib stdenv ruby; };
     "2.22.2" = import ./2.22.2 { inherit lib stdenv ruby; };
   };
 

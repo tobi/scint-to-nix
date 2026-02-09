@@ -7,22 +7,24 @@
 #
 # Available versions:
 #   0.0.8.2
+#   0.0.9
 #
 # Usage:
-#   unf_ext { version = "0.0.8.2"; }
-#   unf_ext { }  # latest (0.0.8.2)
+#   unf_ext { version = "0.0.9"; }
+#   unf_ext { }  # latest (0.0.9)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.0.8.2",
+  version ? "0.0.9",
   git ? { },
 }:
 let
   versions = {
     "0.0.8.2" = import ./0.0.8.2 { inherit lib stdenv ruby; };
+    "0.0.9" = import ./0.0.9 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

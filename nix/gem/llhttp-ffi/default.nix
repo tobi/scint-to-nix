@@ -7,22 +7,26 @@
 #
 # Available versions:
 #   0.4.0
+#   0.5.0
+#   0.5.1
 #
 # Usage:
-#   llhttp-ffi { version = "0.4.0"; }
-#   llhttp-ffi { }  # latest (0.4.0)
+#   llhttp-ffi { version = "0.5.1"; }
+#   llhttp-ffi { }  # latest (0.5.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.4.0",
+  version ? "0.5.1",
   git ? { },
 }:
 let
   versions = {
     "0.4.0" = import ./0.4.0 { inherit lib stdenv ruby; };
+    "0.5.0" = import ./0.5.0 { inherit lib stdenv ruby; };
+    "0.5.1" = import ./0.5.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

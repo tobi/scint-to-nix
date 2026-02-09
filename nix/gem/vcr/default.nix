@@ -6,6 +6,8 @@
 # vcr
 #
 # Available versions:
+#   6.3.0
+#   6.3.1
 #   6.4.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "6.3.0" = import ./6.3.0 { inherit lib stdenv ruby; };
+    "6.3.1" = import ./6.3.1 { inherit lib stdenv ruby; };
     "6.4.0" = import ./6.4.0 { inherit lib stdenv ruby; };
   };
 

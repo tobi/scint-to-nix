@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   0.23.10
+#   2.6.1
+#   2.6.2
+#   2.6.3
 #
 # Usage:
-#   commonmarker { version = "0.23.10"; }
-#   commonmarker { }  # latest (0.23.10)
+#   commonmarker { version = "2.6.3"; }
+#   commonmarker { }  # latest (2.6.3)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.23.10",
+  version ? "2.6.3",
   git ? { },
 }:
 let
   versions = {
     "0.23.10" = import ./0.23.10 { inherit lib stdenv ruby; };
+    "2.6.1" = import ./2.6.1 { inherit lib stdenv ruby; };
+    "2.6.2" = import ./2.6.2 { inherit lib stdenv ruby; };
+    "2.6.3" = import ./2.6.3 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

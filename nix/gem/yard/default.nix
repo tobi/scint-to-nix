@@ -6,6 +6,8 @@
 # yard
 #
 # Available versions:
+#   0.9.36
+#   0.9.37
 #   0.9.38
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.9.36" = import ./0.9.36 { inherit lib stdenv ruby; };
+    "0.9.37" = import ./0.9.37 { inherit lib stdenv ruby; };
     "0.9.38" = import ./0.9.38 { inherit lib stdenv ruby; };
   };
 

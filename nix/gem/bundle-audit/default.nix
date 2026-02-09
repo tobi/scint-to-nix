@@ -7,22 +7,24 @@
 #
 # Available versions:
 #   0.1.0
+#   0.2.0
 #
 # Usage:
-#   bundle-audit { version = "0.1.0"; }
-#   bundle-audit { }  # latest (0.1.0)
+#   bundle-audit { version = "0.2.0"; }
+#   bundle-audit { }  # latest (0.2.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.1.0",
+  version ? "0.2.0",
   git ? { },
 }:
 let
   versions = {
     "0.1.0" = import ./0.1.0 { inherit lib stdenv ruby; };
+    "0.2.0" = import ./0.2.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

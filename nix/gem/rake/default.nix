@@ -7,6 +7,7 @@
 #
 # Available versions:
 #   13.2.1
+#   13.3.0
 #   13.3.1
 #
 # Usage:
@@ -24,6 +25,7 @@
 let
   versions = {
     "13.2.1" = import ./13.2.1 { inherit lib stdenv ruby; };
+    "13.3.0" = import ./13.3.0 { inherit lib stdenv ruby; };
     "13.3.1" = import ./13.3.1 { inherit lib stdenv ruby; };
   };
 

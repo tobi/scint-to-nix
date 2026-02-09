@@ -6,6 +6,9 @@
 # webrick
 #
 # Available versions:
+#   1.8.2
+#   1.9.0
+#   1.9.1
 #   1.9.2
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "1.8.2" = import ./1.8.2 { inherit lib stdenv ruby; };
+    "1.9.0" = import ./1.9.0 { inherit lib stdenv ruby; };
+    "1.9.1" = import ./1.9.1 { inherit lib stdenv ruby; };
     "1.9.2" = import ./1.9.2 { inherit lib stdenv ruby; };
   };
 

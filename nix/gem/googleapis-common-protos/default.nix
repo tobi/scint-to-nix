@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   1.6.0
+#   1.7.0
+#   1.8.0
+#   1.9.0
 #
 # Usage:
-#   googleapis-common-protos { version = "1.6.0"; }
-#   googleapis-common-protos { }  # latest (1.6.0)
+#   googleapis-common-protos { version = "1.9.0"; }
+#   googleapis-common-protos { }  # latest (1.9.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.6.0",
+  version ? "1.9.0",
   git ? { },
 }:
 let
   versions = {
     "1.6.0" = import ./1.6.0 { inherit lib stdenv ruby; };
+    "1.7.0" = import ./1.7.0 { inherit lib stdenv ruby; };
+    "1.8.0" = import ./1.8.0 { inherit lib stdenv ruby; };
+    "1.9.0" = import ./1.9.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

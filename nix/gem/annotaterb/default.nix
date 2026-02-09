@@ -7,22 +7,24 @@
 #
 # Available versions:
 #   4.20.0
+#   4.21.0
 #
 # Usage:
-#   annotaterb { version = "4.20.0"; }
-#   annotaterb { }  # latest (4.20.0)
+#   annotaterb { version = "4.21.0"; }
+#   annotaterb { }  # latest (4.21.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "4.20.0",
+  version ? "4.21.0",
   git ? { },
 }:
 let
   versions = {
     "4.20.0" = import ./4.20.0 { inherit lib stdenv ruby; };
+    "4.21.0" = import ./4.21.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

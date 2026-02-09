@@ -13,7 +13,11 @@
 #   };
 #   builtins.attrValues gems  -> list of derivations
 #
-{ pkgs, ruby, gemset }:
+{
+  pkgs,
+  ruby,
+  gemset,
+}:
 
 let
   inherit (pkgs) lib stdenv;
@@ -31,13 +35,17 @@ let
       // args
     );
 
-  resolve = entry:
-    if entry ? git then {
-      name = "${entry.name}-${entry.git.rev}";
-      value = gem entry.name { git = entry.git; };
-    } else {
-      name = entry.name;
-      value = gem entry.name { version = entry.version; };
-    };
+  resolve =
+    entry:
+    if entry ? git then
+      {
+        name = "${entry.name}-${entry.git.rev}";
+        value = gem entry.name { inherit (entry) git; };
+      }
+    else
+      {
+        inherit (entry) name;
+        value = gem entry.name { inherit (entry) version; };
+      };
 in
 builtins.listToAttrs (map resolve gemset)

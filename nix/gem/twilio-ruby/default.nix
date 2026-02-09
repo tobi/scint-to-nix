@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   7.6.0
+#   7.9.1
+#   7.10.0
+#   7.10.1
 #
 # Usage:
-#   twilio-ruby { version = "7.6.0"; }
-#   twilio-ruby { }  # latest (7.6.0)
+#   twilio-ruby { version = "7.10.1"; }
+#   twilio-ruby { }  # latest (7.10.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "7.6.0",
+  version ? "7.10.1",
   git ? { },
 }:
 let
   versions = {
     "7.6.0" = import ./7.6.0 { inherit lib stdenv ruby; };
+    "7.9.1" = import ./7.9.1 { inherit lib stdenv ruby; };
+    "7.10.0" = import ./7.10.0 { inherit lib stdenv ruby; };
+    "7.10.1" = import ./7.10.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

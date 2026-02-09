@@ -7,24 +7,30 @@
 #
 # Available versions:
 #   1.0.1
+#   1.1.2
 #   1.1.3
+#   1.2.0
+#   1.2.1
 #
 # Usage:
-#   omniauth-google-oauth2 { version = "1.1.3"; }
-#   omniauth-google-oauth2 { }  # latest (1.1.3)
+#   omniauth-google-oauth2 { version = "1.2.1"; }
+#   omniauth-google-oauth2 { }  # latest (1.2.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.1.3",
+  version ? "1.2.1",
   git ? { },
 }:
 let
   versions = {
     "1.0.1" = import ./1.0.1 { inherit lib stdenv ruby; };
+    "1.1.2" = import ./1.1.2 { inherit lib stdenv ruby; };
     "1.1.3" = import ./1.1.3 { inherit lib stdenv ruby; };
+    "1.2.0" = import ./1.2.0 { inherit lib stdenv ruby; };
+    "1.2.1" = import ./1.2.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

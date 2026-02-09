@@ -6,6 +6,7 @@
 # concurrent-ruby
 #
 # Available versions:
+#   1.3.4
 #   1.3.5
 #   1.3.6
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "1.3.4" = import ./1.3.4 { inherit lib stdenv ruby; };
     "1.3.5" = import ./1.3.5 { inherit lib stdenv ruby; };
     "1.3.6" = import ./1.3.6 { inherit lib stdenv ruby; };
   };

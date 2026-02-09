@@ -6,23 +6,29 @@
 # httparty
 #
 # Available versions:
+#   0.21.0
 #   0.24.0
+#   0.24.1
+#   0.24.2
 #
 # Usage:
-#   httparty { version = "0.24.0"; }
-#   httparty { }  # latest (0.24.0)
+#   httparty { version = "0.24.2"; }
+#   httparty { }  # latest (0.24.2)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.24.0",
+  version ? "0.24.2",
   git ? { },
 }:
 let
   versions = {
+    "0.21.0" = import ./0.21.0 { inherit lib stdenv ruby; };
     "0.24.0" = import ./0.24.0 { inherit lib stdenv ruby; };
+    "0.24.1" = import ./0.24.1 { inherit lib stdenv ruby; };
+    "0.24.2" = import ./0.24.2 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

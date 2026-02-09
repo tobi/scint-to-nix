@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   3.20.0
+#   3.21.0
+#   3.21.1
+#   3.22.0
 #
 # Usage:
-#   ruby_parser { version = "3.20.0"; }
-#   ruby_parser { }  # latest (3.20.0)
+#   ruby_parser { version = "3.22.0"; }
+#   ruby_parser { }  # latest (3.22.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "3.20.0",
+  version ? "3.22.0",
   git ? { },
 }:
 let
   versions = {
     "3.20.0" = import ./3.20.0 { inherit lib stdenv ruby; };
+    "3.21.0" = import ./3.21.0 { inherit lib stdenv ruby; };
+    "3.21.1" = import ./3.21.1 { inherit lib stdenv ruby; };
+    "3.22.0" = import ./3.22.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

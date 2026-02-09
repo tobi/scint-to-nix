@@ -6,6 +6,7 @@
 # uniform_notifier
 #
 # Available versions:
+#   1.16.0
 #   1.17.0
 #   1.18.0
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "1.16.0" = import ./1.16.0 { inherit lib stdenv ruby; };
     "1.17.0" = import ./1.17.0 { inherit lib stdenv ruby; };
     "1.18.0" = import ./1.18.0 { inherit lib stdenv ruby; };
   };

@@ -6,6 +6,7 @@
 # marcel
 #
 # Available versions:
+#   1.0.3
 #   1.0.4
 #   1.1.0
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "1.0.3" = import ./1.0.3 { inherit lib stdenv ruby; };
     "1.0.4" = import ./1.0.4 { inherit lib stdenv ruby; };
     "1.1.0" = import ./1.1.0 { inherit lib stdenv ruby; };
   };

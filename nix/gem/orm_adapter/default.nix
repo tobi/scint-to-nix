@@ -6,6 +6,7 @@
 # orm_adapter
 #
 # Available versions:
+#   0.4.1
 #   0.5.0
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "0.4.1" = import ./0.4.1 { inherit lib stdenv ruby; };
     "0.5.0" = import ./0.5.0 { inherit lib stdenv ruby; };
   };
 

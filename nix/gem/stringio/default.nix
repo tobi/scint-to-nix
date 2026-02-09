@@ -6,6 +6,9 @@
 # stringio
 #
 # Available versions:
+#   3.1.0
+#   3.1.7
+#   3.1.8
 #   3.1.9
 #   3.2.0
 #
@@ -23,6 +26,9 @@
 }:
 let
   versions = {
+    "3.1.0" = import ./3.1.0 { inherit lib stdenv ruby; };
+    "3.1.7" = import ./3.1.7 { inherit lib stdenv ruby; };
+    "3.1.8" = import ./3.1.8 { inherit lib stdenv ruby; };
     "3.1.9" = import ./3.1.9 { inherit lib stdenv ruby; };
     "3.2.0" = import ./3.2.0 { inherit lib stdenv ruby; };
   };

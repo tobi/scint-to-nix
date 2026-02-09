@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   1.165.0
+#   1.177.0
+#   1.178.0
+#   1.179.0
 #
 # Usage:
-#   aws-sdk-mediaconvert { version = "1.165.0"; }
-#   aws-sdk-mediaconvert { }  # latest (1.165.0)
+#   aws-sdk-mediaconvert { version = "1.179.0"; }
+#   aws-sdk-mediaconvert { }  # latest (1.179.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.165.0",
+  version ? "1.179.0",
   git ? { },
 }:
 let
   versions = {
     "1.165.0" = import ./1.165.0 { inherit lib stdenv ruby; };
+    "1.177.0" = import ./1.177.0 { inherit lib stdenv ruby; };
+    "1.178.0" = import ./1.178.0 { inherit lib stdenv ruby; };
+    "1.179.0" = import ./1.179.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

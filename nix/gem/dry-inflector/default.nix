@@ -7,22 +7,26 @@
 #
 # Available versions:
 #   1.2.0
+#   1.3.0
+#   1.3.1
 #
 # Usage:
-#   dry-inflector { version = "1.2.0"; }
-#   dry-inflector { }  # latest (1.2.0)
+#   dry-inflector { version = "1.3.1"; }
+#   dry-inflector { }  # latest (1.3.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.2.0",
+  version ? "1.3.1",
   git ? { },
 }:
 let
   versions = {
     "1.2.0" = import ./1.2.0 { inherit lib stdenv ruby; };
+    "1.3.0" = import ./1.3.0 { inherit lib stdenv ruby; };
+    "1.3.1" = import ./1.3.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

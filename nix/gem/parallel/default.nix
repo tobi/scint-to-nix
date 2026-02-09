@@ -6,6 +6,9 @@
 # parallel
 #
 # Available versions:
+#   1.24.0
+#   1.26.2
+#   1.26.3
 #   1.27.0
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "1.24.0" = import ./1.24.0 { inherit lib stdenv ruby; };
+    "1.26.2" = import ./1.26.2 { inherit lib stdenv ruby; };
+    "1.26.3" = import ./1.26.3 { inherit lib stdenv ruby; };
     "1.27.0" = import ./1.27.0 { inherit lib stdenv ruby; };
   };
 

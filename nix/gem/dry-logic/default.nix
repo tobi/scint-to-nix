@@ -6,6 +6,8 @@
 # dry-logic
 #
 # Available versions:
+#   1.4.0
+#   1.5.0
 #   1.6.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.4.0" = import ./1.4.0 { inherit lib stdenv ruby; };
+    "1.5.0" = import ./1.5.0 { inherit lib stdenv ruby; };
     "1.6.0" = import ./1.6.0 { inherit lib stdenv ruby; };
   };
 

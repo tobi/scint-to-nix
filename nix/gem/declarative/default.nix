@@ -6,6 +6,8 @@
 # declarative
 #
 # Available versions:
+#   0.0.9
+#   0.0.10
 #   0.0.20
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.0.9" = import ./0.0.9 { inherit lib stdenv ruby; };
+    "0.0.10" = import ./0.0.10 { inherit lib stdenv ruby; };
     "0.0.20" = import ./0.0.20 { inherit lib stdenv ruby; };
   };
 

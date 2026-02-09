@@ -6,6 +6,9 @@
 # htmlentities
 #
 # Available versions:
+#   4.3.4
+#   4.4.0
+#   4.4.1
 #   4.4.2
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "4.3.4" = import ./4.3.4 { inherit lib stdenv ruby; };
+    "4.4.0" = import ./4.4.0 { inherit lib stdenv ruby; };
+    "4.4.1" = import ./4.4.1 { inherit lib stdenv ruby; };
     "4.4.2" = import ./4.4.2 { inherit lib stdenv ruby; };
   };
 

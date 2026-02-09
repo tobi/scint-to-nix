@@ -6,23 +6,27 @@
 # importmap-rails
 #
 # Available versions:
+#   2.1.0
 #   2.2.2
+#   2.2.3
 #
 # Usage:
-#   importmap-rails { version = "2.2.2"; }
-#   importmap-rails { }  # latest (2.2.2)
+#   importmap-rails { version = "2.2.3"; }
+#   importmap-rails { }  # latest (2.2.3)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "2.2.2",
+  version ? "2.2.3",
   git ? { },
 }:
 let
   versions = {
+    "2.1.0" = import ./2.1.0 { inherit lib stdenv ruby; };
     "2.2.2" = import ./2.2.2 { inherit lib stdenv ruby; };
+    "2.2.3" = import ./2.2.3 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

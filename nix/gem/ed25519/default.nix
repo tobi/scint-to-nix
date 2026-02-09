@@ -6,6 +6,8 @@
 # ed25519
 #
 # Available versions:
+#   1.2.4
+#   1.3.0
 #   1.4.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.2.4" = import ./1.2.4 { inherit lib stdenv ruby; };
+    "1.3.0" = import ./1.3.0 { inherit lib stdenv ruby; };
     "1.4.0" = import ./1.4.0 { inherit lib stdenv ruby; };
   };
 

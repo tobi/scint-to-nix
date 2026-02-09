@@ -6,6 +6,8 @@
 # matrix
 #
 # Available versions:
+#   0.4.1
+#   0.4.2
 #   0.4.3
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.4.1" = import ./0.4.1 { inherit lib stdenv ruby; };
+    "0.4.2" = import ./0.4.2 { inherit lib stdenv ruby; };
     "0.4.3" = import ./0.4.3 { inherit lib stdenv ruby; };
   };
 

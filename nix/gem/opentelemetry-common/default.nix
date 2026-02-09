@@ -6,6 +6,8 @@
 # opentelemetry-common
 #
 # Available versions:
+#   0.21.0
+#   0.22.0
 #   0.23.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.21.0" = import ./0.21.0 { inherit lib stdenv ruby; };
+    "0.22.0" = import ./0.22.0 { inherit lib stdenv ruby; };
     "0.23.0" = import ./0.23.0 { inherit lib stdenv ruby; };
   };
 

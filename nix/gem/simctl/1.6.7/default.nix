@@ -1,0 +1,46 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# simctl 1.6.7
+#
+{
+  lib,
+  stdenv,
+  ruby,
+}:
+let
+  rubyVersion = "${ruby.version.majMin}.0";
+  arch = stdenv.hostPlatform.system;
+  prefix = "ruby/${rubyVersion}";
+in
+stdenv.mkDerivation {
+  pname = "simctl";
+  version = "1.6.7";
+  src = builtins.path {
+    path = ./source;
+    name = "simctl-1.6.7-source";
+  };
+
+  dontBuild = true;
+  dontConfigure = true;
+
+  passthru = { inherit prefix; };
+
+  installPhase = ''
+        local dest=$out/${prefix}
+        mkdir -p $dest/gems/simctl-1.6.7
+        cp -r . $dest/gems/simctl-1.6.7/
+        mkdir -p $dest/specifications
+        cat > $dest/specifications/simctl-1.6.7.gemspec <<'EOF'
+    Gem::Specification.new do |s|
+      s.name = "simctl"
+      s.version = "1.6.7"
+      s.summary = "simctl"
+      s.require_paths = ["lib"]
+      s.files = []
+    end
+    EOF
+  '';
+}

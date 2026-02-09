@@ -6,6 +6,8 @@
 # rbtrace
 #
 # Available versions:
+#   0.5.1
+#   0.5.2
 #   0.5.3
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.5.1" = import ./0.5.1 { inherit lib stdenv ruby; };
+    "0.5.2" = import ./0.5.2 { inherit lib stdenv ruby; };
     "0.5.3" = import ./0.5.3 { inherit lib stdenv ruby; };
   };
 

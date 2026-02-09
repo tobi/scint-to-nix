@@ -6,6 +6,8 @@
 # net-protocol
 #
 # Available versions:
+#   0.2.0
+#   0.2.1
 #   0.2.2
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.2.0" = import ./0.2.0 { inherit lib stdenv ruby; };
+    "0.2.1" = import ./0.2.1 { inherit lib stdenv ruby; };
     "0.2.2" = import ./0.2.2 { inherit lib stdenv ruby; };
   };
 

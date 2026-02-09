@@ -6,7 +6,10 @@
 # rubocop-performance
 #
 # Available versions:
+#   1.21.0
+#   1.24.0
 #   1.25.0
+#   1.26.0
 #   1.26.1
 #
 # Usage:
@@ -23,7 +26,10 @@
 }:
 let
   versions = {
+    "1.21.0" = import ./1.21.0 { inherit lib stdenv ruby; };
+    "1.24.0" = import ./1.24.0 { inherit lib stdenv ruby; };
     "1.25.0" = import ./1.25.0 { inherit lib stdenv ruby; };
+    "1.26.0" = import ./1.26.0 { inherit lib stdenv ruby; };
     "1.26.1" = import ./1.26.1 { inherit lib stdenv ruby; };
   };
 

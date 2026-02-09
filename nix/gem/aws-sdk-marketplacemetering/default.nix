@@ -1,0 +1,40 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# aws-sdk-marketplacemetering
+#
+# Available versions:
+#   1.90.0
+#   1.91.0
+#   1.92.0
+#
+# Usage:
+#   aws-sdk-marketplacemetering { version = "1.92.0"; }
+#   aws-sdk-marketplacemetering { }  # latest (1.92.0)
+#
+{
+  lib,
+  stdenv,
+  ruby,
+  pkgs ? null,
+  version ? "1.92.0",
+  git ? { },
+}:
+let
+  versions = {
+    "1.90.0" = import ./1.90.0 { inherit lib stdenv ruby; };
+    "1.91.0" = import ./1.91.0 { inherit lib stdenv ruby; };
+    "1.92.0" = import ./1.92.0 { inherit lib stdenv ruby; };
+  };
+
+  gitRevs = {
+  };
+in
+if git ? rev then
+  gitRevs.${git.rev}
+    or (throw "aws-sdk-marketplacemetering: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+else
+  versions.${version}
+    or (throw "aws-sdk-marketplacemetering: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")

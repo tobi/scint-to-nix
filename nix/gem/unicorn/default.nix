@@ -6,6 +6,8 @@
 # unicorn
 #
 # Available versions:
+#   5.8.0
+#   6.0.0
 #   6.1.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "5.8.0" = import ./5.8.0 { inherit lib stdenv ruby; };
+    "6.0.0" = import ./6.0.0 { inherit lib stdenv ruby; };
     "6.1.0" = import ./6.1.0 { inherit lib stdenv ruby; };
   };
 

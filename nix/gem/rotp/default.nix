@@ -6,6 +6,8 @@
 # rotp
 #
 # Available versions:
+#   6.2.1
+#   6.2.2
 #   6.3.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "6.2.1" = import ./6.2.1 { inherit lib stdenv ruby; };
+    "6.2.2" = import ./6.2.2 { inherit lib stdenv ruby; };
     "6.3.0" = import ./6.3.0 { inherit lib stdenv ruby; };
   };
 

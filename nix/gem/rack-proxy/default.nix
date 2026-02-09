@@ -6,6 +6,8 @@
 # rack-proxy
 #
 # Available versions:
+#   0.7.5
+#   0.7.6
 #   0.7.7
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.7.5" = import ./0.7.5 { inherit lib stdenv ruby; };
+    "0.7.6" = import ./0.7.6 { inherit lib stdenv ruby; };
     "0.7.7" = import ./0.7.7 { inherit lib stdenv ruby; };
   };
 

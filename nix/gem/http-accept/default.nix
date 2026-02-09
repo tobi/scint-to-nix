@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   1.7.0
+#   2.1.1
+#   2.2.0
+#   2.2.1
 #
 # Usage:
-#   http-accept { version = "1.7.0"; }
-#   http-accept { }  # latest (1.7.0)
+#   http-accept { version = "2.2.1"; }
+#   http-accept { }  # latest (2.2.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.7.0",
+  version ? "2.2.1",
   git ? { },
 }:
 let
   versions = {
     "1.7.0" = import ./1.7.0 { inherit lib stdenv ruby; };
+    "2.1.1" = import ./2.1.1 { inherit lib stdenv ruby; };
+    "2.2.0" = import ./2.2.0 { inherit lib stdenv ruby; };
+    "2.2.1" = import ./2.2.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

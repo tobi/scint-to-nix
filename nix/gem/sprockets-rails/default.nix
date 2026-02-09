@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   3.4.2
+#   3.5.0
+#   3.5.1
+#   3.5.2
 #
 # Usage:
-#   sprockets-rails { version = "3.4.2"; }
-#   sprockets-rails { }  # latest (3.4.2)
+#   sprockets-rails { version = "3.5.2"; }
+#   sprockets-rails { }  # latest (3.5.2)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "3.4.2",
+  version ? "3.5.2",
   git ? { },
 }:
 let
   versions = {
     "3.4.2" = import ./3.4.2 { inherit lib stdenv ruby; };
+    "3.5.0" = import ./3.5.0 { inherit lib stdenv ruby; };
+    "3.5.1" = import ./3.5.1 { inherit lib stdenv ruby; };
+    "3.5.2" = import ./3.5.2 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

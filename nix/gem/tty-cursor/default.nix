@@ -6,6 +6,8 @@
 # tty-cursor
 #
 # Available versions:
+#   0.6.1
+#   0.7.0
 #   0.7.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.6.1" = import ./0.6.1 { inherit lib stdenv ruby; };
+    "0.7.0" = import ./0.7.0 { inherit lib stdenv ruby; };
     "0.7.1" = import ./0.7.1 { inherit lib stdenv ruby; };
   };
 

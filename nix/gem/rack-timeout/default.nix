@@ -6,23 +6,27 @@
 # rack-timeout
 #
 # Available versions:
+#   0.6.2
 #   0.6.3
+#   0.7.0
 #
 # Usage:
-#   rack-timeout { version = "0.6.3"; }
-#   rack-timeout { }  # latest (0.6.3)
+#   rack-timeout { version = "0.7.0"; }
+#   rack-timeout { }  # latest (0.7.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.6.3",
+  version ? "0.7.0",
   git ? { },
 }:
 let
   versions = {
+    "0.6.2" = import ./0.6.2 { inherit lib stdenv ruby; };
     "0.6.3" = import ./0.6.3 { inherit lib stdenv ruby; };
+    "0.7.0" = import ./0.7.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

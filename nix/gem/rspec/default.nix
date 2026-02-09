@@ -6,6 +6,9 @@
 # rspec
 #
 # Available versions:
+#   3.12.0
+#   3.13.0
+#   3.13.1
 #   3.13.2
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "3.12.0" = import ./3.12.0 { inherit lib stdenv ruby; };
+    "3.13.0" = import ./3.13.0 { inherit lib stdenv ruby; };
+    "3.13.1" = import ./3.13.1 { inherit lib stdenv ruby; };
     "3.13.2" = import ./3.13.2 { inherit lib stdenv ruby; };
   };
 

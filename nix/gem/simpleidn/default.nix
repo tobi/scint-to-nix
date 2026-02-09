@@ -6,6 +6,8 @@
 # simpleidn
 #
 # Available versions:
+#   0.2.1
+#   0.2.2
 #   0.2.3
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.2.1" = import ./0.2.1 { inherit lib stdenv ruby; };
+    "0.2.2" = import ./0.2.2 { inherit lib stdenv ruby; };
     "0.2.3" = import ./0.2.3 { inherit lib stdenv ruby; };
   };
 

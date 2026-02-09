@@ -7,22 +7,24 @@
 #
 # Available versions:
 #   1.10.0
+#   1.11.0
 #
 # Usage:
-#   rake-compiler-dock { version = "1.10.0"; }
-#   rake-compiler-dock { }  # latest (1.10.0)
+#   rake-compiler-dock { version = "1.11.0"; }
+#   rake-compiler-dock { }  # latest (1.11.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.10.0",
+  version ? "1.11.0",
   git ? { },
 }:
 let
   versions = {
     "1.10.0" = import ./1.10.0 { inherit lib stdenv ruby; };
+    "1.11.0" = import ./1.11.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

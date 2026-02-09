@@ -6,6 +6,8 @@
 # ruby2_keywords
 #
 # Available versions:
+#   0.0.3
+#   0.0.4
 #   0.0.5
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.0.3" = import ./0.0.3 { inherit lib stdenv ruby; };
+    "0.0.4" = import ./0.0.4 { inherit lib stdenv ruby; };
     "0.0.5" = import ./0.0.5 { inherit lib stdenv ruby; };
   };
 

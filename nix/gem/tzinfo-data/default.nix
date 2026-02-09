@@ -7,24 +7,28 @@
 #
 # Available versions:
 #   1.2023.3
+#   1.2025.1
 #   1.2025.2
+#   1.2025.3
 #
 # Usage:
-#   tzinfo-data { version = "1.2025.2"; }
-#   tzinfo-data { }  # latest (1.2025.2)
+#   tzinfo-data { version = "1.2025.3"; }
+#   tzinfo-data { }  # latest (1.2025.3)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.2025.2",
+  version ? "1.2025.3",
   git ? { },
 }:
 let
   versions = {
     "1.2023.3" = import ./1.2023.3 { inherit lib stdenv ruby; };
+    "1.2025.1" = import ./1.2025.1 { inherit lib stdenv ruby; };
     "1.2025.2" = import ./1.2025.2 { inherit lib stdenv ruby; };
+    "1.2025.3" = import ./1.2025.3 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

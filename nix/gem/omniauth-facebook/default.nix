@@ -6,23 +6,27 @@
 # omniauth-facebook
 #
 # Available versions:
+#   8.0.0
 #   9.0.0
+#   10.0.0
 #
 # Usage:
-#   omniauth-facebook { version = "9.0.0"; }
-#   omniauth-facebook { }  # latest (9.0.0)
+#   omniauth-facebook { version = "10.0.0"; }
+#   omniauth-facebook { }  # latest (10.0.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "9.0.0",
+  version ? "10.0.0",
   git ? { },
 }:
 let
   versions = {
+    "8.0.0" = import ./8.0.0 { inherit lib stdenv ruby; };
     "9.0.0" = import ./9.0.0 { inherit lib stdenv ruby; };
+    "10.0.0" = import ./10.0.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -6,6 +6,8 @@
 # websocket
 #
 # Available versions:
+#   1.2.9
+#   1.2.10
 #   1.2.11
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.2.9" = import ./1.2.9 { inherit lib stdenv ruby; };
+    "1.2.10" = import ./1.2.10 { inherit lib stdenv ruby; };
     "1.2.11" = import ./1.2.11 { inherit lib stdenv ruby; };
   };
 

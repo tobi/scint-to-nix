@@ -6,6 +6,9 @@
 # sanitize
 #
 # Available versions:
+#   6.0.2
+#   6.1.2
+#   6.1.3
 #   7.0.0
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "6.0.2" = import ./6.0.2 { inherit lib stdenv ruby; };
+    "6.1.2" = import ./6.1.2 { inherit lib stdenv ruby; };
+    "6.1.3" = import ./6.1.3 { inherit lib stdenv ruby; };
     "7.0.0" = import ./7.0.0 { inherit lib stdenv ruby; };
   };
 

@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   0.20.0
+#   1.0.1
+#   1.1.0
+#   1.2.0
 #
 # Usage:
-#   gapic-common { version = "0.20.0"; }
-#   gapic-common { }  # latest (0.20.0)
+#   gapic-common { version = "1.2.0"; }
+#   gapic-common { }  # latest (1.2.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.20.0",
+  version ? "1.2.0",
   git ? { },
 }:
 let
   versions = {
     "0.20.0" = import ./0.20.0 { inherit lib stdenv ruby; };
+    "1.0.1" = import ./1.0.1 { inherit lib stdenv ruby; };
+    "1.1.0" = import ./1.1.0 { inherit lib stdenv ruby; };
+    "1.2.0" = import ./1.2.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -6,7 +6,9 @@
 # unicode-display_width
 #
 # Available versions:
+#   2.5.0
 #   3.1.4
+#   3.1.5
 #   3.2.0
 #
 # Usage:
@@ -23,7 +25,9 @@
 }:
 let
   versions = {
+    "2.5.0" = import ./2.5.0 { inherit lib stdenv ruby; };
     "3.1.4" = import ./3.1.4 { inherit lib stdenv ruby; };
+    "3.1.5" = import ./3.1.5 { inherit lib stdenv ruby; };
     "3.2.0" = import ./3.2.0 { inherit lib stdenv ruby; };
   };
 

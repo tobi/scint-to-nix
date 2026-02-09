@@ -7,22 +7,24 @@
 #
 # Available versions:
 #   1.1.0
+#   1.3.0
 #
 # Usage:
-#   dry-cli { version = "1.1.0"; }
-#   dry-cli { }  # latest (1.1.0)
+#   dry-cli { version = "1.3.0"; }
+#   dry-cli { }  # latest (1.3.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.1.0",
+  version ? "1.3.0",
   git ? { },
 }:
 let
   versions = {
     "1.1.0" = import ./1.1.0 { inherit lib stdenv ruby; };
+    "1.3.0" = import ./1.3.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -7,22 +7,24 @@
 #
 # Available versions:
 #   6.2.1
+#   6.7.0
 #
 # Usage:
-#   groupdate { version = "6.2.1"; }
-#   groupdate { }  # latest (6.2.1)
+#   groupdate { version = "6.7.0"; }
+#   groupdate { }  # latest (6.7.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "6.2.1",
+  version ? "6.7.0",
   git ? { },
 }:
 let
   versions = {
     "6.2.1" = import ./6.2.1 { inherit lib stdenv ruby; };
+    "6.7.0" = import ./6.7.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

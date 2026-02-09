@@ -6,6 +6,8 @@
 # net-ssh
 #
 # Available versions:
+#   7.2.1
+#   7.2.3
 #   7.3.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "7.2.1" = import ./7.2.1 { inherit lib stdenv ruby; };
+    "7.2.3" = import ./7.2.3 { inherit lib stdenv ruby; };
     "7.3.0" = import ./7.3.0 { inherit lib stdenv ruby; };
   };
 

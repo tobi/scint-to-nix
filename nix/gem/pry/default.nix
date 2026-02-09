@@ -7,24 +7,28 @@
 #
 # Available versions:
 #   0.14.2
+#   0.15.1
 #   0.15.2
+#   0.16.0
 #
 # Usage:
-#   pry { version = "0.15.2"; }
-#   pry { }  # latest (0.15.2)
+#   pry { version = "0.16.0"; }
+#   pry { }  # latest (0.16.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.15.2",
+  version ? "0.16.0",
   git ? { },
 }:
 let
   versions = {
     "0.14.2" = import ./0.14.2 { inherit lib stdenv ruby; };
+    "0.15.1" = import ./0.15.1 { inherit lib stdenv ruby; };
     "0.15.2" = import ./0.15.2 { inherit lib stdenv ruby; };
+    "0.16.0" = import ./0.16.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

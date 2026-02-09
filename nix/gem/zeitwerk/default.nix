@@ -6,7 +6,9 @@
 # zeitwerk
 #
 # Available versions:
+#   2.6.13
 #   2.6.17
+#   2.7.2
 #   2.7.3
 #   2.7.4
 #
@@ -24,7 +26,9 @@
 }:
 let
   versions = {
+    "2.6.13" = import ./2.6.13 { inherit lib stdenv ruby; };
     "2.6.17" = import ./2.6.17 { inherit lib stdenv ruby; };
+    "2.7.2" = import ./2.7.2 { inherit lib stdenv ruby; };
     "2.7.3" = import ./2.7.3 { inherit lib stdenv ruby; };
     "2.7.4" = import ./2.7.4 { inherit lib stdenv ruby; };
   };

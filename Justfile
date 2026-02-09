@@ -126,3 +126,36 @@ lint app="fizzy":
 [group('test')]
 fmt-check:
     find nix/ -name '*.nix' | xargs nixfmt --check
+
+# Run statix linter on all nix files
+[group('test')]
+statix:
+    nix-shell -p statix --run "statix check nix/"
+
+# ── Matrix ─────────────────────────────────────────────────────────
+
+# Build across ruby versions
+# just matrix                          # full matrix (all rubies × all apps)
+# just matrix fizzy                    # fizzy on all rubies
+# just matrix fizzy ruby_3_3           # fizzy on ruby 3.3 only
+# just matrix "" ruby_3_3              # all apps on ruby 3.3
+[group('build')]
+matrix app="" rubyver="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ -n "{{rubyver}}" ]]; then
+        attr="{{rubyver}}"
+        [[ -n "{{app}}" ]] && attr="${attr}.{{app}}"
+        echo "Building matrix: $attr..."
+        nix-build nix/matrix.nix --no-out-link --keep-going -A "$attr"
+    elif [[ -n "{{app}}" ]]; then
+        echo "Building {{app}} across all rubies..."
+        rubies=$(nix-instantiate --eval -E 'builtins.attrNames (import ./nix/matrix.nix {})' 2>/dev/null | tr -d '[]"' | tr ' ' '\n' | grep -v '^$')
+        for r in $rubies; do
+            echo "  $r.{{app}}..."
+            nix-build nix/matrix.nix --no-out-link --keep-going -A "$r.{{app}}" 2>&1 | tail -1
+        done
+    else
+        echo "Building full matrix..."
+        nix-build nix/matrix.nix --no-out-link --keep-going
+    fi

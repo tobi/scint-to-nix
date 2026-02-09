@@ -6,6 +6,8 @@
 # net-pop
 #
 # Available versions:
+#   0.1.0
+#   0.1.1
 #   0.1.2
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.1.0" = import ./0.1.0 { inherit lib stdenv ruby; };
+    "0.1.1" = import ./0.1.1 { inherit lib stdenv ruby; };
     "0.1.2" = import ./0.1.2 { inherit lib stdenv ruby; };
   };
 

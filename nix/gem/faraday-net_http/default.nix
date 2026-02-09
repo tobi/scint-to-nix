@@ -6,7 +6,9 @@
 # faraday-net_http
 #
 # Available versions:
+#   3.1.0
 #   3.4.0
+#   3.4.1
 #   3.4.2
 #
 # Usage:
@@ -23,7 +25,9 @@
 }:
 let
   versions = {
+    "3.1.0" = import ./3.1.0 { inherit lib stdenv ruby; };
     "3.4.0" = import ./3.4.0 { inherit lib stdenv ruby; };
+    "3.4.1" = import ./3.4.1 { inherit lib stdenv ruby; };
     "3.4.2" = import ./3.4.2 { inherit lib stdenv ruby; };
   };
 

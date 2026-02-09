@@ -6,6 +6,9 @@
 # rouge
 #
 # Available versions:
+#   4.2.1
+#   4.6.0
+#   4.6.1
 #   4.7.0
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "4.2.1" = import ./4.2.1 { inherit lib stdenv ruby; };
+    "4.6.0" = import ./4.6.0 { inherit lib stdenv ruby; };
+    "4.6.1" = import ./4.6.1 { inherit lib stdenv ruby; };
     "4.7.0" = import ./4.7.0 { inherit lib stdenv ruby; };
   };
 

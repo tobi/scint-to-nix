@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   2.3.0
+#   2.6.0
+#   2.6.1
+#   2.7.0
 #
 # Usage:
-#   tilt { version = "2.3.0"; }
-#   tilt { }  # latest (2.3.0)
+#   tilt { version = "2.7.0"; }
+#   tilt { }  # latest (2.7.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "2.3.0",
+  version ? "2.7.0",
   git ? { },
 }:
 let
   versions = {
     "2.3.0" = import ./2.3.0 { inherit lib stdenv ruby; };
+    "2.6.0" = import ./2.6.0 { inherit lib stdenv ruby; };
+    "2.6.1" = import ./2.6.1 { inherit lib stdenv ruby; };
+    "2.7.0" = import ./2.7.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

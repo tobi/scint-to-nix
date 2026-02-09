@@ -6,6 +6,7 @@
 # unf
 #
 # Available versions:
+#   0.1.3
 #   0.1.4
 #   0.2.0
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "0.1.3" = import ./0.1.3 { inherit lib stdenv ruby; };
     "0.1.4" = import ./0.1.4 { inherit lib stdenv ruby; };
     "0.2.0" = import ./0.2.0 { inherit lib stdenv ruby; };
   };

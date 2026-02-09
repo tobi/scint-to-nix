@@ -6,6 +6,9 @@
 # msgpack
 #
 # Available versions:
+#   1.7.2
+#   1.7.4
+#   1.7.5
 #   1.8.0
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "1.7.2" = import ./1.7.2 { inherit lib stdenv ruby; };
+    "1.7.4" = import ./1.7.4 { inherit lib stdenv ruby; };
+    "1.7.5" = import ./1.7.5 { inherit lib stdenv ruby; };
     "1.8.0" = import ./1.8.0 { inherit lib stdenv ruby; };
   };
 

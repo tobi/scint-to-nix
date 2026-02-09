@@ -6,6 +6,8 @@
 # ruby-saml
 #
 # Available versions:
+#   1.17.0
+#   1.18.0
 #   1.18.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.17.0" = import ./1.17.0 { inherit lib stdenv ruby; };
+    "1.18.0" = import ./1.18.0 { inherit lib stdenv ruby; };
     "1.18.1" = import ./1.18.1 { inherit lib stdenv ruby; };
   };
 

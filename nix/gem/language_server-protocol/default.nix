@@ -6,6 +6,8 @@
 # language_server-protocol
 #
 # Available versions:
+#   3.17.0.3
+#   3.17.0.4
 #   3.17.0.5
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "3.17.0.3" = import ./3.17.0.3 { inherit lib stdenv ruby; };
+    "3.17.0.4" = import ./3.17.0.4 { inherit lib stdenv ruby; };
     "3.17.0.5" = import ./3.17.0.5 { inherit lib stdenv ruby; };
   };
 

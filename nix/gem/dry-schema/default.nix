@@ -6,23 +6,27 @@
 # dry-schema
 #
 # Available versions:
+#   1.14.0
 #   1.14.1
+#   1.15.0
 #
 # Usage:
-#   dry-schema { version = "1.14.1"; }
-#   dry-schema { }  # latest (1.14.1)
+#   dry-schema { version = "1.15.0"; }
+#   dry-schema { }  # latest (1.15.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.14.1",
+  version ? "1.15.0",
   git ? { },
 }:
 let
   versions = {
+    "1.14.0" = import ./1.14.0 { inherit lib stdenv ruby; };
     "1.14.1" = import ./1.14.1 { inherit lib stdenv ruby; };
+    "1.15.0" = import ./1.15.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

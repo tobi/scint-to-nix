@@ -1,0 +1,46 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# devise-two-factor 6.3.1
+#
+{
+  lib,
+  stdenv,
+  ruby,
+}:
+let
+  rubyVersion = "${ruby.version.majMin}.0";
+  arch = stdenv.hostPlatform.system;
+  prefix = "ruby/${rubyVersion}";
+in
+stdenv.mkDerivation {
+  pname = "devise-two-factor";
+  version = "6.3.1";
+  src = builtins.path {
+    path = ./source;
+    name = "devise-two-factor-6.3.1-source";
+  };
+
+  dontBuild = true;
+  dontConfigure = true;
+
+  passthru = { inherit prefix; };
+
+  installPhase = ''
+        local dest=$out/${prefix}
+        mkdir -p $dest/gems/devise-two-factor-6.3.1
+        cp -r . $dest/gems/devise-two-factor-6.3.1/
+        mkdir -p $dest/specifications
+        cat > $dest/specifications/devise-two-factor-6.3.1.gemspec <<'EOF'
+    Gem::Specification.new do |s|
+      s.name = "devise-two-factor"
+      s.version = "6.3.1"
+      s.summary = "devise-two-factor"
+      s.require_paths = ["lib"]
+      s.files = []
+    end
+    EOF
+  '';
+}

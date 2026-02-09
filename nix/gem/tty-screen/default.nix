@@ -6,6 +6,8 @@
 # tty-screen
 #
 # Available versions:
+#   0.8.0
+#   0.8.1
 #   0.8.2
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.8.0" = import ./0.8.0 { inherit lib stdenv ruby; };
+    "0.8.1" = import ./0.8.1 { inherit lib stdenv ruby; };
     "0.8.2" = import ./0.8.2 { inherit lib stdenv ruby; };
   };
 

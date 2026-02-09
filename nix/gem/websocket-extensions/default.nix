@@ -6,6 +6,8 @@
 # websocket-extensions
 #
 # Available versions:
+#   0.1.3
+#   0.1.4
 #   0.1.5
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.1.3" = import ./0.1.3 { inherit lib stdenv ruby; };
+    "0.1.4" = import ./0.1.4 { inherit lib stdenv ruby; };
     "0.1.5" = import ./0.1.5 { inherit lib stdenv ruby; };
   };
 

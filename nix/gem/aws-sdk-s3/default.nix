@@ -7,26 +7,32 @@
 #
 # Available versions:
 #   1.182.0
+#   1.197.0
 #   1.208.0
 #   1.211.0
+#   1.212.0
+#   1.213.0
 #
 # Usage:
-#   aws-sdk-s3 { version = "1.211.0"; }
-#   aws-sdk-s3 { }  # latest (1.211.0)
+#   aws-sdk-s3 { version = "1.213.0"; }
+#   aws-sdk-s3 { }  # latest (1.213.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.211.0",
+  version ? "1.213.0",
   git ? { },
 }:
 let
   versions = {
     "1.182.0" = import ./1.182.0 { inherit lib stdenv ruby; };
+    "1.197.0" = import ./1.197.0 { inherit lib stdenv ruby; };
     "1.208.0" = import ./1.208.0 { inherit lib stdenv ruby; };
     "1.211.0" = import ./1.211.0 { inherit lib stdenv ruby; };
+    "1.212.0" = import ./1.212.0 { inherit lib stdenv ruby; };
+    "1.213.0" = import ./1.213.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

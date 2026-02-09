@@ -6,6 +6,8 @@
 # sawyer
 #
 # Available versions:
+#   0.9.1
+#   0.9.2
 #   0.9.3
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.9.1" = import ./0.9.1 { inherit lib stdenv ruby; };
+    "0.9.2" = import ./0.9.2 { inherit lib stdenv ruby; };
     "0.9.3" = import ./0.9.3 { inherit lib stdenv ruby; };
   };
 

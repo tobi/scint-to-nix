@@ -7,22 +7,26 @@
 #
 # Available versions:
 #   1.0.2
+#   2.0.0
+#   2.0.1
 #
 # Usage:
-#   omniauth-rails_csrf_protection { version = "1.0.2"; }
-#   omniauth-rails_csrf_protection { }  # latest (1.0.2)
+#   omniauth-rails_csrf_protection { version = "2.0.1"; }
+#   omniauth-rails_csrf_protection { }  # latest (2.0.1)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.0.2",
+  version ? "2.0.1",
   git ? { },
 }:
 let
   versions = {
     "1.0.2" = import ./1.0.2 { inherit lib stdenv ruby; };
+    "2.0.0" = import ./2.0.0 { inherit lib stdenv ruby; };
+    "2.0.1" = import ./2.0.1 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

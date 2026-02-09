@@ -6,23 +6,27 @@
 # fastimage
 #
 # Available versions:
+#   2.3.0
 #   2.3.1
+#   2.4.0
 #
 # Usage:
-#   fastimage { version = "2.3.1"; }
-#   fastimage { }  # latest (2.3.1)
+#   fastimage { version = "2.4.0"; }
+#   fastimage { }  # latest (2.4.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "2.3.1",
+  version ? "2.4.0",
   git ? { },
 }:
 let
   versions = {
+    "2.3.0" = import ./2.3.0 { inherit lib stdenv ruby; };
     "2.3.1" = import ./2.3.1 { inherit lib stdenv ruby; };
+    "2.4.0" = import ./2.4.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

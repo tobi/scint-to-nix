@@ -7,24 +7,28 @@
 #
 # Available versions:
 #   1.0.4
+#   1.1.0
 #   1.1.1
+#   1.2.0
 #
 # Usage:
-#   faraday-multipart { version = "1.1.1"; }
-#   faraday-multipart { }  # latest (1.1.1)
+#   faraday-multipart { version = "1.2.0"; }
+#   faraday-multipart { }  # latest (1.2.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.1.1",
+  version ? "1.2.0",
   git ? { },
 }:
 let
   versions = {
     "1.0.4" = import ./1.0.4 { inherit lib stdenv ruby; };
+    "1.1.0" = import ./1.1.0 { inherit lib stdenv ruby; };
     "1.1.1" = import ./1.1.1 { inherit lib stdenv ruby; };
+    "1.2.0" = import ./1.2.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

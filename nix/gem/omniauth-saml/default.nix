@@ -6,6 +6,8 @@
 # omniauth-saml
 #
 # Available versions:
+#   2.2.2
+#   2.2.3
 #   2.2.4
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "2.2.2" = import ./2.2.2 { inherit lib stdenv ruby; };
+    "2.2.3" = import ./2.2.3 { inherit lib stdenv ruby; };
     "2.2.4" = import ./2.2.4 { inherit lib stdenv ruby; };
   };
 

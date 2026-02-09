@@ -6,6 +6,7 @@
 # erubi
 #
 # Available versions:
+#   1.12.0
 #   1.13.0
 #   1.13.1
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "1.12.0" = import ./1.12.0 { inherit lib stdenv ruby; };
     "1.13.0" = import ./1.13.0 { inherit lib stdenv ruby; };
     "1.13.1" = import ./1.13.1 { inherit lib stdenv ruby; };
   };

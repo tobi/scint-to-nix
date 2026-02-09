@@ -6,23 +6,27 @@
 # devise
 #
 # Available versions:
+#   4.9.3
 #   4.9.4
+#   5.0.0
 #
 # Usage:
-#   devise { version = "4.9.4"; }
-#   devise { }  # latest (4.9.4)
+#   devise { version = "5.0.0"; }
+#   devise { }  # latest (5.0.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "4.9.4",
+  version ? "5.0.0",
   git ? { },
 }:
 let
   versions = {
+    "4.9.3" = import ./4.9.3 { inherit lib stdenv ruby; };
     "4.9.4" = import ./4.9.4 { inherit lib stdenv ruby; };
+    "5.0.0" = import ./5.0.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

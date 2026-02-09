@@ -6,6 +6,8 @@
 # docile
 #
 # Available versions:
+#   1.3.5
+#   1.4.0
 #   1.4.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.3.5" = import ./1.3.5 { inherit lib stdenv ruby; };
+    "1.4.0" = import ./1.4.0 { inherit lib stdenv ruby; };
     "1.4.1" = import ./1.4.1 { inherit lib stdenv ruby; };
   };
 

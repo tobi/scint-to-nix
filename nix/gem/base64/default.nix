@@ -6,6 +6,8 @@
 # base64
 #
 # Available versions:
+#   0.1.2
+#   0.2.0
 #   0.3.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.1.2" = import ./0.1.2 { inherit lib stdenv ruby; };
+    "0.2.0" = import ./0.2.0 { inherit lib stdenv ruby; };
     "0.3.0" = import ./0.3.0 { inherit lib stdenv ruby; };
   };
 

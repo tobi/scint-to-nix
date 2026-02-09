@@ -1,0 +1,55 @@
+#
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# kamal 2.4.0
+#
+{
+  lib,
+  stdenv,
+  ruby,
+}:
+let
+  rubyVersion = "${ruby.version.majMin}.0";
+  arch = stdenv.hostPlatform.system;
+  prefix = "ruby/${rubyVersion}";
+in
+stdenv.mkDerivation {
+  pname = "kamal";
+  version = "2.4.0";
+  src = builtins.path {
+    path = ./source;
+    name = "kamal-2.4.0-source";
+  };
+
+  dontBuild = true;
+  dontConfigure = true;
+
+  passthru = { inherit prefix; };
+
+  installPhase = ''
+        local dest=$out/${prefix}
+        mkdir -p $dest/gems/kamal-2.4.0
+        cp -r . $dest/gems/kamal-2.4.0/
+        mkdir -p $dest/specifications
+        cat > $dest/specifications/kamal-2.4.0.gemspec <<'EOF'
+    Gem::Specification.new do |s|
+      s.name = "kamal"
+      s.version = "2.4.0"
+      s.summary = "kamal"
+      s.require_paths = ["lib"]
+      s.bindir = "bin"
+      s.executables = ["kamal"]
+      s.files = []
+    end
+    EOF
+        mkdir -p $dest/bin
+        cat > $dest/bin/kamal <<'BINSTUB'
+    #!/usr/bin/env ruby
+    require "rubygems"
+    load Gem.bin_path("kamal", "kamal", "2.4.0")
+    BINSTUB
+        chmod +x $dest/bin/kamal
+  '';
+}

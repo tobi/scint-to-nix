@@ -6,23 +6,31 @@
 # dotenv-rails
 #
 # Available versions:
+#   2.8.1
 #   3.1.2
+#   3.1.7
+#   3.1.8
+#   3.2.0
 #
 # Usage:
-#   dotenv-rails { version = "3.1.2"; }
-#   dotenv-rails { }  # latest (3.1.2)
+#   dotenv-rails { version = "3.2.0"; }
+#   dotenv-rails { }  # latest (3.2.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "3.1.2",
+  version ? "3.2.0",
   git ? { },
 }:
 let
   versions = {
+    "2.8.1" = import ./2.8.1 { inherit lib stdenv ruby; };
     "3.1.2" = import ./3.1.2 { inherit lib stdenv ruby; };
+    "3.1.7" = import ./3.1.7 { inherit lib stdenv ruby; };
+    "3.1.8" = import ./3.1.8 { inherit lib stdenv ruby; };
+    "3.2.0" = import ./3.2.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

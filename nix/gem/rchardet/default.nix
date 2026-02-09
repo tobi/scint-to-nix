@@ -6,6 +6,8 @@
 # rchardet
 #
 # Available versions:
+#   1.8.0
+#   1.9.0
 #   1.10.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.8.0" = import ./1.8.0 { inherit lib stdenv ruby; };
+    "1.9.0" = import ./1.9.0 { inherit lib stdenv ruby; };
     "1.10.0" = import ./1.10.0 { inherit lib stdenv ruby; };
   };
 

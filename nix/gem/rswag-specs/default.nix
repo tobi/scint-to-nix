@@ -6,6 +6,7 @@
 # rswag-specs
 #
 # Available versions:
+#   2.5.1
 #   2.17.0
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "2.5.1" = import ./2.5.1 { inherit lib stdenv ruby; };
     "2.17.0" = import ./2.17.0 { inherit lib stdenv ruby; };
   };
 

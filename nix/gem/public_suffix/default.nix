@@ -6,25 +6,31 @@
 # public_suffix
 #
 # Available versions:
+#   6.0.1
 #   6.0.2
 #   7.0.0
+#   7.0.1
+#   7.0.2
 #
 # Usage:
-#   public_suffix { version = "7.0.0"; }
-#   public_suffix { }  # latest (7.0.0)
+#   public_suffix { version = "7.0.2"; }
+#   public_suffix { }  # latest (7.0.2)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "7.0.0",
+  version ? "7.0.2",
   git ? { },
 }:
 let
   versions = {
+    "6.0.1" = import ./6.0.1 { inherit lib stdenv ruby; };
     "6.0.2" = import ./6.0.2 { inherit lib stdenv ruby; };
     "7.0.0" = import ./7.0.0 { inherit lib stdenv ruby; };
+    "7.0.1" = import ./7.0.1 { inherit lib stdenv ruby; };
+    "7.0.2" = import ./7.0.2 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

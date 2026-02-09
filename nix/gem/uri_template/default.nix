@@ -6,6 +6,8 @@
 # uri_template
 #
 # Available versions:
+#   0.5.3
+#   0.6.0
 #   0.7.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.5.3" = import ./0.5.3 { inherit lib stdenv ruby; };
+    "0.6.0" = import ./0.6.0 { inherit lib stdenv ruby; };
     "0.7.0" = import ./0.7.0 { inherit lib stdenv ruby; };
   };
 

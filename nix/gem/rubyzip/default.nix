@@ -6,7 +6,11 @@
 # rubyzip
 #
 # Available versions:
+#   2.3.2
 #   2.4.1
+#   3.0.0.rc2
+#   3.2.0
+#   3.2.1
 #   3.2.2
 #
 # Usage:
@@ -23,7 +27,11 @@
 }:
 let
   versions = {
+    "2.3.2" = import ./2.3.2 { inherit lib stdenv ruby; };
     "2.4.1" = import ./2.4.1 { inherit lib stdenv ruby; };
+    "3.0.0.rc2" = import ./3.0.0.rc2 { inherit lib stdenv ruby; };
+    "3.2.0" = import ./3.2.0 { inherit lib stdenv ruby; };
+    "3.2.1" = import ./3.2.1 { inherit lib stdenv ruby; };
     "3.2.2" = import ./3.2.2 { inherit lib stdenv ruby; };
   };
 

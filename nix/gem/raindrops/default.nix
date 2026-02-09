@@ -6,6 +6,8 @@
 # raindrops
 #
 # Available versions:
+#   0.19.2
+#   0.20.0
 #   0.20.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.19.2" = import ./0.19.2 { inherit lib stdenv ruby; };
+    "0.20.0" = import ./0.20.0 { inherit lib stdenv ruby; };
     "0.20.1" = import ./0.20.1 { inherit lib stdenv ruby; };
   };
 

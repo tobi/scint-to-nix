@@ -6,6 +6,8 @@
 # sassc
 #
 # Available versions:
+#   2.2.1
+#   2.3.0
 #   2.4.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "2.2.1" = import ./2.2.1 { inherit lib stdenv ruby; };
+    "2.3.0" = import ./2.3.0 { inherit lib stdenv ruby; };
     "2.4.0" = import ./2.4.0 { inherit lib stdenv ruby; };
   };
 

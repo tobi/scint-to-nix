@@ -6,6 +6,8 @@
 # netrc
 #
 # Available versions:
+#   0.10.2
+#   0.10.3
 #   0.11.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.10.2" = import ./0.10.2 { inherit lib stdenv ruby; };
+    "0.10.3" = import ./0.10.3 { inherit lib stdenv ruby; };
     "0.11.0" = import ./0.11.0 { inherit lib stdenv ruby; };
   };
 

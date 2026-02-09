@@ -7,22 +7,24 @@
 #
 # Available versions:
 #   0.9.119
+#   0.9.124
 #
 # Usage:
-#   rb_sys { version = "0.9.119"; }
-#   rb_sys { }  # latest (0.9.119)
+#   rb_sys { version = "0.9.124"; }
+#   rb_sys { }  # latest (0.9.124)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.9.119",
+  version ? "0.9.124",
   git ? { },
 }:
 let
   versions = {
     "0.9.119" = import ./0.9.119 { inherit lib stdenv ruby; };
+    "0.9.124" = import ./0.9.124 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

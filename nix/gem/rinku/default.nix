@@ -6,6 +6,8 @@
 # rinku
 #
 # Available versions:
+#   2.0.4
+#   2.0.5
 #   2.0.6
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "2.0.4" = import ./2.0.4 { inherit lib stdenv ruby; };
+    "2.0.5" = import ./2.0.5 { inherit lib stdenv ruby; };
     "2.0.6" = import ./2.0.6 { inherit lib stdenv ruby; };
   };
 

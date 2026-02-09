@@ -6,7 +6,9 @@
 # psych
 #
 # Available versions:
+#   5.1.2
 #   5.2.6
+#   5.3.0
 #   5.3.1
 #
 # Usage:
@@ -23,7 +25,23 @@
 }:
 let
   versions = {
+    "5.1.2" = import ./5.1.2 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
     "5.2.6" = import ./5.2.6 {
+      inherit
+        lib
+        stdenv
+        ruby
+        pkgs
+        ;
+    };
+    "5.3.0" = import ./5.3.0 {
       inherit
         lib
         stdenv

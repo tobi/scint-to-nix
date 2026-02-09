@@ -7,22 +7,24 @@
 #
 # Available versions:
 #   0.26.4
+#   0.26.5
 #
 # Usage:
-#   ruby-lsp { version = "0.26.4"; }
-#   ruby-lsp { }  # latest (0.26.4)
+#   ruby-lsp { version = "0.26.5"; }
+#   ruby-lsp { }  # latest (0.26.5)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.26.4",
+  version ? "0.26.5",
   git ? { },
 }:
 let
   versions = {
     "0.26.4" = import ./0.26.4 { inherit lib stdenv ruby; };
+    "0.26.5" = import ./0.26.5 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

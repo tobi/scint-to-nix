@@ -6,6 +6,8 @@
 # hana
 #
 # Available versions:
+#   1.3.5
+#   1.3.6
 #   1.3.7
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.3.5" = import ./1.3.5 { inherit lib stdenv ruby; };
+    "1.3.6" = import ./1.3.6 { inherit lib stdenv ruby; };
     "1.3.7" = import ./1.3.7 { inherit lib stdenv ruby; };
   };
 

@@ -7,26 +7,34 @@
 #
 # Available versions:
 #   1.1134.0
+#   1.1150.0
 #   1.1198.0
 #   1.1203.0
+#   1.1211.0
+#   1.1212.0
+#   1.1213.0
 #
 # Usage:
-#   aws-partitions { version = "1.1203.0"; }
-#   aws-partitions { }  # latest (1.1203.0)
+#   aws-partitions { version = "1.1213.0"; }
+#   aws-partitions { }  # latest (1.1213.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.1203.0",
+  version ? "1.1213.0",
   git ? { },
 }:
 let
   versions = {
     "1.1134.0" = import ./1.1134.0 { inherit lib stdenv ruby; };
+    "1.1150.0" = import ./1.1150.0 { inherit lib stdenv ruby; };
     "1.1198.0" = import ./1.1198.0 { inherit lib stdenv ruby; };
     "1.1203.0" = import ./1.1203.0 { inherit lib stdenv ruby; };
+    "1.1211.0" = import ./1.1211.0 { inherit lib stdenv ruby; };
+    "1.1212.0" = import ./1.1212.0 { inherit lib stdenv ruby; };
+    "1.1213.0" = import ./1.1213.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -6,6 +6,7 @@
 # bcrypt
 #
 # Available versions:
+#   3.1.19
 #   3.1.20
 #   3.1.21
 #
@@ -23,6 +24,7 @@
 }:
 let
   versions = {
+    "3.1.19" = import ./3.1.19 { inherit lib stdenv ruby; };
     "3.1.20" = import ./3.1.20 { inherit lib stdenv ruby; };
     "3.1.21" = import ./3.1.21 { inherit lib stdenv ruby; };
   };

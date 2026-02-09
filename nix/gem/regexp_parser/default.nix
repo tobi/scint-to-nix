@@ -6,7 +6,10 @@
 # regexp_parser
 #
 # Available versions:
+#   2.9.0
 #   2.10.0
+#   2.11.1
+#   2.11.2
 #   2.11.3
 #
 # Usage:
@@ -23,7 +26,10 @@
 }:
 let
   versions = {
+    "2.9.0" = import ./2.9.0 { inherit lib stdenv ruby; };
     "2.10.0" = import ./2.10.0 { inherit lib stdenv ruby; };
+    "2.11.1" = import ./2.11.1 { inherit lib stdenv ruby; };
+    "2.11.2" = import ./2.11.2 { inherit lib stdenv ruby; };
     "2.11.3" = import ./2.11.3 { inherit lib stdenv ruby; };
   };
 

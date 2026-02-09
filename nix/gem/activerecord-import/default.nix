@@ -6,23 +6,27 @@
 # activerecord-import
 #
 # Available versions:
+#   2.0.0
 #   2.1.0
+#   2.2.0
 #
 # Usage:
-#   activerecord-import { version = "2.1.0"; }
-#   activerecord-import { }  # latest (2.1.0)
+#   activerecord-import { version = "2.2.0"; }
+#   activerecord-import { }  # latest (2.2.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "2.1.0",
+  version ? "2.2.0",
   git ? { },
 }:
 let
   versions = {
+    "2.0.0" = import ./2.0.0 { inherit lib stdenv ruby; };
     "2.1.0" = import ./2.1.0 { inherit lib stdenv ruby; };
+    "2.2.0" = import ./2.2.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -6,6 +6,7 @@
 # solid_cable
 #
 # Available versions:
+#   3.0.5
 #   3.0.12
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "3.0.5" = import ./3.0.5 { inherit lib stdenv ruby; };
     "3.0.12" = import ./3.0.12 { inherit lib stdenv ruby; };
   };
 

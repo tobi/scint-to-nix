@@ -6,6 +6,7 @@
 # kamal
 #
 # Available versions:
+#   2.4.0
 #   2.10.1
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "2.4.0" = import ./2.4.0 { inherit lib stdenv ruby; };
     "2.10.1" = import ./2.10.1 { inherit lib stdenv ruby; };
   };
 

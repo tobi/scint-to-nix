@@ -6,6 +6,7 @@
 # solid_cache
 #
 # Available versions:
+#   1.0.6
 #   1.0.10
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "1.0.6" = import ./1.0.6 { inherit lib stdenv ruby; };
     "1.0.10" = import ./1.0.10 { inherit lib stdenv ruby; };
   };
 

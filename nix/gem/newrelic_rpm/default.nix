@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   9.6.0
+#   9.24.0
+#   10.0.0
+#   10.1.0
 #
 # Usage:
-#   newrelic_rpm { version = "9.6.0"; }
-#   newrelic_rpm { }  # latest (9.6.0)
+#   newrelic_rpm { version = "10.1.0"; }
+#   newrelic_rpm { }  # latest (10.1.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "9.6.0",
+  version ? "10.1.0",
   git ? { },
 }:
 let
   versions = {
     "9.6.0" = import ./9.6.0 { inherit lib stdenv ruby; };
+    "9.24.0" = import ./9.24.0 { inherit lib stdenv ruby; };
+    "10.0.0" = import ./10.0.0 { inherit lib stdenv ruby; };
+    "10.1.0" = import ./10.1.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

@@ -6,6 +6,8 @@
 # Ascii85
 #
 # Available versions:
+#   1.1.1
+#   2.0.0
 #   2.0.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.1.1" = import ./1.1.1 { inherit lib stdenv ruby; };
+    "2.0.0" = import ./2.0.0 { inherit lib stdenv ruby; };
     "2.0.1" = import ./2.0.1 { inherit lib stdenv ruby; };
   };
 

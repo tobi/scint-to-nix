@@ -6,6 +6,8 @@
 # tty-color
 #
 # Available versions:
+#   0.5.1
+#   0.5.2
 #   0.6.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.5.1" = import ./0.5.1 { inherit lib stdenv ruby; };
+    "0.5.2" = import ./0.5.2 { inherit lib stdenv ruby; };
     "0.6.0" = import ./0.6.0 { inherit lib stdenv ruby; };
   };
 

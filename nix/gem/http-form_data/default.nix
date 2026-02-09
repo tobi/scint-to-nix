@@ -6,6 +6,8 @@
 # http-form_data
 #
 # Available versions:
+#   2.1.1
+#   2.2.0
 #   2.3.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "2.1.1" = import ./2.1.1 { inherit lib stdenv ruby; };
+    "2.2.0" = import ./2.2.0 { inherit lib stdenv ruby; };
     "2.3.0" = import ./2.3.0 { inherit lib stdenv ruby; };
   };
 

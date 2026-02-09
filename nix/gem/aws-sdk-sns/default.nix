@@ -7,24 +7,32 @@
 #
 # Available versions:
 #   1.70.0
+#   1.92.0
 #   1.96.0
+#   1.110.0
+#   1.111.0
+#   1.112.0
 #
 # Usage:
-#   aws-sdk-sns { version = "1.96.0"; }
-#   aws-sdk-sns { }  # latest (1.96.0)
+#   aws-sdk-sns { version = "1.112.0"; }
+#   aws-sdk-sns { }  # latest (1.112.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.96.0",
+  version ? "1.112.0",
   git ? { },
 }:
 let
   versions = {
     "1.70.0" = import ./1.70.0 { inherit lib stdenv ruby; };
+    "1.92.0" = import ./1.92.0 { inherit lib stdenv ruby; };
     "1.96.0" = import ./1.96.0 { inherit lib stdenv ruby; };
+    "1.110.0" = import ./1.110.0 { inherit lib stdenv ruby; };
+    "1.111.0" = import ./1.111.0 { inherit lib stdenv ruby; };
+    "1.112.0" = import ./1.112.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

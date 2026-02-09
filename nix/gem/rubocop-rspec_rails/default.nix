@@ -6,6 +6,7 @@
 # rubocop-rspec_rails
 #
 # Available versions:
+#   2.28.3
 #   2.32.0
 #
 # Usage:
@@ -22,6 +23,7 @@
 }:
 let
   versions = {
+    "2.28.3" = import ./2.28.3 { inherit lib stdenv ruby; };
     "2.32.0" = import ./2.32.0 { inherit lib stdenv ruby; };
   };
 

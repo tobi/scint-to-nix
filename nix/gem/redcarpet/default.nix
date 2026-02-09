@@ -6,6 +6,8 @@
 # redcarpet
 #
 # Available versions:
+#   3.5.1
+#   3.6.0
 #   3.6.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "3.5.1" = import ./3.5.1 { inherit lib stdenv ruby; };
+    "3.6.0" = import ./3.6.0 { inherit lib stdenv ruby; };
     "3.6.1" = import ./3.6.1 { inherit lib stdenv ruby; };
   };
 

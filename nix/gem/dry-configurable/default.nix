@@ -6,6 +6,8 @@
 # dry-configurable
 #
 # Available versions:
+#   1.1.0
+#   1.2.0
 #   1.3.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.1.0" = import ./1.1.0 { inherit lib stdenv ruby; };
+    "1.2.0" = import ./1.2.0 { inherit lib stdenv ruby; };
     "1.3.0" = import ./1.3.0 { inherit lib stdenv ruby; };
   };
 

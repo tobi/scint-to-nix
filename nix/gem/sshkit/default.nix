@@ -6,6 +6,8 @@
 # sshkit
 #
 # Available versions:
+#   1.23.2
+#   1.24.0
 #   1.25.0
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "1.23.2" = import ./1.23.2 { inherit lib stdenv ruby; };
+    "1.24.0" = import ./1.24.0 { inherit lib stdenv ruby; };
     "1.25.0" = import ./1.25.0 { inherit lib stdenv ruby; };
   };
 

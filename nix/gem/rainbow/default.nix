@@ -6,6 +6,8 @@
 # rainbow
 #
 # Available versions:
+#   3.0.0
+#   3.1.0
 #   3.1.1
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "3.0.0" = import ./3.0.0 { inherit lib stdenv ruby; };
+    "3.1.0" = import ./3.1.0 { inherit lib stdenv ruby; };
     "3.1.1" = import ./3.1.1 { inherit lib stdenv ruby; };
   };
 

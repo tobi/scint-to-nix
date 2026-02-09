@@ -6,6 +6,8 @@
 # rubocop-factory_bot
 #
 # Available versions:
+#   2.25.1
+#   2.27.0
 #   2.27.1
 #   2.28.0
 #
@@ -23,6 +25,8 @@
 }:
 let
   versions = {
+    "2.25.1" = import ./2.25.1 { inherit lib stdenv ruby; };
+    "2.27.0" = import ./2.27.0 { inherit lib stdenv ruby; };
     "2.27.1" = import ./2.27.1 { inherit lib stdenv ruby; };
     "2.28.0" = import ./2.28.0 { inherit lib stdenv ruby; };
   };

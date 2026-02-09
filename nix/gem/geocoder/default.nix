@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   1.8.1
+#   1.8.4
+#   1.8.5
+#   1.8.6
 #
 # Usage:
-#   geocoder { version = "1.8.1"; }
-#   geocoder { }  # latest (1.8.1)
+#   geocoder { version = "1.8.6"; }
+#   geocoder { }  # latest (1.8.6)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.8.1",
+  version ? "1.8.6",
   git ? { },
 }:
 let
   versions = {
     "1.8.1" = import ./1.8.1 { inherit lib stdenv ruby; };
+    "1.8.4" = import ./1.8.4 { inherit lib stdenv ruby; };
+    "1.8.5" = import ./1.8.5 { inherit lib stdenv ruby; };
+    "1.8.6" = import ./1.8.6 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

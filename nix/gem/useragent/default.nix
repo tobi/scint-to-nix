@@ -6,6 +6,8 @@
 # useragent
 #
 # Available versions:
+#   0.16.9
+#   0.16.10
 #   0.16.11
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "0.16.9" = import ./0.16.9 { inherit lib stdenv ruby; };
+    "0.16.10" = import ./0.16.10 { inherit lib stdenv ruby; };
     "0.16.11" = import ./0.16.11 { inherit lib stdenv ruby; };
   };
 

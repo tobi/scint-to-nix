@@ -6,6 +6,9 @@
 # rubocop-capybara
 #
 # Available versions:
+#   2.20.0
+#   2.21.0
+#   2.22.0
 #   2.22.1
 #
 # Usage:
@@ -22,6 +25,9 @@
 }:
 let
   versions = {
+    "2.20.0" = import ./2.20.0 { inherit lib stdenv ruby; };
+    "2.21.0" = import ./2.21.0 { inherit lib stdenv ruby; };
+    "2.22.0" = import ./2.22.0 { inherit lib stdenv ruby; };
     "2.22.1" = import ./2.22.1 { inherit lib stdenv ruby; };
   };
 

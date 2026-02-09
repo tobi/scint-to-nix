@@ -6,6 +6,8 @@
 # kgio
 #
 # Available versions:
+#   2.11.2
+#   2.11.3
 #   2.11.4
 #
 # Usage:
@@ -22,6 +24,8 @@
 }:
 let
   versions = {
+    "2.11.2" = import ./2.11.2 { inherit lib stdenv ruby; };
+    "2.11.3" = import ./2.11.3 { inherit lib stdenv ruby; };
     "2.11.4" = import ./2.11.4 { inherit lib stdenv ruby; };
   };
 

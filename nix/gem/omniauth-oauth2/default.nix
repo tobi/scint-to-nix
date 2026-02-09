@@ -8,23 +8,25 @@
 # Available versions:
 #   1.7.3
 #   1.8.0
+#   1.9.0
 #
 # Usage:
-#   omniauth-oauth2 { version = "1.8.0"; }
-#   omniauth-oauth2 { }  # latest (1.8.0)
+#   omniauth-oauth2 { version = "1.9.0"; }
+#   omniauth-oauth2 { }  # latest (1.9.0)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "1.8.0",
+  version ? "1.9.0",
   git ? { },
 }:
 let
   versions = {
     "1.7.3" = import ./1.7.3 { inherit lib stdenv ruby; };
     "1.8.0" = import ./1.8.0 { inherit lib stdenv ruby; };
+    "1.9.0" = import ./1.9.0 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

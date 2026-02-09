@@ -7,22 +7,28 @@
 #
 # Available versions:
 #   2.1.0
+#   2.2.0
+#   2.2.1
+#   2.2.2
 #
 # Usage:
-#   database_cleaner-active_record { version = "2.1.0"; }
-#   database_cleaner-active_record { }  # latest (2.1.0)
+#   database_cleaner-active_record { version = "2.2.2"; }
+#   database_cleaner-active_record { }  # latest (2.2.2)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "2.1.0",
+  version ? "2.2.2",
   git ? { },
 }:
 let
   versions = {
     "2.1.0" = import ./2.1.0 { inherit lib stdenv ruby; };
+    "2.2.0" = import ./2.2.0 { inherit lib stdenv ruby; };
+    "2.2.1" = import ./2.2.1 { inherit lib stdenv ruby; };
+    "2.2.2" = import ./2.2.2 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {

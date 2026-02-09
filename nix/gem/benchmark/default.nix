@@ -6,6 +6,8 @@
 # benchmark
 #
 # Available versions:
+#   0.3.0
+#   0.4.0
 #   0.4.1
 #   0.5.0
 #
@@ -23,6 +25,8 @@
 }:
 let
   versions = {
+    "0.3.0" = import ./0.3.0 { inherit lib stdenv ruby; };
+    "0.4.0" = import ./0.4.0 { inherit lib stdenv ruby; };
     "0.4.1" = import ./0.4.1 { inherit lib stdenv ruby; };
     "0.5.0" = import ./0.5.0 { inherit lib stdenv ruby; };
   };
