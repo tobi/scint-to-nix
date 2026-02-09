@@ -26,7 +26,6 @@ let
   };
 
   gitRevs = {
-    "433ca320a42d" = import ./git-433ca320a42d { inherit lib stdenv ruby; };
   };
 in
 if git ? rev then
