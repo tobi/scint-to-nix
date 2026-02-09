@@ -17,9 +17,29 @@ else
   projects=("${all_projects[@]}")
 fi
 
+now() { date +%s%3N; }  # milliseconds since epoch
+
+fmt_duration() {
+  local ms=$1
+  if (( ms < 1000 )); then
+    printf "%dms" "$ms"
+  else
+    local secs=$(( ms / 1000 ))
+    local frac=$(( ms % 1000 / 100 ))
+    printf "%d.%ds" "$secs" "$frac"
+  fi
+}
+
 passed=0
 failed=0
 failures=()
+
+# Collect results for the summary table
+declare -a result_projects=()
+declare -a result_statuses=()
+declare -a result_devshell_times=()
+declare -a result_test_times=()
+declare -a result_total_times=()
 
 for project in "${projects[@]}"; do
   script="$dir/$project/run-tests"
@@ -29,17 +49,61 @@ for project in "${projects[@]}"; do
   fi
 
   echo "=== $project ==="
-  if "$script" 2>&1; then
+  t_start=$(now)
+  t_devshell=""
+
+  # Run test, tee output while watching for "devshell ready" marker
+  rc=0
+  while IFS= read -r line; do
+    if [[ "$line" == ___EXIT_CODE_* ]]; then
+      rc="${line#___EXIT_CODE_}"
+    else
+      echo "$line"
+      if [[ -z "$t_devshell" && "$line" == *"devshell ready"* ]]; then
+        t_devshell=$(now)
+      fi
+    fi
+  done < <("$script" 2>&1; echo "___EXIT_CODE_$?") || true
+
+  t_end=$(now)
+
+  # Fall back if devshell marker wasn't seen
+  [[ -z "$t_devshell" ]] && t_devshell=$t_start
+
+  devshell_ms=$(( t_devshell - t_start ))
+  test_ms=$(( t_end - t_devshell ))
+  total_ms=$(( t_end - t_start ))
+
+  result_projects+=("$project")
+  result_devshell_times+=("$(fmt_duration $devshell_ms)")
+  result_test_times+=("$(fmt_duration $test_ms)")
+  result_total_times+=("$(fmt_duration $total_ms)")
+
+  if [[ "$rc" == "0" ]]; then
     passed=$((passed + 1))
-    echo "=== $project === PASS"
+    result_statuses+=("✅")
+    echo "=== $project === PASS ($(fmt_duration $total_ms))"
   else
     failed=$((failed + 1))
     failures+=("$project")
-    echo "=== $project === FAIL"
+    result_statuses+=("❌")
+    echo "=== $project === FAIL ($(fmt_duration $total_ms))"
   fi
   echo
 done
 
+# Print summary table
+echo "================================"
+printf "%-14s %-6s %10s %10s %10s\n" "Project" "Result" "Devshell" "Tests" "Total"
+printf "%-14s %-6s %10s %10s %10s\n" "-------" "------" "--------" "-----" "-----"
+for i in "${!result_projects[@]}"; do
+  printf "%-14s %-6s %10s %10s %10s\n" \
+    "${result_projects[$i]}" \
+    "${result_statuses[$i]}" \
+    "${result_devshell_times[$i]}" \
+    "${result_test_times[$i]}" \
+    "${result_total_times[$i]}"
+done
 echo "================================"
 echo "$passed passed, $failed failed"
 if [ "$failed" -gt 0 ]; then

@@ -112,13 +112,12 @@ in
 lib.concatMap versionsOf dirs
 EOF
 
-    nix-build --no-out-link --keep-going "$nixexpr" \
-        >/dev/null 2> >(tee -a "$buildlog" >&2) || true
+    paths=$(nix-build --no-out-link --keep-going "$nixexpr" \
+        2> >(tee -a "$buildlog" >&2)) || true
     rm -f "$nixexpr"
 
-    failed=$(grep -oP "'/nix/store/[^']+'" "$buildlog" 2>/dev/null | sort -u | wc -l || true)
-    failed=${failed:-0}
-    failed=$((failed + 0))  # ensure numeric
-    echo "$((total - failed))/${total} built, ${failed} failed."
+    built=$(echo "$paths" | grep -c '/nix/store/' || true)
+    failed=$((total - built))
+    echo "${built}/${total} built, ${failed} failed."
     collect_failure_logs "$buildlog"
 fi

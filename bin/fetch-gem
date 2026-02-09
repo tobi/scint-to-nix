@@ -84,7 +84,8 @@ def extract_metadata(gem_file, name, version)
             yaml = Zlib::GzipReader.new(StringIO.new(entry.read)).read
             meta = YAML.safe_load(yaml,
               permitted_classes: [Gem::Specification, Gem::Version, Gem::Requirement,
-                                 Gem::Dependency, Symbol, Time])
+                                 Gem::Dependency, Symbol, Time],
+              aliases: true)
             break
           end
         end

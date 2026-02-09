@@ -3,30 +3,26 @@
 # ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
-# unf_ext
+# lz4-ruby
 #
 # Available versions:
-#   0.0.8.2
-#   0.0.9
-#   0.0.9.1
+#   0.3.3
 #
 # Usage:
-#   unf_ext { version = "0.0.9.1"; }
-#   unf_ext { }  # latest (0.0.9.1)
+#   lz4-ruby { version = "0.3.3"; }
+#   lz4-ruby { }  # latest (0.3.3)
 #
 {
   lib,
   stdenv,
   ruby,
   pkgs ? null,
-  version ? "0.0.9.1",
+  version ? "0.3.3",
   git ? { },
 }:
 let
   versions = {
-    "0.0.8.2" = import ./0.0.8.2 { inherit lib stdenv ruby; };
-    "0.0.9" = import ./0.0.9 { inherit lib stdenv ruby; };
-    "0.0.9.1" = import ./0.0.9.1 { inherit lib stdenv ruby; };
+    "0.3.3" = import ./0.3.3 { inherit lib stdenv ruby; };
   };
 
   gitRevs = {
@@ -34,7 +30,7 @@ let
 in
 if git ? rev then
   gitRevs.${git.rev}
-    or (throw "unf_ext: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
+    or (throw "lz4-ruby: unknown git rev '${git.rev}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames gitRevs)}")
 else
   versions.${version}
-    or (throw "unf_ext: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")
+    or (throw "lz4-ruby: unknown version '${version}'. Available: ${builtins.concatStringsSep ", " (builtins.attrNames versions)}")

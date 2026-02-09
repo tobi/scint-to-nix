@@ -3,7 +3,7 @@
 # ║  GENERATED — do not edit.  Run bin/generate to regenerate  ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
-# 1411 gems
+# 1414 gems
 #
 # Usage:
 #   gems = import ./nix/modules/gem.nix { inherit pkgs ruby; };
@@ -837,6 +837,7 @@ in
   "loofah" = args: gem "loofah" args;
   "lru_redux" = args: gem "lru_redux" args;
   "lumberjack" = args: gem "lumberjack" args;
+  "lz4-ruby" = args: gem "lz4-ruby" args;
   "macaddr" = args: gem "macaddr" args;
   "mail" = args: gem "mail" args;
   "mapkick-rb" = args: gem "mapkick-rb" args;
@@ -1176,6 +1177,7 @@ in
   "ruby-openai" = args: gem "ruby-openai" args;
   "ruby-prof" = args: gem "ruby-prof" args;
   "ruby-progressbar" = args: gem "ruby-progressbar" args;
+  "ruby-rc4" = args: gem "ruby-rc4" args;
   "ruby-readability" = args: gem "ruby-readability" args;
   "ruby-saml" = args: gem "ruby-saml" args;
   "ruby-statistics" = args: gem "ruby-statistics" args;
@@ -1332,6 +1334,7 @@ in
   "tidewave" = args: gem "tidewave" args;
   "tiktoken_ruby" = args: gem "tiktoken_ruby" args;
   "tilt" = args: gem "tilt" args;
+  "time_diff" = args: gem "time_diff" args;
   "timecop" = args: gem "timecop" args;
   "timeliness" = args: gem "timeliness" args;
   "timeout" = args: gem "timeout" args;
@@ -1441,7 +1444,4 @@ in
   "zip_kit" = args: gem "zip_kit" args;
   "zlib" = args: gem "zlib" args;
   "zonebie" = args: gem "zonebie" args;
-  "azure-storage-ruby" = args: gem "azure-storage-ruby" args;
-  "devise-secure_password" = args: gem "devise-secure_password" args;
-  "acts_as_follower" = args: gem "acts_as_follower" args;
 }
