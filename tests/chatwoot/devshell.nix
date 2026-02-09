@@ -42,7 +42,7 @@ in pkgs.mkShell {
       echo "port = $PGPORT" >> "$PGDATA/postgresql.conf"
       echo "shared_preload_libraries = 'pg_stat_statements'" >> "$PGDATA/postgresql.conf"
     fi
-    pg_ctl -D "$PGDATA" -l "$TMPDIR/pg.log" -o "-k $PGDATA" start >/dev/null 2>&1 || true
+    pg_ctl -D "$PGDATA" -l "$TMPDIR/pg.log" -o "-k $PGDATA" -w start >/dev/null 2>&1 || true
 
     # Redis
     redis-server --daemonize yes --port 6380 --dir "$TMPDIR" --logfile "$TMPDIR/redis.log" >/dev/null 2>&1 || true
