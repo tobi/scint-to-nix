@@ -1,0 +1,1 @@
+{ pkgs, ruby }: [ pkgs.openssl ]

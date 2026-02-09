@@ -1,0 +1,142 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# generate-gemset — produce a project .nix gemset from its Gemfile.lock
+#
+# Produces: nix/<project>.nix
+# Returns an attrset of all gem derivations. Use with:
+#   builtins.attrValues gems  -> list of all derivations for symlinkJoin
+#
+# Usage:
+#   generate-gemset fizzy ../fizzy/Gemfile.lock
+
+require "bundler"
+require "fileutils"
+
+OVERLAYS_DIR = File.join(__dir__, "..", "overlays")
+
+project   = ARGV[0] or abort "Usage: generate-gemset <project> <Gemfile.lock>"
+lockfile  = ARGV[1] or abort "Usage: generate-gemset <project> <Gemfile.lock>"
+output_dir = File.join(__dir__, "..", "nix")
+
+gemfile = lockfile.sub(/Gemfile\.lock$/, "Gemfile")
+ENV["BUNDLE_GEMFILE"] = File.expand_path(gemfile) if File.exist?(gemfile)
+
+lf = Bundler::LockfileParser.new(File.read(lockfile))
+
+# Which gems have overlays?
+overlays = {}
+if Dir.exist?(OVERLAYS_DIR)
+  Dir.glob(File.join(OVERLAYS_DIR, "*.nix")).each do |f|
+    overlays[File.basename(f, ".nix")] = true
+  end
+end
+
+# Classify specs
+rubygem_specs = []
+git_specs = []
+
+lf.specs.each do |spec|
+  src = spec.source
+  case src
+  when Bundler::Source::Git
+    base = File.basename(src.uri, ".git")
+    git_specs << { spec: spec, uri: src.uri, rev: src.revision,
+                   base: base, shortrev: src.revision[0, 12] }
+  when Bundler::Source::Path
+    next  # skip path sources
+  else
+    existing = rubygem_specs.find { |s| s.name == spec.name }
+    if existing
+      rubygem_specs.delete(existing) if spec.platform.to_s == "ruby"
+      next unless spec.platform.to_s == "ruby"
+    end
+    rubygem_specs << spec
+  end
+end
+
+# Group git specs by repo+rev
+git_repos = {}
+git_specs.each do |gs|
+  key = "#{gs[:base]}-#{gs[:shortrev]}"
+  git_repos[key] ||= { uri: gs[:uri], rev: gs[:rev], base: gs[:base],
+                        shortrev: gs[:shortrev], gems: [] }
+  git_repos[key][:gems] << gs[:spec] unless git_repos[key][:gems].any? { |e| e.name == gs[:spec].name }
+end
+
+$stderr.puts "#{project}: #{rubygem_specs.size} rubygems, #{git_specs.size} git (#{git_repos.size} repos)"
+
+# -- Generate gemset .nix --------------------------------------------------
+
+nix = +""
+nix << "# #{project.upcase} — #{rubygem_specs.size + git_specs.size} gems\n"
+nix << "# Generated from #{File.basename(lockfile)}\n"
+nix << "{ pkgs, ruby }:\n\n"
+nix << "let\n"
+nix << "  call = path: pkgs.callPackage path { inherit ruby; };\n"
+nix << "  callP = path: pkgs.callPackage path { inherit ruby pkgs; };\n"
+nix << "in {\n"
+
+rubygem_specs.sort_by(&:name).each do |spec|
+  fn = overlays.key?(spec.name) ? "callP" : "call"
+  nix << "  \"#{spec.name}\" = #{fn} ./#{spec.name}/#{spec.version};\n"
+end
+
+git_repos.each do |repo_key, repo|
+  nix << "\n  # git: #{repo[:base]} @ #{repo[:shortrev]}\n"
+  nix << "  \"#{repo_key}\" = call ./git/#{repo_key};\n"
+end
+
+nix << "}\n"
+
+FileUtils.mkdir_p(output_dir)
+File.write(File.join(output_dir, "#{project}.nix"), nix)
+$stderr.puts "  -> nix/#{project}.nix"
+
+# -- Generate git repo derivations -----------------------------------------
+
+git_repos.each do |repo_key, repo|
+  source_dir = nil
+  repo[:gems].each do |spec|
+    candidate = File.join(__dir__, "..", "cache", "sources", "#{spec.name}-#{spec.version}")
+    if Dir.exist?(candidate)
+      source_dir = File.expand_path(candidate)
+      break
+    end
+  end
+
+  unless source_dir
+    $stderr.puts "  WARN: no source for git repo #{repo_key}"
+    next
+  end
+
+  git_dir = File.join(output_dir, "git", repo_key)
+  FileUtils.mkdir_p(git_dir)
+  FileUtils.ln_sf(source_dir, File.join(git_dir, "source"))
+
+  gnix = +""
+  gnix << "# Git: #{repo[:base]} @ #{repo[:shortrev]}\n"
+  gnix << "# URI: #{repo[:uri]}\n"
+  gnix << "# Gems: #{repo[:gems].map(&:name).join(", ")}\n"
+  gnix << "{ lib, stdenv, ruby }:\n\n"
+  gnix << "let\n"
+  gnix << "  rubyVersion = \"${ruby.version.majMin}.0\";\n"
+  gnix << "  prefix = \"ruby/${rubyVersion}\";\n"
+  gnix << "in\n\n"
+  gnix << "stdenv.mkDerivation {\n"
+  gnix << "  pname = \"#{repo[:base]}\";\n"
+  gnix << "  version = \"#{repo[:shortrev]}\";\n"
+  gnix << "  src = builtins.path { path = ./source; name = \"#{repo_key}-source\"; };\n\n"
+  gnix << "  dontBuild = true;\n"
+  gnix << "  dontConfigure = true;\n\n"
+  gnix << "  passthru = { inherit prefix; };\n\n"
+  gnix << "  installPhase = ''\n"
+  gnix << "    local dest=$out/${prefix}/bundler/gems/#{repo_key}\n"
+  gnix << "    mkdir -p $dest\n"
+  gnix << "    cp -r . $dest/\n"
+  gnix << "  '';\n"
+  gnix << "}\n"
+
+  File.write(File.join(git_dir, "default.nix"), gnix)
+  $stderr.puts "  -> nix/git/#{repo_key}/"
+end
