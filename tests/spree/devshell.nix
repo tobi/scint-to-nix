@@ -1,7 +1,7 @@
 # Spree dev/test shell — SQLite for testing.
 #
 # Usage:
-#   cd ~/src/ruby-tests/spree && nix-shell ../../tries/2026-02-07-scint/gem2nix/tests/spree/devshell.nix
+#   cd ~/src/ruby-tests/spree && nix-shell ../../tries/2026-02-07-scint/gemset2nix/tests/spree/devshell.nix
 #
 { pkgs ? import <nixpkgs> {}
 , ruby ? pkgs.ruby_3_4

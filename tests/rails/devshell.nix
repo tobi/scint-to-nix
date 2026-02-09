@@ -1,7 +1,7 @@
 # Rails framework dev/test shell — for testing the rails repo itself.
 #
 # Usage:
-#   cd ~/src/ruby-tests/rails && nix-shell ../../tries/2026-02-07-scint/gem2nix/tests/rails/devshell.nix
+#   cd ~/src/ruby-tests/rails && nix-shell ../../tries/2026-02-07-scint/gemset2nix/tests/rails/devshell.nix
 #
 { pkgs ? import <nixpkgs> {}
 , ruby ? pkgs.ruby_3_4

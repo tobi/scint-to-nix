@@ -1,8 +1,8 @@
-# gem2nix — Product Requirements Document
+# gemset2nix — Product Requirements Document
 
 ## Overview
 
-**gem2nix** turns a Ruby app's `Gemfile.lock` into hermetic, individually-cacheable Nix derivations — one per gem. It bridges scint's global gem cache with Nix's build/store model so that every gem is a reproducible, independently-cacheable store path.
+**gemset2nix** turns a Ruby app's `Gemfile.lock` into hermetic, individually-cacheable Nix derivations — one per gem. It bridges scint's global gem cache with Nix's build/store model so that every gem is a reproducible, independently-cacheable store path.
 
 ## Goals
 

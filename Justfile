@@ -1,4 +1,4 @@
-# gem2nix — Justfile
+# gemset2nix — Justfile
 #
 # Usage:
 #   just build                   # build every gem derivation

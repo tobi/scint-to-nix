@@ -1,7 +1,7 @@
-# Dev shell for fizzy with all gems pre-built via gem2nix.
+# Dev shell for fizzy with all gems pre-built via gemset2nix.
 #
 # Usage:
-#   cd fizzy && nix-shell ../gem2nix/tests/fizzy/devshell.nix
+#   cd fizzy && nix-shell ../gemset2nix/tests/fizzy/devshell.nix
 #
 { pkgs ? import <nixpkgs> {}
 , ruby ? pkgs.ruby_3_4

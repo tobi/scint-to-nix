@@ -1,4 +1,4 @@
-# gem2nix
+# gemset2nix
 
 Turn a Ruby app's `Gemfile.lock` into hermetic, individually-cacheable Nix derivations — one per gem. The output is a `BUNDLE_PATH`-compatible directory that `require "bundler/setup"` accepts without modification.
 
@@ -112,7 +112,7 @@ in pkgs.mkShell {
 
 ```bash
 cd fizzy
-nix-shell ../gem2nix/tests/fizzy/devshell.nix
+nix-shell ../gemset2nix/tests/fizzy/devshell.nix
 bundle exec rails test  # 1026 tests, 0 errors
 ```
 
@@ -138,7 +138,7 @@ just build fizzy
 just lint fizzy
 
 # 7. Enter devshell
-cd ../fizzy && nix-shell ../gem2nix/tests/fizzy/devshell.nix
+cd ../fizzy && nix-shell ../gemset2nix/tests/fizzy/devshell.nix
 ```
 
 ## Justfile commands

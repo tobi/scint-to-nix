@@ -1,7 +1,7 @@
 # Discourse dev/test shell.
 #
 # Usage:
-#   cd ~/src/ruby-tests/discourse && nix-shell ../../tries/2026-02-07-scint/gem2nix/tests/discourse/devshell.nix
+#   cd ~/src/ruby-tests/discourse && nix-shell ../../tries/2026-02-07-scint/gemset2nix/tests/discourse/devshell.nix
 #
 { pkgs ? import <nixpkgs> {}
 , ruby ? pkgs.ruby_3_3
