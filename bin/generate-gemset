@@ -101,7 +101,7 @@ end
 
 git_repos.each do |repo_key, repo|
   nix << "\n  # git: #{repo[:base]} @ #{repo[:shortrev]}\n"
-  nix << "  \"#{repo_key}\" = call ./git/#{repo_key};\n"
+  nix << "  \"#{repo_key}\" = call ./#{repo[:base]}/git-#{repo[:shortrev]};\n"
 end
 
 nix << "}\n"
@@ -127,7 +127,7 @@ git_repos.each do |repo_key, repo|
     next
   end
 
-  git_dir = File.join(output_dir, "git", repo_key)
+  git_dir = File.join(output_dir, repo[:base], "git-#{repo[:shortrev]}")
   FileUtils.mkdir_p(git_dir)
   FileUtils.ln_sf(source_dir, File.join(git_dir, "source"))
 
@@ -180,5 +180,5 @@ git_repos.each do |repo_key, repo|
   gnix << "}\n"
 
   File.write(File.join(git_dir, "default.nix"), gnix)
-  $stderr.puts "  -> nix/git/#{repo_key}/"
+  $stderr.puts "  -> nix/#{repo[:base]}/git-#{repo[:shortrev]}/"
 end

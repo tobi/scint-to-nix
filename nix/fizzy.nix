@@ -160,11 +160,11 @@ in {
   "zip_kit" = call ./zip_kit/6.3.4;
 
   # git: rails @ 60d92e4e7dfe
-  "rails-60d92e4e7dfe" = call ./git/rails-60d92e4e7dfe;
+  "rails-60d92e4e7dfe" = call ./rails/git-60d92e4e7dfe;
 
   # git: lexxy @ 4f0fc4d5773b
-  "lexxy-4f0fc4d5773b" = call ./git/lexxy-4f0fc4d5773b;
+  "lexxy-4f0fc4d5773b" = call ./lexxy/git-4f0fc4d5773b;
 
   # git: useragent @ 433ca320a42d
-  "useragent-433ca320a42d" = call ./git/useragent-433ca320a42d;
+  "useragent-433ca320a42d" = call ./useragent/git-433ca320a42d;
 }
