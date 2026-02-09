@@ -184,6 +184,41 @@ gems = by_name.values.map do |spec|
     require_paths = require_paths.select { |p| Dir.exist?(File.join(base, p)) }
   end
 
+  # Executables: prefer spec.marshal (if populated), fall back to .gem YAML metadata
+  executables = nil
+  bindir = nil
+  if real_spec && real_spec.respond_to?(:executables) && !real_spec.executables.empty?
+    executables = real_spec.executables
+    bindir = real_spec.bindir
+  end
+
+  if executables.nil? || executables.empty?
+    gem_path = cache.inbound_path(spec)
+    if File.exist?(gem_path)
+      begin
+        File.open(gem_path, "rb") do |io|
+          Gem::Package::TarReader.new(io) do |tar|
+            tar.each do |entry|
+              if entry.full_name == "metadata.gz"
+                yaml = Zlib::GzipReader.new(StringIO.new(entry.read)).read
+                meta = YAML.safe_load(yaml,
+                  permitted_classes: [Gem::Specification, Gem::Version, Gem::Requirement, Gem::Dependency, Symbol, Time])
+                executables = meta.executables rescue nil
+                bindir = meta.bindir rescue nil
+                break
+              end
+            end
+          end
+        end
+      rescue => e
+        # ignore
+      end
+    end
+  end
+
+  executables ||= []
+  bindir ||= "exe"
+
   nix_attr = full_name
 
   # Detect git source
@@ -212,6 +247,8 @@ gems = by_name.values.map do |spec|
     source_subdir: source_subdir,
     extconfs: extconfs,
     require_paths: require_paths,
+    executables: executables,
+    bindir: bindir,
     git_source: git_source,
   }
 end
@@ -362,6 +399,10 @@ gems.each do |g|
   end
   nix << "      s.summary = \"#{name}\"\n"
   nix << "      s.require_paths = [#{g[:require_paths].map { |p| "\"#{p}\"" }.join(", ")}]\n"
+  unless g[:executables].empty?
+    nix << "      s.bindir = \"#{g[:bindir]}\"\n"
+    nix << "      s.executables = [#{g[:executables].map { |e| "\"#{e}\"" }.join(", ")}]\n"
+  end
   nix << "      s.files = []\n"
   g[:deps].each { |d| nix << "      s.add_dependency \"#{d}\"\n" }
   nix << "    end\n"
@@ -420,13 +461,18 @@ git_checkouts.each do |checkout_dir, info|
   source_dir = File.join(checkout_out_dir, "source")
 
   unless Dir.exist?(source_dir)
-    FileUtils.mkdir_p(checkout_out_dir)
-    # For monorepos, prefer the gem with no source_subdir (the root gem) since its
-    # cached_dir contains the full repo. For single-gem repos, any gem works.
-    representative = info[:gems].find { |g| !g[:source_subdir] || g[:source_subdir].empty? } || info[:gems].first
-    repo_root = representative[:cached_dir]
-    FileUtils.cp_r(repo_root, source_dir)
-    $stderr.puts "  Copied git checkout: #{checkout_dir} from #{repo_root}"
+    FileUtils.mkdir_p(source_dir)
+    # Merge all cached dirs from all gems in this git checkout.
+    # For monorepos (rails, azure-storage-ruby), each sub-gem's cached dir
+    # may only contain its own slice. We overlay them all into one tree.
+    info[:gems].each do |g|
+      Dir.children(g[:cached_dir]).each do |child|
+        src = File.join(g[:cached_dir], child)
+        dst = File.join(source_dir, child)
+        FileUtils.cp_r(src, dst) unless File.exist?(dst)
+      end
+    end
+    $stderr.puts "  Merged git checkout: #{checkout_dir} from #{info[:gems].size} gem(s)"
   end
 
   # Write default.nix — simple copy, no build
@@ -479,6 +525,31 @@ nix << "\n    # Git-sourced gem checkouts (full repo source)\n"
 git_checkouts.each do |checkout_dir, _|
   nix_var = "gitCheckout_#{checkout_dir.gsub("-", "_")}"
   nix << "    ln -s ${#{nix_var}} $prefix/bundler/gems/#{checkout_dir}\n"
+end
+
+# Gem binstubs in ruby/<ver>/bin/
+gems_with_exes = gems.select { |g| !g[:executables].empty? }
+unless gems_with_exes.empty?
+  nix << "\n    # Gem binstubs\n"
+  nix << "    mkdir -p $prefix/bin\n"
+  gems_with_exes.each do |g|
+    full = g[:platform] == "ruby" ? "#{g[:name]}-#{g[:version]}" : "#{g[:name]}-#{g[:version]}-#{g[:platform]}"
+    g[:executables].each do |exe|
+      if g[:git_source]
+        checkout_dir = g[:git_source][:checkout_dir]
+        nix_var = "gitCheckout_#{checkout_dir.gsub("-", "_")}"
+        # Git gems: exe is relative to the checkout subdir
+        source_subdir = g[:source_subdir]
+        if source_subdir
+          nix << "    ln -sf ${#{nix_var}}/#{source_subdir}/#{g[:bindir]}/#{exe} $prefix/bin/#{exe}\n"
+        else
+          nix << "    ln -sf ${#{nix_var}}/#{g[:bindir]}/#{exe} $prefix/bin/#{exe}\n"
+        end
+      else
+        nix << "    ln -sf ${scintGems.\"#{g[:nix_attr]}\"}/gems/#{full}/#{g[:bindir]}/#{exe} $prefix/bin/#{exe}\n"
+      end
+    end
+  end
 end
 
 nix << "  '';\n}\n"

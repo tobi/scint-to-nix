@@ -12,7 +12,7 @@ let
 in pkgs.mkShell {
   buildInputs = [
     ruby
-    pkgs.postgresql
+    (pkgs.postgresql.withPackages (ps: [ ps.pgvector ]))
     pkgs.redis
     pkgs.nodejs_22
     pkgs.yarn
@@ -40,6 +40,7 @@ in pkgs.mkShell {
       initdb --no-locale -D "$PGDATA" -U postgres >/dev/null 2>&1
       echo "unix_socket_directories = '$PGDATA'" >> "$PGDATA/postgresql.conf"
       echo "port = $PGPORT" >> "$PGDATA/postgresql.conf"
+      echo "shared_preload_libraries = 'pg_stat_statements'" >> "$PGDATA/postgresql.conf"
     fi
     pg_ctl -D "$PGDATA" -l "$TMPDIR/pg.log" -o "-k $PGDATA" start >/dev/null 2>&1 || true
 
