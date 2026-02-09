@@ -58,7 +58,7 @@ NIXPKGS=$(nix-instantiate --eval -E '(import <nixpkgs> {}).path' 2>/dev/null | t
 grep -A 20 '"<gem-name>"' "$NIXPKGS/pkgs/development/ruby-modules/gem-config/default.nix"
 ```
 
-The [nixpkgs-research skill](../../.pi/agent/skills/nixpkgs-research/SKILL.md) has detailed instructions for searching nixpkgs packages and inspecting headers/libs/pkg-config files. Load it if you need to find the right nixpkgs package for a library.
+The [nixpkgs-research skill](/home/tobi/.pi/agent/skills/nixpkgs-research/SKILL.md) has detailed instructions for searching nixpkgs packages and inspecting headers/libs/pkg-config files. Load it if you need to find the right nixpkgs package for a library.
 
 ### Step 4 — Write the overlay
 
