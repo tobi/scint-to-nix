@@ -25,6 +25,148 @@ OVERLAYS_DIR = File.join(__dir__, "..", "overlays")
 
 output_dir = File.join(__dir__, "..", "nix", "gem")
 
+# ── Auto-detection: library name → nixpkgs deps ──────────────────────────
+#
+# When a gem's extconf.rb calls pkg_config(), find_header(), or have_library()
+# for a known library, we can infer the needed nativeBuildInputs automatically.
+# This eliminates the need for a hand-written overlay in most cases.
+#
+# Manual overlays (overlays/<name>.nix) always win over auto-detection.
+
+# Map: string found in pkg_config/find_header/have_library → nixpkgs attr names
+LIB_TO_NIXPKGS = {
+  # extconf string        => [nix attrs]
+  "libffi"             => %w[libffi pkg-config],
+  "ffi"                => %w[libffi pkg-config],
+  "openssl"            => %w[openssl pkg-config],
+  "libssl"             => %w[openssl pkg-config],
+  "libcrypto"          => %w[openssl pkg-config],
+  "ssl"                => %w[openssl pkg-config],
+  "crypto"             => %w[openssl pkg-config],
+  "yaml-0.1"           => %w[libyaml pkg-config],
+  "yaml"               => %w[libyaml pkg-config],
+  "yaml.h"             => %w[libyaml pkg-config],
+  "sqlite3"            => %w[sqlite pkg-config],
+  "libpq"              => %w[libpq pkg-config],
+  "pq"                 => %w[libpq pkg-config],
+  "z"                  => %w[zlib pkg-config],
+  "zlib"               => %w[zlib pkg-config],
+  "snappy"             => %w[snappy pkg-config],
+  "libsnappy"          => %w[snappy pkg-config],
+  "libxml2"            => %w[libxml2 pkg-config],
+  "libxml-2.0"         => %w[libxml2 pkg-config],
+  "libxslt"            => %w[libxslt pkg-config],
+  "mysqlclient"        => %w[libmysqlclient openssl pkg-config zlib],
+  "mysql"              => %w[libmysqlclient openssl pkg-config zlib],
+  "libgit2"            => %w[cmake pkg-config openssl zlib libssh2],
+  "re2"                => %w[re2 pkg-config],
+  "icu"                => %w[icu zlib pkg-config],
+  "icu-uc"             => %w[icu zlib pkg-config],
+  "icu-i18n"           => %w[icu zlib pkg-config],
+  "ImageMagick"        => %w[imagemagick pkg-config],
+  "MagickWand"         => %w[imagemagick pkg-config],
+  "pam"                => %w[pam],
+  "idn"                => %w[libidn pkg-config],
+  "libidn"             => %w[libidn pkg-config],
+  "gpgme"              => %w[gpgme libgpg-error libassuan pkg-config],
+  "libcurl"            => %w[curl pkg-config],
+  "curl"               => %w[curl pkg-config],
+  "ncurses"            => %w[ncurses],
+  "ncursesw"           => %w[ncurses],
+  "hiredis"            => %w[hiredis pkg-config],
+  "yajl"               => %w[yajl pkg-config],
+  "libsodium"          => %w[libsodium pkg-config],
+  "vips"               => %w[vips pkg-config],
+  "libvips"            => %w[vips pkg-config],
+  "protobuf"           => %w[protobuf pkg-config],
+  "pcre"               => %w[pcre pkg-config],
+  "pcre2"              => %w[pcre2 pkg-config],
+}.freeze
+
+# Strings to ignore in have_library — these are always available or not real deps
+LIB_IGNORE = Set.new(%w[c m dl pthread rt nsl socket stdc++ gcc_s objc]).freeze
+
+# Build-time gem requires that map to a gem name
+BUILD_TIME_GEMS = {
+  "mini_portile2" => "mini_portile2",
+  "rb_sys/mkmf"   => "rb_sys",
+  "rb_sys"         => "rb_sys",
+  "pkg-config"     => "pkg-config",
+  "mkmf-rice"      => "rice",
+  "rice"           => "rice",
+}.freeze
+
+# Scan an extconf.rb file and return auto-detected info:
+#   { deps: Set<String>, extconf_flags: String|nil, build_gem_deps: Array<String>, is_rust: bool }
+def scan_extconf(source_dir)
+  result = { deps: Set.new, extconf_flags: nil, build_gem_deps: [], is_rust: false }
+
+  extconfs = Dir.glob(File.join(source_dir, "ext", "**", "extconf.rb"))
+  return result if extconfs.empty?
+
+  # Check for Rust extension (Cargo.toml with rb-sys)
+  cargo_tomls = Dir.glob(File.join(source_dir, "ext", "**", "Cargo.toml"))
+  cargo_tomls.each do |ct|
+    content = File.read(ct) rescue next
+    if content.include?("rb-sys") || content.include?("rb_sys")
+      result[:is_rust] = true
+      result[:build_gem_deps] << "rb_sys"
+      break
+    end
+  end
+
+  extconfs.each do |extconf|
+    content = File.read(extconf) rescue next
+
+    # Category 1: pkg_config / find_header / have_library
+    content.scan(/pkg_config\s*\(\s*['"]([^'"]+)['"]\s*\)/) do |m|
+      lib = m[0]
+      if LIB_TO_NIXPKGS.key?(lib)
+        LIB_TO_NIXPKGS[lib].each { |dep| result[:deps] << dep }
+      end
+    end
+
+    content.scan(/find_header\s*\(\s*['"]([^'"]+)['"]\s*/) do |m|
+      header = m[0]
+      # Map common headers to libraries
+      LIB_TO_NIXPKGS.each do |lib, deps|
+        if header.downcase.include?(lib.downcase.sub(/^lib/, ""))
+          deps.each { |dep| result[:deps] << dep }
+        end
+      end
+    end
+
+    content.scan(/have_library\s*\(\s*['"]([^'"]+)['"]/) do |m|
+      lib = m[0]
+      next if LIB_IGNORE.include?(lib)
+      if LIB_TO_NIXPKGS.key?(lib)
+        LIB_TO_NIXPKGS[lib].each { |dep| result[:deps] << dep }
+      end
+    end
+
+    # Category 2: system libraries flag
+    if content.include?('enable_config("system-libraries")') ||
+       content.include?("enable_config('system-libraries')")
+      result[:extconf_flags] = "--enable-system-libraries"
+    end
+
+    if content.include?("--use-system-libraries")
+      result[:extconf_flags] ||= "--use-system-libraries"
+    end
+
+    # Category 4: build-time gem deps
+    content.scan(/require\s+['"]([^'"]+)['"]/) do |m|
+      req = m[0]
+      if BUILD_TIME_GEMS.key?(req)
+        result[:build_gem_deps] << BUILD_TIME_GEMS[req]
+      end
+    end
+  end
+
+  result[:build_gem_deps].uniq!
+  result
+end
+
 i = 0
 while i < ARGV.length
   case ARGV[i]
@@ -99,6 +241,12 @@ meta_by_key.each_value do |meta|
   has_overlay = overlays.key?(name)
   has_heredoc = true  # installPhase always has gemspec heredoc
 
+  # Auto-detect deps from extconf.rb (only used when no manual overlay exists)
+  auto = has_ext && !has_overlay ? scan_extconf(source_dir) : nil
+  auto_has_deps = auto && (!auto[:deps].empty? || !auto[:build_gem_deps].empty? || auto[:is_rust])
+  # Need pkgs when overlay exists OR when auto-detection found system deps
+  needs_pkgs = has_overlay || (auto_has_deps && !auto[:deps].empty?)
+
   # Pick indent: 4 spaces if no heredoc in block, 8 if heredoc present
   si = has_heredoc ? SH : "    "
 
@@ -109,10 +257,17 @@ meta_by_key.each_value do |meta|
   nix << "# ╚══════════════════════════════════════════════════════════════╝\n"
   nix << "#\n"
   nix << "# #{name} #{version}\n"
+  if auto_has_deps
+    nix << "# auto-detected: deps=[#{auto[:deps].to_a.join(", ")}]"
+    nix << " extconfFlags=#{auto[:extconf_flags]}" if auto[:extconf_flags]
+    nix << " rust" if auto[:is_rust]
+    nix << " build-gems=[#{auto[:build_gem_deps].join(", ")}]" unless auto[:build_gem_deps].empty?
+    nix << "\n"
+  end
   nix << "#\n"
 
   args = ["lib", "stdenv", "ruby"]
-  args << "pkgs" if has_overlay
+  args << "pkgs" if needs_pkgs
   nix << "{\n"
   args.each { |a| nix << "  #{a},\n" }
   nix << "}:\n"
@@ -135,6 +290,36 @@ meta_by_key.each_value do |meta|
     nix << "    if builtins.isAttrs overlay && overlay ? postInstall then overlay.postInstall else \"\";\n"
     nix << "  overlayExtconfFlags =\n"
     nix << "    if builtins.isAttrs overlay && overlay ? extconfFlags then overlay.extconfFlags else \"\";\n"
+  end
+
+  # Auto-detected build-time gem deps: resolve to derivation paths
+  if auto && !auto[:build_gem_deps].empty? && !auto[:is_rust]
+    auto[:build_gem_deps].each do |gdep|
+      # Find the latest version of this gem in our pool
+      gdep_dir = File.join(output_dir, gdep)
+      if Dir.exist?(gdep_dir)
+        versions = Dir.children(gdep_dir)
+                      .select { |d| d != "default.nix" && File.directory?(File.join(gdep_dir, d)) && !d.start_with?("git-") }
+                      .sort_by { |v| Gem::Version.new(v) rescue Gem::Version.new("0") }
+        unless versions.empty?
+          v = versions.last
+          nix << "  #{gdep.gsub("-", "_")} = import ../../../#{gdep}/#{v} { inherit lib stdenv ruby; };\n"
+        end
+      end
+    end
+  end
+
+  # Rust gems: emit rb_sys derivation
+  if auto&.dig(:is_rust)
+    rb_sys_dir = File.join(output_dir, "rb_sys")
+    if Dir.exist?(rb_sys_dir)
+      rb_sys_versions = Dir.children(rb_sys_dir)
+                           .select { |d| d != "default.nix" && File.directory?(File.join(rb_sys_dir, d)) && !d.start_with?("git-") }
+                           .sort_by { |v| Gem::Version.new(v) rescue Gem::Version.new("0") }
+      unless rb_sys_versions.empty?
+        nix << "  rb_sys = import ../../../rb_sys/#{rb_sys_versions.last} { inherit lib stdenv ruby; };\n"
+      end
+    end
   end
 
   nix << "in\n"
@@ -177,6 +362,35 @@ meta_by_key.each_value do |meta|
       default_build_lines.each { |l| nix << "        #{l}\n" }
       nix << "        ${overlayAfterBuild}\n"
       nix << "      '';\n\n"
+    elsif auto&.dig(:is_rust)
+      # Rust extension via rb_sys — full Rust build environment
+      rust_deps = %w[pkgs.rustPlatform.rust.cargo pkgs.rustPlatform.rust.rustc pkgs.llvmPackages.libclang]
+      auto[:deps].each { |d| rust_deps << "pkgs.#{d}" }
+      nix << "  nativeBuildInputs = [ ruby #{rust_deps.join(" ")} ];\n\n"
+      nix << "  buildPhase = ''\n"
+      nix << "    export GEM_PATH=${rb_sys}/${rb_sys.bundle_path}\n"
+      nix << "    export CARGO_HOME=\"$TMPDIR/cargo\"\n"
+      nix << "    mkdir -p \"$CARGO_HOME\"\n"
+      nix << "    export LIBCLANG_PATH=\"${pkgs.llvmPackages.libclang.lib}/lib\"\n"
+      nix << "    export BINDGEN_EXTRA_CLANG_ARGS=\"-isystem ${pkgs.stdenv.cc.cc}/lib/gcc/${pkgs.stdenv.hostPlatform.config}/${pkgs.stdenv.cc.cc.version}/include\"\n"
+      nix << "    export CC=\"${pkgs.stdenv.cc}/bin/cc\"\n"
+      nix << "    export CXX=\"${pkgs.stdenv.cc}/bin/c++\"\n"
+      nix << "    extconfFlags=\"#{auto[:extconf_flags] || ""}\"\n"
+      default_build_lines.each { |l| nix << "    #{l}\n" }
+      nix << "  '';\n\n"
+    elsif auto_has_deps
+      # Auto-detected system deps — inline them
+      dep_list = auto[:deps].map { |d| "pkgs.#{d}" }.join(" ")
+      nix << "  nativeBuildInputs = [ ruby #{dep_list} ];\n\n"
+      nix << "  buildPhase = ''\n"
+      nix << "    extconfFlags=\"#{auto[:extconf_flags] || ""}\"\n"
+      # Build-time gem deps → GEM_PATH
+      unless auto[:build_gem_deps].empty? || auto[:is_rust]
+        gem_paths = auto[:build_gem_deps].map { |g| "${#{g.gsub("-", "_")}}/${#{g.gsub("-", "_")}.bundle_path}" }
+        nix << "    export GEM_PATH=#{gem_paths.join(":")}\n"
+      end
+      default_build_lines.each { |l| nix << "    #{l}\n" }
+      nix << "  '';\n\n"
     else
       nix << "  nativeBuildInputs = [ ruby ];\n\n"
       nix << "  buildPhase = ''\n"
@@ -276,18 +490,34 @@ $stderr.puts "#{generated} derivations"
 #   gems.rails { version = "7.1.5.2"; }
 #   gems.rails { git.rev = "60d92e4e7dfe"; }
 
+# Track which gems need pkgs (overlay or auto-detected system deps)
+gems_needing_pkgs = Set.new
+overlays.each_key { |n| gems_needing_pkgs << n }
+
 gems_by_name = {}
 meta_by_key.each_value do |meta|
   name = meta[:name]
   version = meta[:version]
   source_dir = File.join(SOURCE_DIR, "#{name}-#{version}")
   next unless Dir.exist?(source_dir)
-  (gems_by_name[name] ||= { versions: [], has_overlay: overlays.key?(name) })[:versions] << version
+  info = (gems_by_name[name] ||= { versions: [], needs_pkgs: overlays.key?(name) })
+  info[:versions] << version
+  # Check if any version of this gem has auto-detected system deps
+  unless info[:needs_pkgs]
+    has_ext = meta[:has_extensions] || !Dir.glob(File.join(source_dir, "ext", "**", "extconf.rb")).empty?
+    if has_ext
+      auto = scan_extconf(source_dir)
+      if !auto[:deps].empty? || auto[:is_rust]
+        info[:needs_pkgs] = true
+        gems_needing_pkgs << name
+      end
+    end
+  end
 end
 
 gems_by_name.each do |name, info|
   versions = info[:versions].sort_by { |v| Gem::Version.new(v) }
-  has_overlay = info[:has_overlay]
+  needs_pkgs = info[:needs_pkgs]
   latest = versions.last
 
   sel = +""
@@ -317,7 +547,7 @@ gems_by_name.each do |name, info|
 
   sel << "  versions = {\n"
   versions.each do |v|
-    if has_overlay
+    if needs_pkgs
       sel << "    \"#{v}\" = import ./#{v} {\n"
       sel << "      inherit\n"
       sel << "        lib\n"
