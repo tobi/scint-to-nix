@@ -17,21 +17,40 @@ ruby := "ruby_3_4"
 [group('build')]
 build app="":
     #!/usr/bin/env bash
+    buildlog=$(mktemp /tmp/gem-build-XXXXXX.log)
     if [[ -n "{{app}}" ]]; then
         echo "Building all gems for {{app}}..."
+        echo "=== gem build log ({{app}}) — $(date -Iseconds) ===" > "$buildlog"
         paths=$(nix-build --no-out-link --keep-going -E '
             let pkgs = import <nixpkgs> {};
                 ruby = pkgs.{{ruby}};
                 resolve = import ./nix/modules/resolve.nix;
                 gems = resolve { inherit pkgs ruby; gemset = import ./nix/app/{{app}}.nix; };
             in builtins.attrValues gems
-        ')
-        n=$(echo "$paths" | wc -l)
+        ' 2> >(tee -a "$buildlog" >&2)) || true
+        n=$(echo "$paths" | grep -c '/nix/store/' || echo 0)
         echo "$n gems built for {{app}}."
+        if grep -q 'nix log' "$buildlog" 2>/dev/null; then
+            echo ""
+            echo "Build failures detected. Collecting logs into $buildlog ..."
+            echo "" >> "$buildlog"
+            echo "=== FAILURE LOGS ===" >> "$buildlog"
+            grep -oP '/nix/store/\S+\.drv' "$buildlog" | sort -u | while read -r drv; do
+                echo "" >> "$buildlog"
+                echo "--- nix log $drv ---" >> "$buildlog"
+                nix log "$drv" >> "$buildlog" 2>&1 || true
+            done
+            echo ""
+            echo "Full build log with failure details: $buildlog"
+            echo "Fix with: /nix-build skill — refer to $buildlog"
+            grep 'nix log' "$buildlog" >&2 || true
+        else
+            rm -f "$buildlog"
+        fi
     else
         total=$(find nix/gem -mindepth 2 -maxdepth 2 -type d | wc -l)
         echo "Building $total gem derivations..."
-        err=$(mktemp)
+        echo "=== gem build log (all) — $(date -Iseconds) ===" > "$buildlog"
         nix-build --no-out-link --keep-going -E '
             let pkgs = import <nixpkgs> {};
                 ruby = pkgs.{{ruby}};
@@ -43,13 +62,24 @@ build app="":
                     in map (v: pkgs.callPackage (./nix/gem + "/${name}/${v}") { inherit ruby; })
                            (builtins.attrNames subdirs);
             in lib.concatMap versionsOf dirs
-        ' >/dev/null 2>"$err" || true
-        failed=$(grep -oP "'/nix/store/[^']+'" "$err" | sort -u | wc -l || echo 0)
+        ' >/dev/null 2> >(tee -a "$buildlog" >&2) || true
+        failed=$(grep -oP "'/nix/store/[^']+'" "$buildlog" | sort -u | wc -l || echo 0)
         echo "$((total - failed))/$total built, $failed failed."
         if [[ $failed -gt 0 ]]; then
-            grep 'nix log' "$err" >&2 || true
+            echo "" >> "$buildlog"
+            echo "=== FAILURE LOGS ===" >> "$buildlog"
+            grep -oP '/nix/store/\S+\.drv' "$buildlog" | sort -u | while read -r drv; do
+                echo "" >> "$buildlog"
+                echo "--- nix log $drv ---" >> "$buildlog"
+                nix log "$drv" >> "$buildlog" 2>&1 || true
+            done
+            echo ""
+            echo "Full build log with failure details: $buildlog"
+            echo "Fix with: /nix-build skill — refer to $buildlog"
+            grep 'nix log' "$buildlog" >&2 || true
+        else
+            rm -f "$buildlog"
         fi
-        rm -f "$err"
     fi
 
 # Build a single gem (for debugging failures)
