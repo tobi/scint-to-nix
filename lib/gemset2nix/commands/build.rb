@@ -67,16 +67,15 @@ module Gemset2Nix
         if parts[1]
           version_dir = File.join(gem_dir, parts[1])
           abort "Unknown version: #{path}" unless Dir.exist?(version_dir)
-          $stderr.puts "Building #{name} #{parts[1]}..."
+          UI.header "Build #{UI.bold(name)} #{parts[1]}"
           exec_nix_build(version_dir)
         else
-          # Build latest version
           versions = Dir.children(gem_dir)
             .select { |d| d != "default.nix" && File.directory?(File.join(gem_dir, d)) && !d.start_with?("git-") }
             .sort_by { |v| Gem::Version.new(v) rescue Gem::Version.new("0") }
           abort "No versions found for #{name}" if versions.empty?
           latest = versions.last
-          $stderr.puts "Building #{name} #{latest}..."
+          UI.header "Build #{UI.bold(name)} #{latest}"
           exec_nix_build(File.join(gem_dir, latest))
         end
       end
@@ -94,7 +93,7 @@ module Gemset2Nix
         app_nix = File.join(@project.app_dir, "#{app}.nix")
         abort "Unknown app: #{app}" unless File.exist?(app_nix)
 
-        $stderr.puts "Building #{gem_name} from #{app}..."
+        UI.header "Build #{UI.bold(gem_name)} #{UI.dim("from #{app}")}"
         exec "nix-build", "--no-out-link", "-E", <<~NIX
           let pkgs = import <nixpkgs> {};
               ruby = pkgs.#{@ruby};
@@ -109,7 +108,7 @@ module Gemset2Nix
         app_nix = File.join(@project.app_dir, "#{app}.nix")
         abort "Unknown app: #{app}" unless File.exist?(app_nix)
 
-        $stderr.puts "Building all gems for #{app}..."
+        UI.header "Build #{UI.bold(app)}"
         run_with_failure_log do |log|
           paths, _ = nix_build_keep_going(<<~NIX, log)
             let pkgs = import <nixpkgs> {};
@@ -119,7 +118,7 @@ module Gemset2Nix
             in builtins.attrValues gems
           NIX
           n = paths.count { |p| p.start_with?("/nix/store/") }
-          $stderr.puts "#{n} gems built for #{app}."
+          UI.done "#{n} gems built for #{app}"
         end
       end
 
@@ -128,7 +127,9 @@ module Gemset2Nix
         total = Dir.glob(File.join(@project.output_dir, "*", "*")).count { |d|
           File.directory?(d) && !File.basename(d).start_with?("git-") && File.basename(d) != "default.nix"
         }
-        $stderr.puts "Building #{total} gem derivations..."
+        overlay_count = @project.overlays.size
+        UI.header "Build #{UI.bold("all")}"
+        UI.info "#{total} gem derivations #{UI.dim("(#{overlay_count} overlays)")}"
 
         nixexpr = Tempfile.new(["gem-build-all-", ".nix"])
         nixexpr.write(<<~NIX)
@@ -154,7 +155,11 @@ module Gemset2Nix
           paths, _ = nix_build_keep_going(nixexpr.path, log, is_file: true)
           built = paths.count { |p| p.start_with?("/nix/store/") }
           failed = [total - built, 0].max
-          $stderr.puts "#{built}/#{total} built, #{failed} failed."
+          if failed > 0
+            UI.fail "#{built}/#{total} built, #{UI.red("#{failed} failed")}"
+          else
+            UI.done "#{built}/#{total} built"
+          end
         end
       ensure
         nixexpr&.close
@@ -199,25 +204,25 @@ module Gemset2Nix
 
       def collect_failure_logs(log)
         return unless File.exist?(log)
-        content = File.read(log)
-        drvs = content.scan(%r{/nix/store/\S+\.drv}).uniq
+        content = File.read(log, encoding: "utf-8")
+        # Only collect drvs that nix reports as failed — not all drvs mentioned in the log
+        drvs = content.scan(/error: Cannot build '([^']+\.drv)'/).flatten.uniq
         return if drvs.empty?
 
         @keep_log = true
-        $stderr.puts "\nFailed gems:"
+        $stderr.puts
         drvs.each do |drv|
           basename = drv.sub(%r{.*/[a-z0-9]*-}, "").sub(/\.drv$/, "")
           gem_name = basename.sub(/-[0-9][0-9.]*$/, "")
           gem_version = basename[/[0-9][0-9.]*$/] || "unknown"
           overlay = File.join(@project.overlays_dir, "#{gem_name}.nix")
 
-          if File.exist?(overlay)
-            $stderr.puts "  ✗ #{gem_name} #{gem_version}  →  edit overlays/#{gem_name}.nix"
-          else
-            $stderr.puts "  ✗ #{gem_name} #{gem_version}  →  create overlays/#{gem_name}.nix"
-          end
+          hint = File.exist?(overlay) ? "edit overlays/#{gem_name}.nix" : "create overlays/#{gem_name}.nix"
+          UI.fail "#{gem_name} #{gem_version}  #{UI.dim("→")}  #{hint}"
         end
-        $stderr.puts "\nBuild log: #{log}"
+        $stderr.puts
+        UI.info "nix log #{UI.dim("<drv>")} to see build output"
+        UI.info "Build log: #{log}"
       end
     end
   end
