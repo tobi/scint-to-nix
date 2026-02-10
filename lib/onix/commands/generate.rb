@@ -33,6 +33,9 @@ module Onix
         "gdk-pixbuf-2.0" => "gdk-pixbuf",
         "vips"      => "vips",
         "MagickWand" => "imagemagick",
+        "libbrotlicommon" => "brotli",
+        "libbrotlidec" => "brotli",
+        "libbrotlienc" => "brotli",
       }.freeze
 
       LIBRARY_TO_NIX = {
@@ -210,12 +213,13 @@ module Onix
       def resolve_nix_deps(scan)
         nix_deps = Set.new
 
-        scan.pkg_configs.each { |pc| nix_deps << PKG_CONFIG_TO_NIX.fetch(pc, pc) }
+        scan.pkg_configs.each { |pc| nix_deps << PKG_CONFIG_TO_NIX[pc] if PKG_CONFIG_TO_NIX[pc] }
         scan.libraries.each { |lib| nix_pkg = LIBRARY_TO_NIX[lib]; nix_deps << nix_pkg if nix_pkg }
         scan.dir_configs.each { |dc| nix_pkg = DIR_CONFIG_TO_NIX[dc]; nix_deps << nix_pkg if nix_pkg }
         scan.c_includes.each { |inc| nix_pkg = C_INCLUDE_TO_NIX[inc]; nix_deps << nix_pkg if nix_pkg }
         scan.build_tools.each { |tool| nix_pkg = BUILD_TOOL_TO_NIX[tool]; nix_deps << nix_pkg if nix_pkg }
-        nix_deps << "pkg-config" unless scan.pkg_configs.empty?
+        has_known_pkg_configs = scan.pkg_configs.any? { |pc| PKG_CONFIG_TO_NIX.key?(pc) }
+        nix_deps << "pkg-config" if has_known_pkg_configs
 
         nix_deps.to_a.sort
       end

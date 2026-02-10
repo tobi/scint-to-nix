@@ -59,11 +59,13 @@ module Onix
       nix << "  bundle_path = \"ruby/${rubyVersion}\";\n"
 
       has_gem_path = false
-      if has_overlay
-        overlay_let(nix, name)
+      if !gem_path_entries.empty?
+        varname = has_overlay ? "autoGemPath" : "gemPath"
+        auto_build_gems_let(nix, gem_path_entries, varname: varname)
         has_gem_path = true
-      elsif !gem_path_entries.empty?
-        auto_build_gems_let(nix, gem_path_entries)
+      end
+      if has_overlay
+        overlay_let(nix, name, has_auto_gem_path: has_gem_path)
         has_gem_path = true
       end
 
@@ -214,7 +216,11 @@ module Onix
 
     # ── Let-block fragments ─────────────────────────────────────────
 
-    def overlay_let(nix, name)
+    def overlay_let(nix, name, has_auto_gem_path: false)
+      # Rename auto-detected gemPath so we can merge it with overlay's
+      if has_auto_gem_path
+        nix.sub!(/^  gemPath = /, "  autoGemPath = ")
+      end
       nix << "  overlay = import ../../../../overlays/#{name}.nix { inherit pkgs ruby; };\n"
       nix << "  overlayDeps = if builtins.isList overlay then overlay else overlay.deps or [ ];\n"
       nix << "  overlayBuildGems =\n"
@@ -229,16 +235,23 @@ module Onix
       nix << "    if builtins.isAttrs overlay && overlay ? postInstall then overlay.postInstall else \"\";\n"
       nix << "  overlayExtconfFlags =\n"
       nix << "    if builtins.isAttrs overlay && overlay ? extconfFlags then overlay.extconfFlags else \"\";\n"
-      nix << "  gemPath = builtins.concatStringsSep \":\" (map (g: \"${g}/${g.bundle_path}\") overlayBuildGems);\n"
+      overlay_gem_path = 'builtins.concatStringsSep ":" (map (g: "${g}/${g.bundle_path}") overlayBuildGems)'
+      if has_auto_gem_path
+        # Merge auto-detected + overlay build gem paths
+        nix << "  gemPath = let auto = autoGemPath; extra = #{overlay_gem_path}; in\n"
+        nix << "    if extra == \"\" then auto else if auto == \"\" then extra else \"${auto}:${extra}\";\n"
+      else
+        nix << "  gemPath = #{overlay_gem_path};\n"
+      end
     end
 
-    def auto_build_gems_let(nix, entries)
+    def auto_build_gems_let(nix, entries, varname: "gemPath")
       # entries: [{ varname:, import_path: }]
       entries.each do |e|
         nix << "  #{e[:varname]} = import #{e[:import_path]} { inherit lib stdenv ruby; };\n"
       end
       expr = entries.map { |e| "\"${#{e[:varname]}}/${#{e[:varname]}.bundle_path}\"" }.join(" ")
-      nix << "  gemPath = builtins.concatStringsSep \":\" [ #{expr} ];\n"
+      nix << "  #{varname} = builtins.concatStringsSep \":\" [ #{expr} ];\n"
     end
 
     # ── Build phase ─────────────────────────────────────────────────

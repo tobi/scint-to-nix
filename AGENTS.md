@@ -5,21 +5,15 @@
 ```
 Gemfile.lock
     ↓
-bin/fetch             gem fetch + gem unpack + git clone → cache/
+onix fetch            gem fetch + gem unpack + git clone → cache/
     ↓
-bin/generate          cache/meta/*.json → nix/gem/<name>/<version>/default.nix
+onix generate         cache/meta/*.json → nix/gem/<name>/<version>/default.nix
                                         → nix/gem/<name>/default.nix (selectors)
-                                        → nix/modules/gem.nix (catalogue)
     ↓
-bin/import            Gemfile.lock → nix/app/<project>.nix
-                                   → nix/gem/<repo>/git-<rev>/default.nix
-                                   → nix/modules/apps.nix (registry)
-    ↓
-just build [app]      nix-build → /nix/store/<hash>-<gem>-<ver>/
-                      buildEnv  → unified BUNDLE_PATH
+onix build            nix-build → /nix/store/<hash>-<gem>-<ver>/
 ```
 
-Everything under `nix/` is generated. Never hand-edit — run `bin/generate` and `bin/import` to regenerate.
+Everything under `nix/` is generated. Never hand-edit — run `onix generate` to regenerate.
 
 All customization lives in `overlays/`.
 
@@ -28,19 +22,23 @@ All customization lives in `overlays/`.
 1. Files in `nix/` are always overwritten by generators — never hand-edit.
 2. Overlays in `overlays/` are hand-maintained — generators never touch them.
 3. If a gem fails, decide: is it a codegen bug or a missing overlay?
-   - Codegen bug → fix `bin/generate` so the fix applies to all similar gems.
+   - Codegen bug → fix `onix generate` so the fix applies to all similar gems.
    - Missing native deps → write an overlay.
-4. Test with `just build`, `just lint`, and `just test <app>`.
+4. Test with `onix build` and `onix check`.
 5. **Always link against system libraries from nixpkgs.** Never use vendored/bundled copies of libraries that a gem ships in its source tree. If a gem bundles libxml2, sqlite, openssl, etc. — the overlay must pass flags like `--use-system-libraries` or `--enable-system-libraries` to `extconf.rb` so it links against the nixpkgs version. This is the whole point of hermetic builds: every shared library comes from a known nix store path, not from some tarball the gem author downloaded at release time. If the gem has no flag for system libraries, patch `extconf.rb` or provide the right `pkg-config` / header paths via environment variables so it finds the nix versions.
-6. **Prefer generating into `default.nix` over config files or overlays.** If build requirements are knowable from gem metadata or `extconf.rb` analysis at generate time (e.g., `pkg_config('libffi')` → needs `pkgs.libffi`), teach `bin/generate` to detect and inline them directly into the generated derivation. No overlay file, no config file, no indirection. Overlays are for cases that can't be inferred automatically.
+6. **Prefer generating into `default.nix` over config files or overlays.** If build requirements are knowable from gem metadata or `extconf.rb` analysis at generate time (e.g., `pkg_config('libffi')` → needs `pkgs.libffi`), teach `onix generate` to detect and inline them directly into the generated derivation. No overlay file, no config file, no indirection. Overlays are for cases that can't be inferred automatically.
 
 ## Writing overlays
 
-When `just build` fails, you'll see output like:
+When `onix build` fails, you'll see output like:
 
 ```
-685/690 built, 5 failed.
-         nix log /nix/store/...-tiktoken_ruby-0.0.15.1.drv
+  ✗ 685/690 built, 5 failed  2m34s
+
+  ✗ tiktoken_ruby  →  create overlays/tiktoken_ruby.nix
+    nix log /nix/store/...-tiktoken_ruby-0.0.15.1.drv
+
+  See AGENTS.md § Writing overlays for how to fix build failures.
 ```
 
 Run `nix log <drv>` to see the build log. The failure almost always falls into one of these categories:
@@ -185,9 +183,10 @@ Overlay gems need `pkgs` to import their overlay. In the generated derivation, `
 
 ```bash
 # 1. Build and see what fails
-just build
-#    685/690 built, 5 failed.
-#    nix log /nix/store/...-extralite-bundle-2.13.drv
+onix build
+#    ✗ 685/690 built, 5 failed
+#    ✗ extralite-bundle  →  create overlays/extralite-bundle.nix
+#      nix log /nix/store/...-extralite-bundle-2.13.drv
 
 # 2. Read the build log
 nix log /nix/store/...-extralite-bundle-2.13.drv
@@ -201,17 +200,17 @@ cat > overlays/extralite-bundle.nix << 'EOF'
 { pkgs, ruby }: with pkgs; [ sqlite pkg-config ]
 EOF
 
-# 5. Regenerate (overlay detection happens in bin/generate)
-bin/generate
+# 5. Regenerate (overlay detection happens in onix generate)
+onix generate
 
 # 6. Rebuild just that gem to verify
-just build-gem <app> extralite-bundle
+onix build --gem extralite-bundle
 
 # 7. Rebuild everything
-just build
+onix build
 
-# 8. Run lints
-just lint
+# 8. Run checks
+onix check
 ```
 
 ## Debugging tips
@@ -264,7 +263,7 @@ Git gems use `bundler/gems/<base>-<shortref>/` with real `.gemspec` files inside
 ## Lint suite
 
 ```bash
-just lint [app]     # default: fizzy
+onix check     # default: fizzy
 ```
 
 | Lint | What it checks |
@@ -279,7 +278,7 @@ just lint [app]     # default: fizzy
 | `native-extensions` | Native gems have compiled `.so` files |
 | `loadable` | Key gems can be `require`'d by ruby |
 
-After writing an overlay, always run `just lint` to verify the gem is complete.
+After writing an overlay, always run `onix check` to verify the gem is complete.
 
 ## Existing overlays
 

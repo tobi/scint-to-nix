@@ -44,7 +44,11 @@ module Onix
         results = {}
         total_t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-        # Run independent checks in parallel
+        passed = 0
+        failed = 0
+        print_mutex = Mutex.new
+
+        # Run independent checks in parallel, print as each completes
         threads = checks.map do |check|
           Thread.new(check) do |c|
             t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -56,27 +60,23 @@ module Onix
               elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0
               results[c] = { ok: false, message: "ERROR: #{e.message}", time: elapsed }
             end
+
+            r = results[c]
+            name = c.to_s.tr("_", "-")
+            time = UI.dim(UI.format_time(r[:time]).rjust(7))
+            print_mutex.synchronize do
+              if r[:ok]
+                $stderr.puts "  #{UI.green("✓")} #{name.ljust(28)} #{time}  #{r[:message]}"
+                passed += 1
+              else
+                $stderr.puts "  #{UI.red("✗")} #{name.ljust(28)} #{time}  #{r[:message]}"
+                failed += 1
+              end
+            end
           end
         end
 
         threads.each(&:join)
-
-        # Print results in order
-        passed = 0
-        failed = 0
-
-        checks.each do |check|
-          r = results[check]
-          name = check.to_s.tr("_", "-")
-          time = UI.dim(UI.format_time(r[:time]).rjust(7))
-          if r[:ok]
-            $stderr.puts "  #{UI.green("✓")} #{name.ljust(28)} #{time}  #{r[:message]}"
-            passed += 1
-          else
-            $stderr.puts "  #{UI.red("✗")} #{name.ljust(28)} #{time}  #{r[:message]}"
-            failed += 1
-          end
-        end
 
         total_time = UI.format_time(Process.clock_gettime(Process::CLOCK_MONOTONIC) - total_t0)
         UI.summary(
@@ -98,11 +98,13 @@ module Onix
         total = 0
         bad = 0
 
-        output, = Open3.capture2("find", nix_dir, "-type", "l", "-printf", "%p\t%l\n")
+        output, = Open3.capture2("find", nix_dir, "-type", "l")
         output.each_line do |line|
+          path = line.strip
+          next if path.empty?
           total += 1
-          _path, target = line.strip.split("\t", 2)
-          bad += 1 if target&.include?("/..")
+          target = File.readlink(path) rescue next
+          bad += 1 if target.include?("/..")
         end
 
         # Self-referencing in cache
@@ -235,7 +237,7 @@ module Onix
         gemset_files = Dir.glob(File.join(@project.gemsets_dir, "*.gemset"))
         return [true, "no gemsets"] if gemset_files.empty?
 
-        missing = 0
+        missing_gems = []
         total = 0
 
         mat = @project.materializer
@@ -245,12 +247,14 @@ module Onix
           classified[:rubygems].each do |spec|
             total += 1
             dir = File.join(@project.output_dir, spec[:name], spec[:version])
-            missing += 1 unless Dir.exist?(dir)
+            missing_gems << "#{spec[:name]} #{spec[:version]}" unless Dir.exist?(dir)
           end
         end
 
-        if missing > 0
-          [false, "#{missing}/#{total} gems missing derivations"]
+        if missing_gems.any?
+          sample = missing_gems.first(10).map { |g| "  - #{g}" }.join("\n")
+          suffix = missing_gems.size > 10 ? "\n  ... and #{missing_gems.size - 10} more" : ""
+          [false, "#{missing_gems.size}/#{total} gems missing derivations — run `onix generate`\n#{sample}#{suffix}"]
         else
           [true, "#{total} gems all have derivations"]
         end

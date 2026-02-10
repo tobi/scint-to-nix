@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 3.1"
 
-  s.files         = Dir["lib/**/*.rb", "lib/**/*.nix", "exe/*", "LICENSE", "README.md"]
+  s.files         = Dir["lib/**/*.rb", "lib/**/*.nix", "exe/*", "docs/*.md", "LICENSE", "README.md"]
   s.bindir        = "exe"
   s.executables   = ["onix"]
   s.require_paths = ["lib"]

@@ -28,7 +28,7 @@ module Onix
           "overlays/"             => :dir,
           "gemsets/"              => :dir,
           "cache/.gitignore"      => "gems/\ngit-clones/\n",
-          "nix/modules/resolve.nix" => File.read(File.expand_path("../../data/resolve.nix", __dir__)),
+          "nix/modules/resolve.nix" => File.read(File.expand_path("../data/resolve.nix", __dir__)),
           "nix/modules/apps.nix"    => "{\n}\n",
           "README.md"               => readme(name),
         }
