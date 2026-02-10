@@ -86,7 +86,7 @@ Checks: `symlinks` · `nix-eval` · `source-clean` · `secrets` · `dep-complete
 
 ## Using built gems
 
-Every gem output is a fragment of a `BUNDLE_PATH`. Merge them with `buildEnv` and Bundler sees a complete gem installation:
+`resolve` returns an attrset of gem derivations plus a `bundlePath` — a single `buildEnv` that merges everything Bundler needs:
 
 ```nix
 # devshell.nix
@@ -95,16 +95,12 @@ let
   resolve = import ./nix/modules/resolve.nix;
   gems = resolve {
     inherit pkgs ruby;
-    gemset = { gem.app.myapp.enable = true; };
-  };
-  bundlePath = pkgs.buildEnv {
-    name = "myapp-bundle";
-    paths = builtins.attrValues gems;
+    gemset = { gem.app.rails.enable = true; };
   };
 in pkgs.mkShell {
   buildInputs = [ ruby ];
   shellHook = ''
-    export BUNDLE_PATH="${bundlePath}"
+    export BUNDLE_PATH="${gems.bundlePath}"
     export BUNDLE_GEMFILE="$PWD/Gemfile"
   '';
 }

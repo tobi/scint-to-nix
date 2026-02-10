@@ -126,4 +126,11 @@ let
         value = gem entry.name { inherit (entry) version; };
       };
 in
-builtins.listToAttrs (map resolve normalized)
+let
+  gems = builtins.listToAttrs (map resolve normalized);
+  bundlePath = pkgs.buildEnv {
+    name = "gemset2nix-bundle";
+    paths = builtins.attrValues gems;
+  };
+in
+gems // { inherit bundlePath; }

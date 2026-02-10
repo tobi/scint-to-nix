@@ -10,10 +10,6 @@
 let
   resolve = import ../../nix/modules/resolve.nix;
   gems = resolve { inherit pkgs ruby; gemset = { gem.app.fizzy.enable = true; }; };
-  bundlePath = pkgs.buildEnv {
-    name = "fizzy-bundle-path";
-    paths = builtins.attrValues gems;
-  };
 in pkgs.mkShell {
   name = "fizzy-devshell";
 
@@ -28,16 +24,16 @@ in pkgs.mkShell {
   ];
 
   shellHook = ''
-    export BUNDLE_PATH="${bundlePath}"
+    export BUNDLE_PATH="${gems.bundlePath}"
     export BUNDLE_GEMFILE="$PWD/Gemfile"
     export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.vips pkgs.libffi ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
     # Clear stale bootsnap cache (symlink resolution differs from non-nix installs)
     rm -rf tmp/cache/bootsnap 2>/dev/null
 
-    echo "fizzy devshell ready — ${bundlePath}"
+    echo "fizzy devshell ready — ${gems.bundlePath}"
     echo "  ruby: $(ruby --version)"
-    echo "  gems: $(ls ${bundlePath}/ruby/3.4.0/gems 2>/dev/null | wc -l)"
-    echo "  git checkouts: $(ls ${bundlePath}/ruby/3.4.0/bundler/gems 2>/dev/null | wc -l)"
+    echo "  gems: $(ls ${gems.bundlePath}/ruby/3.4.0/gems 2>/dev/null | wc -l)"
+    echo "  git checkouts: $(ls ${gems.bundlePath}/ruby/3.4.0/bundler/gems 2>/dev/null | wc -l)"
   '';
 }

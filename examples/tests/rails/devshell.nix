@@ -10,10 +10,6 @@
 let
   resolve = import ../../nix/modules/resolve.nix;
   gems = resolve { inherit pkgs ruby; gemset = { gem.app.rails.enable = true; }; };
-  bundlePath = pkgs.buildEnv {
-    name = "rails-bundle-path";
-    paths = builtins.attrValues gems;
-  };
 in pkgs.mkShell {
   name = "rails-devshell";
 
@@ -32,12 +28,12 @@ in pkgs.mkShell {
   ];
 
   shellHook = ''
-    export BUNDLE_PATH="${bundlePath}"
+    export BUNDLE_PATH="${gems.bundlePath}"
     export BUNDLE_GEMFILE="$PWD/Gemfile"
     export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.vips pkgs.imagemagick pkgs.libffi ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
-    echo "rails devshell ready — ${bundlePath}"
+    echo "rails devshell ready — ${gems.bundlePath}"
     echo "  ruby: $(ruby --version)"
-    echo "  gems: $(ls ${bundlePath}/ruby/3.4.0/gems 2>/dev/null | wc -l)"
+    echo "  gems: $(ls ${gems.bundlePath}/ruby/3.4.0/gems 2>/dev/null | wc -l)"
   '';
 }
