@@ -91,8 +91,11 @@ module Onix
       # and tee stdout to capture store paths + errors.
       def run_nix_with_nom(cmd, t0)
         # nom reads nix's stderr (build progress). stdout (store paths) goes to terminal.
-        shell = cmd.map { |a| shellescape(a) }.join(" ") + " 2> >(nom)"
+        # --no-idle-warning suppresses "nom hasn't detected any input" when everything is cached.
+        shell = cmd.map { |a| shellescape(a) }.join(" ") + " 2> >(nom 2>/dev/null)"
+        $stderr.puts
         success = system("bash", "-c", shell)
+        $stderr.puts
         elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0
 
         if success
