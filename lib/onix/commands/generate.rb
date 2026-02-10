@@ -391,6 +391,7 @@ module Onix
         nix << "      shellHook = ''\n"
         nix << "        export BUNDLE_PATH=\"${bundlePath}\"\n"
         nix << "        export BUNDLE_GEMFILE=\"''${BUNDLE_GEMFILE:-$PWD/Gemfile}\"\n"
+        nix << "        export GEM_PATH=\"${bundlePath}/ruby/${ruby.version.majMinTiny}''${GEM_PATH:+:$GEM_PATH}\"\n"
         nix << "      '' + shellHook;\n"
         nix << "    });\n"
         nix << "}\n"
