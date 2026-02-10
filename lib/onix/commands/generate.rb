@@ -240,7 +240,7 @@ module Onix
       def generate_git_derivations
         repos = {}
         mat = @project.materializer
-        Dir.glob(File.join(@project.gemsets_dir, "*.gemset")).each do |f|
+        Dir.glob(File.join(@project.packagesets_dir, "*.gem")).each do |f|
           lockdata = @project.parse_lockfile(f)
           classified = mat.classify(lockdata)
           classified[:git].each { |key, repo| repos[key] ||= repo }

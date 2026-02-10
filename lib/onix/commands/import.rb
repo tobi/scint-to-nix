@@ -64,7 +64,7 @@ module Onix
             onix import --from-index --count 500
 
           Options:
-            --name, -n NAME       Override the project/gemset name
+            --name, -n NAME       Override the project/packageset name
             --from-index          Import from rubygems.org index
             --count, -c N         Number of top gems (default: 1000)
             --versions N          Versions per gem (default: 3)
@@ -89,7 +89,7 @@ module Onix
         UI.info "#{rubygem_specs.size} rubygems, #{git_repos.values.sum { |r| r[:gems].size }} git " \
                 "#{UI.dim("(#{git_repos.size} repos)")}"
 
-        write_gemset(project_name, lockfile)
+        write_packageset(project_name, lockfile)
         write_app_nix(project_name, rubygem_specs, git_repos)
         rebuild_apps_registry
       end
@@ -138,13 +138,13 @@ module Onix
         end
         progress.finish
 
-        FileUtils.mkdir_p(@project.gemsets_dir)
+        FileUtils.mkdir_p(@project.packagesets_dir)
         out = "GEM\n  remote: https://rubygems.org/\n  specs:\n"
         lines.sort.each { |l| n, ver = l.split(" ", 2); out << "    #{n} (#{ver})\n" }
         out << "\n"
-        path = File.join(@project.gemsets_dir, "#{name}.gemset")
+        path = File.join(@project.packagesets_dir, "#{name}.gem")
         File.write(path, out)
-        UI.wrote "gemsets/#{name}.gemset #{UI.dim("(#{lines.size} versions)")}"
+        UI.wrote "packagesets/#{name}.gem #{UI.dim("(#{lines.size} versions)")}"
       end
 
       def fetch_top_gem_names(count)
@@ -206,11 +206,11 @@ module Onix
 
       # ── Output writers ────────────────────────────────────────────────
 
-      def write_gemset(project_name, lockfile)
-        FileUtils.mkdir_p(@project.gemsets_dir)
-        dest = File.join(@project.gemsets_dir, "#{project_name}.gemset")
+      def write_packageset(project_name, lockfile)
+        FileUtils.mkdir_p(@project.packagesets_dir)
+        dest = File.join(@project.packagesets_dir, "#{project_name}.gem")
         FileUtils.cp(lockfile, dest)
-        UI.wrote "gemsets/#{project_name}.gemset"
+        UI.wrote "packagesets/#{project_name}.gem"
       end
 
       def write_app_nix(project_name, rubygem_specs, git_repos)

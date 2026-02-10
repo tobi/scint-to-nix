@@ -171,13 +171,13 @@ The `$dest` variable (`$out/ruby/3.4.0`) is available in `postInstall` and conta
 
 ### Passing `pkgs` to overlay gems
 
-Overlay gems need `pkgs` to import their overlay. In the generated derivation, `pkgs` appears in the function args only when an overlay exists. The gemset (`nix/app/<project>.nix`) passes `pkgs` through:
+Overlay gems need `pkgs` to import their overlay. In the generated derivation, `pkgs` appears in the function args only when an overlay exists. The packageset (`nix/app/<project>.nix`) passes `pkgs` through:
 
 ```nix
 "nokogiri" = gem "nokogiri" { version = "1.19.0"; pkgs = pkgs; };
 ```
 
-`bin/import` handles this automatically — any gem with an overlay gets `pkgs = pkgs;` in the gemset.
+`bin/import` handles this automatically — any gem with an overlay gets `pkgs = pkgs;` in the packageset.
 
 ## Workflow for fixing a failing gem
 
@@ -253,7 +253,7 @@ $BUNDLE_PATH/ruby/3.4.0/
 ```
 
 - **Rubygems gems** go in `gems/` + `specifications/`. The derivation handles this.
-- **Git gems** go in `bundler/gems/<base>-<shortref>/`. The gemset generator handles this.
+- **Git gems** go in `bundler/gems/<base>-<shortref>/`. The packageset generator handles this.
 - **Platform gems** (ffi, nokogiri, sqlite3) need both a plain dir and a platform-qualified symlink + gemspec. The derivation creates these automatically for any gem with extensions.
 
 ### Git sources
@@ -273,7 +273,7 @@ onix check     # default: fizzy
 | `source-clean` | No pre-built `.so/.bundle/.dylib` leaked into sources |
 | `secrets` | No leaked keys, passwords, tokens in repo or gem sources |
 | `require-paths-vs-gem-metadata` | Generated `require_paths` match `.gem` YAML metadata |
-| `gemspec-deps` | Gemspec runtime deps resolve within the gemset |
+| `gemspec-deps` | Gemspec runtime deps resolve within the packageset |
 | `require-paths` | Every `require_path` directory exists on disk |
 | `native-extensions` | Native gems have compiled `.so` files |
 | `loadable` | Key gems can be `require`'d by ruby |

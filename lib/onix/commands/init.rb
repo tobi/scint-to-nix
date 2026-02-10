@@ -26,7 +26,7 @@ module Onix
           "nix/app/"              => :dir,
           "nix/modules/"          => :dir,
           "overlays/"             => :dir,
-          "gemsets/"              => :dir,
+          "packagesets/"              => :dir,
           "cache/.gitignore"      => "gems/\ngit-clones/\n",
           "nix/modules/resolve.nix" => File.read(File.expand_path("../data/resolve.nix", __dir__)),
           "nix/modules/apps.nix"    => "{\n}\n",
@@ -94,14 +94,14 @@ module Onix
 
           ### Import
 
-          Copy a `Gemfile.lock` into the project as a gemset:
+          Copy a `Gemfile.lock` into the project as a packageset:
 
           ```bash
           onix import ~/src/myapp               # reads myapp/Gemfile.lock
           onix import --name myapp Gemfile.lock  # explicit path + name
           ```
 
-          Gemset files are copies of `Gemfile.lock` stored in `gemsets/`.
+          Packageset files are copies of lockfiles stored in `packagesets/`.
           Scint's lockfile parser reads them — standard Bundler format.
 
           ### Fetch
@@ -110,7 +110,7 @@ module Onix
           git repos are cloned and checked out at the pinned revision:
 
           ```bash
-          onix fetch           # fetch everything in gemsets/
+          onix fetch           # fetch everything in packagesets/
           onix fetch -j8       # parallel (default: 20)
           ```
 
@@ -316,7 +316,7 @@ module Onix
 
           ```
           #{name}/
-          ├── gemsets/          # Gemfile.lock copies (one per project)
+          ├── packagesets/          # Lockfile copies (.gem for Ruby, .npm for Node)
           ├── overlays/         # Hand-written build overrides
           ├── cache/
           │   ├── sources/      # Unpacked gem source trees

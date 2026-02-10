@@ -15,20 +15,20 @@ module Onix
           case argv.shift
           when "-j", "--jobs" then jobs = argv.shift.to_i
           when "--help", "-h"
-            $stderr.puts "Usage: onix fetch [options] [gemset files...]"
+            $stderr.puts "Usage: onix fetch [options] [packageset files...]"
             $stderr.puts "  -j, --jobs N    Parallel downloads (default: 20, env: JOBS)"
             exit 0
           end
         end
 
         inputs = if argv.empty?
-          Dir.glob(File.join(project.gemsets_dir, "*.gemset"))
+          Dir.glob(File.join(project.packagesets_dir, "*.gem"))
         else
           argv.flat_map { |a| resolve_inputs(a) }
         end
 
         if inputs.empty?
-          UI.fail "No .gemset files found. Run 'onix import' first."
+          UI.fail "No packageset files found. Run 'onix import' first."
           exit 1
         end
 
@@ -122,7 +122,7 @@ module Onix
 
       def resolve_inputs(arg)
         if File.directory?(arg)
-          Dir.glob(File.join(arg, "*.gemset"))
+          Dir.glob(File.join(arg, "*.gem"))
         elsif File.file?(arg)
           [arg]
         else

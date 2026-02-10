@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build every `nix/app/<project>.nix` gemset across a matrix of:
+Build every `nix/app/<project>.nix` packageset across a matrix of:
 
 - **Ruby versions**: `ruby_3_3`, `ruby_3_4`, `ruby_4_0` (when available)
 - **Platforms**: `x86_64-linux`, `aarch64-linux`, `aarch64-darwin`, `x86_64-darwin`
@@ -70,7 +70,7 @@ let
     let
       gems = resolve {
         inherit pkgs ruby;
-        gemset = import (./app + "/${app}.nix");
+        packageset = import (./app + "/${app}.nix");
       };
     in
     pkgs.buildEnv {
@@ -142,7 +142,7 @@ The current architecture is almost there:
 |-------|----------------|-------|
 | `nix/gem/*/default.nix` (selectors) | ✅ | Pass-through to versioned derivation |
 | `nix/gem/*/*/default.nix` (derivations) | ✅ | Uses `stdenv.hostPlatform.parsed` for arch |
-| `nix/app/*.nix` (gemsets) | ✅ | Pure data — list of `{name, version}` |
+| `nix/app/*.nix` (packagesets) | ✅ | Pure data — list of `{name, version}` |
 | `nix/modules/resolve.nix` | ✅ | Takes `ruby` as parameter |
 | `overlays/*.nix` | ✅ | Use `pkgs.*` which adapts per platform |
 | Native ext build phase | ✅ | `extconf.rb` probes build-time `stdenv` |

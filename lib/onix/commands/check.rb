@@ -234,14 +234,14 @@ module Onix
       # ── dep-completeness ─────────────────────────────────────────
 
       def check_dep_completeness
-        gemset_files = Dir.glob(File.join(@project.gemsets_dir, "*.gemset"))
-        return [true, "no gemsets"] if gemset_files.empty?
+        packageset_files = Dir.glob(File.join(@project.packagesets_dir, "*.gem"))
+        return [true, "no packagesets"] if packageset_files.empty?
 
         missing_gems = []
         total = 0
 
         mat = @project.materializer
-        gemset_files.each do |f|
+        packageset_files.each do |f|
           lockdata = @project.parse_lockfile(f)
           classified = mat.classify(lockdata)
           classified[:rubygems].each do |spec|

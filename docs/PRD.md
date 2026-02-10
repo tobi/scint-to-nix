@@ -20,7 +20,7 @@ Gemfile.lock + scint cache
    bin/generate          → out/gems/<name>-<version>/{default.nix, source/}
         │                  out/gems/default.nix   (top-level attrset)
         │                  out/gems/bundle-path.nix
-        │                  out/gems/gemset.json
+        │                  out/gems/packageset.json
         ▼
    bin/build             → nix-build each gem in dependency order
         │
@@ -48,7 +48,7 @@ Gemfile.lock + scint cache
   - Writes `compile.nix` (never overwritten) for gems needing native compilation.
 - Generates top-level `default.nix` (attrset wiring all gems with `scintGemDeps`).
 - Generates `bundle-path.nix` (symlinks all gem outputs into one `GEM_HOME` tree).
-- Generates `gemset.json` (metadata for `bin/build`).
+- Generates `packageset.json` (metadata for `bin/build`).
 
 **Gem classification:**
 
@@ -69,7 +69,7 @@ Gemfile.lock + scint cache
 
 **Behaviour:**
 
-- Reads `gemset.json` for dependency graph.
+- Reads `packageset.json` for dependency graph.
 - Builds gems in parallel, leaves-first (topological order).
 - Stops on first failure with full nix error output.
 - Idempotent — `nix-build` is a no-op for already-built derivations.
@@ -93,7 +93,7 @@ Gemfile.lock + scint cache
 out/gems/
   default.nix           # attrset of all gems, wired deps
   bundle-path.nix       # single GEM_HOME tree
-  gemset.json           # metadata for build script
+  packageset.json           # metadata for build script
   rack-3.2.4/
     default.nix         # pure-ruby gem derivation
     source/             # copied from scint cache

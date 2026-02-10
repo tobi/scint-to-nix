@@ -22,7 +22,7 @@ module Onix
     def output_dir     = File.join(root, "nix", "gem")
     def app_dir        = File.join(root, "nix", "app")
     def modules_dir    = File.join(root, "nix", "modules")
-    def gemsets_dir    = File.join(root, "gemsets")
+    def packagesets_dir = File.join(root, "packagesets")
 
     # All overlay names (without .nix extension)
     def overlays
@@ -37,7 +37,7 @@ module Onix
       overlays.include?(name)
     end
 
-    # Parse a Gemfile.lock / .gemset file via Scint's lockfile parser.
+    # Parse a Gemfile.lock / .gem packageset file via Scint's lockfile parser.
     # Returns a Scint::Lockfile::LockfileData with .specs, .sources, etc.
     def parse_lockfile(path)
       Scint::Lockfile::Parser.parse(path)

@@ -307,7 +307,7 @@ module Onix
       nix << "  buildPhase = ''\n"
       nix << "    export GEM_PATH=${gemPath}\n" if has_gem_path
       unless auto_build_gems.empty?
-        nix << "    # Auto-install build-time gem deps not in the gemset\n"
+        nix << "    # Auto-install build-time gem deps not in the packageset\n"
         nix << "    export GEM_HOME=\"$TMPDIR/gems\"\n"
         nix << "    export GEM_PATH=\"$GEM_HOME''${GEM_PATH:+:$GEM_PATH}\"\n"
         auto_build_gems.each do |g|
