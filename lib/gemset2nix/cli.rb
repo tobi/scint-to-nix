@@ -1,19 +1,18 @@
 # frozen_string_literal: true
 
-require "optparse"
-
 module Gemset2Nix
   module CLI
     COMMANDS = {
-      "init"   => "Initialize a new gemset2nix project",
-      "import" => "Import gems from a Gemfile.lock",
-      "fetch"  => "Fetch gem sources into cache/",
-      "update" => "Regenerate all Nix derivations from cache",
-      "build"  => "Build gem derivations via Nix",
+      "init"   => "Initialize a new project",
+      "import" => "Import gems from Gemfile.lock",
+      "fetch"  => "Download gem sources into cache/",
+      "update" => "Generate Nix derivations from cache",
+      "build"  => "Build gems via Nix",
+      "check"  => "Check generated derivations",
     }.freeze
 
     def self.run(argv)
-      if argv.empty? || (argv.first.start_with?("-") && !COMMANDS.key?(argv.first))
+      if argv.empty? || (argv.first&.start_with?("-") && !COMMANDS.key?(argv.first))
         if argv.include?("--version") || argv.include?("-v")
           puts "gemset2nix #{VERSION}"
           return
@@ -36,18 +35,16 @@ module Gemset2Nix
     end
 
     def self.usage
-      $stderr.puts <<~USAGE
-        gemset2nix — convert Gemfile.lock to hermetic Nix derivations
-
-        Usage: gemset2nix <command> [options]
-
-        Commands:
-      USAGE
+      $stderr.puts
+      $stderr.puts UI.bold("gemset2nix") + " #{UI.dim(VERSION)}"
+      $stderr.puts UI.dim("  Gemfile.lock → hermetic Nix builds")
+      $stderr.puts
       COMMANDS.each do |name, desc|
-        $stderr.puts "  %-10s %s" % [name, desc]
+        $stderr.puts "  #{UI.amber(name.ljust(10))} #{desc}"
       end
       $stderr.puts
-      $stderr.puts "Run 'gemset2nix <command> --help' for command-specific options."
+      $stderr.puts UI.dim("  Workflow: init → import → fetch → update → build")
+      $stderr.puts
     end
   end
 end
