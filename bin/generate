@@ -248,7 +248,7 @@ meta_by_key.each_value do |meta|
   auto = has_ext && !has_overlay ? scan_extconf(source_dir) : nil
   auto_has_deps = auto && (!auto[:deps].empty? || !auto[:build_gem_deps].empty? || auto[:is_rust])
   # Need pkgs when overlay exists OR when auto-detection found system deps
-  needs_pkgs = has_overlay || (auto_has_deps && !auto[:deps].empty?)
+  needs_pkgs = has_overlay || (auto && (auto[:is_rust] || !auto[:deps].empty?))
 
   # Pick indent: 4 spaces if no heredoc in block, 8 if heredoc present
   si = has_heredoc ? SH : "    "
