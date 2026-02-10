@@ -82,12 +82,13 @@ module Onix
 
           ```nix
           # overlays/pg.nix — simplest case: just add deps
-          { pkgs, ruby }: with pkgs; [ libpq pkg-config ]
+          { pkgs, ruby, ... }: with pkgs; [ libpq pkg-config ]
 
-          # overlays/nokogiri.nix — deps + flags
-          { pkgs, ruby }: {
+          # overlays/nokogiri.nix — deps + flags + build-time gem
+          { pkgs, ruby, buildGem, ... }: {
             deps = with pkgs; [ libxml2 libxslt pkg-config zlib ];
             extconfFlags = "--use-system-libraries";
+            buildGems = [ (buildGem "mini_portile2") ];
           }
           ```
 

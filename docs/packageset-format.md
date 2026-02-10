@@ -74,14 +74,8 @@ generation — Ruby already provides them.
 ## The `installer` field
 
 Every entry has `"installer":"ruby"`. This identifies which build system
-handles the package. Future ecosystem support:
-
-```json
-{"installer":"node","name":"esbuild","version":"0.21.5","source":"npm","remote":"https://registry.npmjs.org/"}
-```
-
-The generate step dispatches on `installer` to select the right builder
-(`build-gem.nix` for Ruby, `build-npm.nix` for Node, etc.).
+handles the package. The generate step uses it to select the right builder
+(`build-gem.nix` for Ruby).
 
 ## Design principles
 
@@ -94,6 +88,3 @@ The generate step dispatches on `installer` to select the right builder
 
 3. **Human-readable**: JSONL is easy to diff, grep, and inspect. One line per
    package means clean git diffs when versions change.
-
-4. **Ecosystem-agnostic**: the `installer` field makes the format extensible
-   to npm, pip, cargo, etc. without changing the structure.

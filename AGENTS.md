@@ -239,7 +239,7 @@ Git gems use `bundler/gems/<base>-<shortref>/` with real `.gemspec` files inside
 ## Lint suite
 
 ```bash
-onix check     # default: fizzy
+onix check
 ```
 
 | Lint | What it checks |
