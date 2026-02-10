@@ -3,7 +3,7 @@
 # ║  GENERATED — do not edit.  Run bin/import to refresh ║
 # ╚═══════════════════════════════════════════════════════╝
 #
-# SYNTHETIC — 80 gems
+# SYNTHETIC — 82 gems
 # Generated from Gemfile.lock
 #
 [
@@ -12,6 +12,7 @@
   { name = "bigdecimal"; version = "4.0.1"; }
   { name = "bootsnap"; version = "1.21.1"; }
   { name = "builder"; version = "3.3.0"; }
+  { name = "commonmarker"; version = "2.6.3"; }
   { name = "concurrent-ruby"; version = "1.3.6"; }
   { name = "connection_pool"; version = "3.0.2"; }
   { name = "crass"; version = "1.0.6"; }
@@ -55,6 +56,7 @@
   { name = "rails-dom-testing"; version = "2.3.0"; }
   { name = "rails-html-sanitizer"; version = "1.6.2"; }
   { name = "rake"; version = "13.3.1"; }
+  { name = "rb_sys"; version = "0.9.124"; }
   { name = "rdoc"; version = "7.0.3"; }
   { name = "reline"; version = "0.6.3"; }
   { name = "securerandom"; version = "0.4.1"; }

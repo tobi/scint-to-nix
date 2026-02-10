@@ -57,7 +57,23 @@ nix-shell "$dir/devshell.nix" --run "
 "
 
 echo ""
-echo "--- Test 4: rails boot (git) + sqlite3 (native) ---"
+echo "--- Test 4: Rust extension (commonmarker) ---"
+nix-shell "$dir/devshell.nix" --run "
+  cd '$dir'
+  ruby -e '
+    require \"bundler/setup\"
+    require \"commonmarker\"
+    html = Commonmarker.to_html(\"# Hello\\n\\nFrom **Nix**\")
+    raise \"expected h1, got: #{html}\" unless html.include?(\"<h1>\")
+    raise \"expected strong, got: #{html}\" unless html.include?(\"<strong>\")
+    puts \"Commonmarker: #{html.strip}\"
+    puts \"OK: Rust extension (commonmarker) works\"
+  '
+"
+
+echo ""
+echo "--- Test 5: rails boot (git) + sqlite3 (native) ---"
+
 nix-shell "$dir/devshell.nix" --run "
   cd '$dir'
   RAILS_ENV=test ruby -e '
@@ -94,7 +110,7 @@ nix-shell "$dir/devshell.nix" --run "
 "
 
 echo ""
-echo "--- Test 5: git gem monorepo resolution ---"
+echo "--- Test 6: git gem monorepo resolution ---"
 nix-shell "$dir/devshell.nix" --run "
   cd '$dir'
   ruby -e '
