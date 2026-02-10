@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Gemset2Nix
+module Onix
   # Generates Nix expression strings for gem derivations, selectors,
   # git repos, and the catalogue. Pure string output — no filesystem.
   class NixTemplate

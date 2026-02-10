@@ -1,7 +1,7 @@
 #
-# ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run gemset2nix generate to regen ║
-# ╚══════════════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit. Run onix generate to regen ║
+# ╚══════════════════════════════════════════════════════╝
 #
 # Git: devise-secure_password @ adcc85fe1bab
 # URI: https://github.com/chatwoot/devise-secure_password

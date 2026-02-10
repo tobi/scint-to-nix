@@ -3,7 +3,7 @@
 require "open3"
 require "tempfile"
 
-module Gemset2Nix
+module Onix
   module Commands
     class Build
       def run(argv)
@@ -37,16 +37,16 @@ module Gemset2Nix
 
       def usage
         $stderr.puts <<~USAGE
-          Usage: gemset2nix build [options] [app] [gem]
+          Usage: onix build [options] [app] [gem]
 
           Build gem derivations via Nix.
 
           Examples:
-            gemset2nix build                        # build every gem in the pool
-            gemset2nix build fizzy                   # build all gems for an app
-            gemset2nix build fizzy rack              # build a specific gem from an app
-            gemset2nix build --gem nokogiri/1.19.0   # build a specific gem+version
-            gemset2nix build --gem nokogiri          # build latest version
+            onix build                        # build every gem in the pool
+            onix build fizzy                   # build all gems for an app
+            onix build fizzy rack              # build a specific gem from an app
+            onix build --gem nokogiri/1.19.0   # build a specific gem+version
+            onix build --gem nokogiri          # build latest version
 
           Options:
             --gem, -g NAME[/VERSION]   Build a specific gem derivation

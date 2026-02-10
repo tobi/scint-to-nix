@@ -1,7 +1,7 @@
 #
-# ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run gemset2nix generate to regen ║
-# ╚══════════════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit. Run onix generate to regen ║
+# ╚══════════════════════════════════════════════════════╝
 #
 # Git: webpush @ 9631ac63045c
 # URI: https://github.com/mastodon/webpush.git

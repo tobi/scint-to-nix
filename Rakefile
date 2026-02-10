@@ -2,7 +2,7 @@ require "bundler/gem_tasks"
 
 desc "Install gem then symlink lib/ and exe/ from gem dir back to working tree"
 task "install:link" => :install do
-  spec = Gem::Specification.find_by_name("gemset2nix")
+  spec = Gem::Specification.find_by_name("onix")
   gem_dir = spec.gem_dir
 
   # Replace installed lib/ with symlink to working tree

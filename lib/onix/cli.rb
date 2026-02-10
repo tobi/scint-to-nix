@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Gemset2Nix
+module Onix
   module CLI
     COMMANDS = {
       "init"     => "Initialize a new project",
@@ -14,7 +14,7 @@ module Gemset2Nix
     def self.run(argv)
       if argv.empty? || (argv.first&.start_with?("-") && !COMMANDS.key?(argv.first))
         if argv.include?("--version") || argv.include?("-v")
-          puts "gemset2nix #{VERSION}"
+          puts "onix #{VERSION}"
           return
         end
         usage
@@ -30,13 +30,13 @@ module Gemset2Nix
       end
 
       require_relative "commands/#{command}"
-      klass = Gemset2Nix::Commands.const_get(command.capitalize)
+      klass = Onix::Commands.const_get(command.capitalize)
       klass.new.run(argv)
     end
 
     def self.usage
       $stderr.puts
-      $stderr.puts UI.bold("gemset2nix") + " #{UI.dim(VERSION)}"
+      $stderr.puts UI.bold("onix") + " #{UI.dim(VERSION)}"
       $stderr.puts UI.dim("  Nix-packaged Ruby gems")
       $stderr.puts
       COMMANDS.each do |name, desc|

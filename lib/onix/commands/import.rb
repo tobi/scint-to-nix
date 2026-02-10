@@ -10,7 +10,7 @@ require "uri"
 require "net/http"
 require "json"
 
-module Gemset2Nix
+module Onix
   module Commands
     class Import
       def run(argv)
@@ -50,18 +50,18 @@ module Gemset2Nix
 
       def usage
         $stderr.puts <<~USAGE
-          Usage: gemset2nix import [options] <path>
+          Usage: onix import [options] <path>
 
           Import gems from a Gemfile.lock or the rubygems.org index.
 
           From Gemfile.lock:
-            gemset2nix import path/to/myapp/              # finds Gemfile.lock in dir
-            gemset2nix import path/to/Gemfile.lock         # explicit file
-            gemset2nix import --name myapp Gemfile.lock    # override project name
+            onix import path/to/myapp/              # finds Gemfile.lock in dir
+            onix import path/to/Gemfile.lock         # explicit file
+            onix import --name myapp Gemfile.lock    # override project name
 
           From rubygems.org index:
-            gemset2nix import --from-index                 # top 1000, 3 versions each
-            gemset2nix import --from-index --count 500
+            onix import --from-index                 # top 1000, 3 versions each
+            onix import --from-index --count 500
 
           Options:
             --name, -n NAME       Override the project/gemset name
@@ -238,7 +238,7 @@ module Gemset2Nix
       def rebuild_apps_registry
         apps = +""
         apps << NixWriter::BANNER_IMPORT
-        apps << "# App presets for deps.gem.app.<name>.enable = true\n#\n{\n"
+        apps << "# App presets for onix.apps.<name>.enable = true\n#\n{\n"
         Dir.glob(File.join(@project.app_dir, "*.nix")).sort.each do |f|
           name = File.basename(f, ".nix")
           apps << "  #{name.inspect} = import ../app/#{name}.nix;\n"

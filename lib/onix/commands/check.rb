@@ -8,7 +8,7 @@ require "json"
 require "open3"
 require "tmpdir"
 
-module Gemset2Nix
+module Onix
   module Commands
     class Check
       CHECKS = %i[
@@ -26,7 +26,7 @@ module Gemset2Nix
         while argv.first&.start_with?("-")
           case argv.shift
           when "--help", "-h"
-            $stderr.puts "Usage: gemset2nix check [checks...]"
+            $stderr.puts "Usage: onix check [checks...]"
             $stderr.puts "\nChecks: #{CHECKS.map { |c| c.to_s.tr("_", "-") }.join(", ")}"
             $stderr.puts "Default: all"
             exit 0

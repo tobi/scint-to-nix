@@ -3,17 +3,18 @@
 #
 # Config format:
 #   {
-#     deps.gem.app.rails.enable = true;           # app preset
-#     deps.gem.rack = { enable = true; version = "3.2.4"; };  # pin a gem
+#     onix.apps.rails.enable = true;                              # app preset
+#     onix.ruby.rack = { enable = true; version = "3.2.4"; };     # pin a gem
 #   }
 #
 # Usage:
 #   resolve = import ./nix/modules/resolve.nix;
 #   env = resolve {
 #     inherit pkgs ruby;
-#     config = { deps.gem.app.fizzy.enable = true; };
+#     config = { onix.apps.fizzy.enable = true; };
 #   };
 #   env.devShell { buildInputs = with pkgs; [ sqlite ]; }
+#   # env.onix.ruby.bundlePath — merged BUNDLE_PATH
 #
 {
   pkgs,
@@ -51,33 +52,42 @@ let
       cfg
     else
       let
-        # Support both deps.gem.* (new) and gem.* (legacy)
-        gemCfg =
-          if cfg ? deps && cfg.deps ? gem then cfg.deps.gem
-          else if cfg ? gem then cfg.gem
-          else {};
+        onixCfg = cfg.onix or {};
 
-        # Expand app presets: deps.gem.app.<name>.enable = true
+        # App presets: onix.apps.<name>.enable = true
         appGems =
-          if gemCfg ? app then
-            let
-              enabledApps = lib.filterAttrs (_: v: v.enable or false) gemCfg.app;
-              appEntries = lib.concatMap (
-                name:
-                if appPresets ? ${name} then
-                  appPresets.${name}
-                else
-                  throw "deps.gem.app.${name}: unknown app. Available: ${builtins.concatStringsSep ", " (builtins.attrNames appPresets)}"
-              ) (builtins.attrNames enabledApps);
-            in
-            appEntries
-          else
-            [ ];
+          let
+            appsCfg = onixCfg.apps or
+              # Legacy: onix.ruby.app, deps.gem.app, gem.app
+              (if onixCfg ? ruby && onixCfg.ruby ? app then onixCfg.ruby.app
+               else if cfg ? deps && cfg.deps ? gem && cfg.deps.gem ? app then cfg.deps.gem.app
+               else if cfg ? gem && cfg.gem ? app then cfg.gem.app
+               else {});
+            enabledApps = lib.filterAttrs (_: v: v.enable or false) appsCfg;
+          in
+          lib.concatMap (
+            name:
+            if appPresets ? ${name} then
+              appPresets.${name}
+            else
+              throw "onix.apps.${name}: unknown app. Available: ${builtins.concatStringsSep ", " (builtins.attrNames appPresets)}"
+          ) (builtins.attrNames enabledApps);
 
-        # Direct gem configs: deps.gem.<name> = { enable = true; version = "..."; }
+        # Per-gem config: onix.ruby.<name> = { enable = true; version = "..."; }
+        rubyCfg =
+          let
+            rc = onixCfg.ruby or
+              # Legacy: deps.gem, gem
+              (if cfg ? deps && cfg.deps ? gem then cfg.deps.gem
+               else if cfg ? gem then cfg.gem
+               else {});
+          in
+          # Strip "app" key (handled above)
+          builtins.removeAttrs rc ["app"];
+
         directGems =
           let
-            filtered = lib.filterAttrs (n: v: n != "app" && builtins.isAttrs v && (v.enable or false)) gemCfg;
+            filtered = lib.filterAttrs (_: v: builtins.isAttrs v && (v.enable or false)) rubyCfg;
           in
           lib.mapAttrsToList (
             name: v:
@@ -106,15 +116,18 @@ let
   gems = builtins.listToAttrs (map resolveEntry normalized);
 
   bundlePath = pkgs.buildEnv {
-    name = "gemset2nix-bundle";
+    name = "onix-bundle";
     paths = builtins.attrValues gems;
   };
 in
 gems // {
+  onix.ruby.bundlePath = bundlePath;
+
+  # Legacy alias
   inherit bundlePath;
 
   devShell = {
-    name ? "gemset2nix-devshell",
+    name ? "onix-devshell",
     buildInputs ? [],
     shellHook ? "",
     ...

@@ -1,7 +1,7 @@
 #
-# ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run gemset2nix generate to regen ║
-# ╚══════════════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit. Run onix generate to regen ║
+# ╚══════════════════════════════════════════════════════╝
 #
 # Git: acts_as_follower @ 06393d3693a1
 # URI: https://github.com/forem/acts_as_follower.git

@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-module Gemset2Nix
+module Onix
   module Commands
     class Init
       def run(argv)
         while argv.first&.start_with?("-")
           case argv.shift
           when "--help", "-h"
-            $stderr.puts "Usage: gemset2nix init [directory]"
+            $stderr.puts "Usage: onix init [directory]"
             $stderr.puts
-            $stderr.puts "Initialize a new gemset2nix project in the given directory (default: .)"
+            $stderr.puts "Initialize a new onix project in the given directory (default: .)"
             exit 0
           end
         end
@@ -57,10 +57,10 @@ module Gemset2Nix
           $stderr.puts
           $stderr.puts "  #{UI.bold(name)}/ ready. Next steps:"
           $stderr.puts
-          $stderr.puts "  #{UI.amber("1.")} gemset2nix import path/to/Gemfile.lock"
-          $stderr.puts "  #{UI.amber("2.")} gemset2nix fetch"
-          $stderr.puts "  #{UI.amber("3.")} gemset2nix generate"
-          $stderr.puts "  #{UI.amber("4.")} gemset2nix build"
+          $stderr.puts "  #{UI.amber("1.")} onix import path/to/Gemfile.lock"
+          $stderr.puts "  #{UI.amber("2.")} onix fetch"
+          $stderr.puts "  #{UI.amber("3.")} onix generate"
+          $stderr.puts "  #{UI.amber("4.")} onix build"
           $stderr.puts
         end
       end
@@ -69,25 +69,25 @@ module Gemset2Nix
         <<~MD
           # #{name}
 
-          Nix-packaged Ruby gems, managed by [gemset2nix](https://github.com/tobi/gemset2nix).
+          Nix-packaged Ruby gems, managed by [onix](https://github.com/tobi/onix).
 
           ## Quick start
 
           ```bash
           # 1. Import gems from a Gemfile.lock
-          gemset2nix import path/to/project
+          onix import path/to/project
 
           # 2. Fetch all gem sources into cache/
-          gemset2nix fetch
+          onix fetch
 
           # 3. Generate Nix derivations from cached sources
-          gemset2nix generate
+          onix generate
 
           # 4. Build everything
-          gemset2nix build
+          onix build
 
           # 5. Check for problems (runs automatically after generate)
-          gemset2nix check
+          onix check
           ```
 
           ## Workflow
@@ -97,8 +97,8 @@ module Gemset2Nix
           Copy a `Gemfile.lock` into the project as a gemset:
 
           ```bash
-          gemset2nix import ~/src/myapp               # reads myapp/Gemfile.lock
-          gemset2nix import --name myapp Gemfile.lock  # explicit path + name
+          onix import ~/src/myapp               # reads myapp/Gemfile.lock
+          onix import --name myapp Gemfile.lock  # explicit path + name
           ```
 
           Gemset files are copies of `Gemfile.lock` stored in `gemsets/`.
@@ -110,8 +110,8 @@ module Gemset2Nix
           git repos are cloned and checked out at the pinned revision:
 
           ```bash
-          gemset2nix fetch           # fetch everything in gemsets/
-          gemset2nix fetch -j8       # parallel (default: 20)
+          onix fetch           # fetch everything in gemsets/
+          onix fetch -j8       # parallel (default: 20)
           ```
 
           ### Update
@@ -119,7 +119,7 @@ module Gemset2Nix
           Generate Nix derivations from the cached sources and metadata:
 
           ```bash
-          gemset2nix generate
+          onix generate
           ```
 
           This creates:
@@ -132,10 +132,10 @@ module Gemset2Nix
           Build all gem derivations via Nix:
 
           ```bash
-          gemset2nix build                  # build every gem in the pool
-          gemset2nix build myapp            # build all gems for one app
-          gemset2nix build myapp nokogiri   # build a specific gem from an app
-          gemset2nix build --gem nokogiri   # build a gem by name (latest version)
+          onix build                  # build every gem in the pool
+          onix build myapp            # build all gems for one app
+          onix build myapp nokogiri   # build a specific gem from an app
+          onix build --gem nokogiri   # build a gem by name (latest version)
           ```
 
           ### Check
@@ -143,8 +143,8 @@ module Gemset2Nix
           Run checks on generated derivations:
 
           ```bash
-          gemset2nix check                       # all checks
-          gemset2nix check symlinks nix-eval     # specific checks
+          onix check                       # all checks
+          onix check symlinks nix-eval     # specific checks
           ```
 
           Checks: `symlinks`, `nix-eval`, `source-clean`, `secrets`,
@@ -160,7 +160,7 @@ module Gemset2Nix
 
           ### Auto-detection
 
-          `gemset2nix generate` scans each gem's `ext/**/extconf.rb` and automatically
+          `onix generate` scans each gem's `ext/**/extconf.rb` and automatically
           detects common native dependencies (`pkg_config`, `find_library`,
           `have_header` calls). It also detects Rust gems that use `rb_sys`.
           Auto-detected deps are inlined directly into the generated derivation —
@@ -215,7 +215,7 @@ module Gemset2Nix
           ```
 
           Each `buildGems` entry must be a derivation with a `bundle_path`
-          passthru attribute (i.e., built by `gemset2nix generate`).
+          passthru attribute (i.e., built by `onix generate`).
 
           ### Lifecycle hooks
 
@@ -329,7 +329,7 @@ module Gemset2Nix
               └── modules/      # Catalogue, resolver, app registry
           ```
 
-          Everything under `nix/` is generated. Run `gemset2nix generate` to regenerate.
+          Everything under `nix/` is generated. Run `onix generate` to regenerate.
 
           ## Design
 
@@ -345,7 +345,7 @@ module Gemset2Nix
         MD
       end
 
-      # resolve.nix lives in lib/gemset2nix/data/resolve.nix — single source of truth
+      # resolve.nix lives in lib/onix/data/resolve.nix — single source of truth
     end
   end
 end

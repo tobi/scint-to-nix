@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.name        = "gemset2nix"
+  s.name        = "onix"
   s.version     = "0.5.0"
   s.summary     = "Convert Ruby Gemfile.lock to hermetic Nix derivations"
   s.description = "Generates per-gem Nix derivations from a Gemfile.lock, " \
@@ -7,13 +7,13 @@ Gem::Specification.new do |s|
                   "and bundler-compatible BUNDLE_PATH layout."
   s.authors     = ["Tobi Lütke"]
   s.license     = "MIT"
-  s.homepage    = "https://github.com/tobi/gemset2nix"
+  s.homepage    = "https://github.com/tobi/onix"
 
   s.required_ruby_version = ">= 3.1"
 
   s.files         = Dir["lib/**/*.rb", "lib/**/*.nix", "exe/*", "LICENSE", "README.md"]
   s.bindir        = "exe"
-  s.executables   = ["gemset2nix"]
+  s.executables   = ["onix"]
   s.require_paths = ["lib"]
 
   s.add_dependency "scint", ">= 0.1"

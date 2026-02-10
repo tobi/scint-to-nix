@@ -1,7 +1,7 @@
 #
-# ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run gemset2nix generate to regen ║
-# ╚══════════════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit. Run onix generate to regen ║
+# ╚══════════════════════════════════════════════════════╝
 #
 # Git: rails @ 60d92e4e7dfe
 # URI: https://github.com/rails/rails.git

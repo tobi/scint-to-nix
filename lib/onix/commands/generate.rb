@@ -7,7 +7,7 @@ require "fileutils"
 require "pathname"
 require "set"
 
-module Gemset2Nix
+module Onix
   module Commands
     class Generate
       include NixWriter
@@ -116,7 +116,7 @@ module Gemset2Nix
         generate_catalogue
 
         $stderr.puts
-        UI.info "Run #{UI.amber("gemset2nix check")} to verify"
+        UI.info "Run #{UI.amber("onix check")} to verify"
       end
 
       private
@@ -251,7 +251,7 @@ module Gemset2Nix
           }.find { |d| Dir.exist?(d) }
 
           unless source_dir
-            UI.warn "no source for git repo #{repo_key} (run gemset2nix fetch)"
+            UI.warn "no source for git repo #{repo_key} (run onix fetch)"
             next
           end
 

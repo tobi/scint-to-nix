@@ -3,7 +3,7 @@
 require "scint/parallel_fetcher"
 require "scint/materializer"
 
-module Gemset2Nix
+module Onix
   module Commands
     class Fetch
       def run(argv)
@@ -14,7 +14,7 @@ module Gemset2Nix
           case argv.shift
           when "-j", "--jobs" then jobs = argv.shift.to_i
           when "--help", "-h"
-            $stderr.puts "Usage: gemset2nix fetch [options] [gemset files...]"
+            $stderr.puts "Usage: onix fetch [options] [gemset files...]"
             $stderr.puts "  -j, --jobs N    Parallel downloads (default: 20, env: JOBS)"
             exit 0
           end
@@ -27,7 +27,7 @@ module Gemset2Nix
         end
 
         if inputs.empty?
-          UI.fail "No .gemset files found. Run 'gemset2nix import' first."
+          UI.fail "No .gemset files found. Run 'onix import' first."
           exit 1
         end
 

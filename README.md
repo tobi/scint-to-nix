@@ -1,20 +1,20 @@
-# gemset2nix
+# onix
 
 Nix-packaged Ruby gems. Takes a `Gemfile.lock`, builds every gem once, caches forever.
 
 ```
-$ gemset2nix import ~/src/rails     # read Gemfile.lock, generate nix gem list
-$ gemset2nix import ~/src/shopify  # import as many projects as you want
-$ gemset2nix fetch                 # download .gem files, unpack sources
-$ gemset2nix generate              # emit one nix derivation per gem
-$ gemset2nix build                 # build everything, cache forever
+$ onix import ~/src/rails     # read Gemfile.lock, generate nix gem list
+$ onix import ~/src/shopify  # import as many projects as you want
+$ onix fetch                 # download .gem files, unpack sources
+$ onix generate              # emit one nix derivation per gem
+$ onix build                 # build everything, cache forever
 ```
 
 ## Install
 
 ```bash
 gem install specific_install
-gem specific_install https://github.com/tobi/gemset2nix
+gem specific_install https://github.com/tobi/onix
 ```
 
 Requires Ruby ≥ 3.1 and Nix.
@@ -25,7 +25,7 @@ Requires Ruby ≥ 3.1 and Nix.
 
 ```bash
 mkdir my-gems && cd my-gems
-gemset2nix init
+onix init
 ```
 
 Creates the directory structure: `cache/`, `nix/`, `overlays/`, `gemsets/`.
@@ -33,8 +33,8 @@ Creates the directory structure: `cache/`, `nix/`, `overlays/`, `gemsets/`.
 ### 2. Import a Gemfile.lock
 
 ```bash
-gemset2nix import ~/src/myapp              # reads myapp/Gemfile.lock
-gemset2nix import --name blog Gemfile.lock  # explicit name
+onix import ~/src/myapp              # reads myapp/Gemfile.lock
+onix import --name blog Gemfile.lock  # explicit name
 ```
 
 The gemset file is a copy of your `Gemfile.lock` — Bundler's own parser reads it back. Also generates `nix/app/<name>.nix` (the gem list for Nix).
@@ -42,8 +42,8 @@ The gemset file is a copy of your `Gemfile.lock` — Bundler's own parser reads 
 ### 3. Fetch sources
 
 ```bash
-gemset2nix fetch        # default: 20 parallel jobs
-gemset2nix fetch -j 8   # fewer jobs
+onix fetch        # default: 20 parallel jobs
+onix fetch -j 8   # fewer jobs
 ```
 
 Downloads `.gem` files, unpacks sources, extracts metadata, clones git repos. Everything goes into `cache/` — no network access needed after this step.
@@ -51,7 +51,7 @@ Downloads `.gem` files, unpacks sources, extracts metadata, clones git repos. Ev
 ### 4. Generate derivations
 
 ```bash
-gemset2nix generate
+onix generate
 ```
 
 Scans cached sources and metadata, auto-detects native dependencies from `extconf.rb`, and writes:
@@ -62,10 +62,10 @@ Scans cached sources and metadata, auto-detects native dependencies from `extcon
 ### 5. Build
 
 ```bash
-gemset2nix build                    # build every gem in the pool
-gemset2nix build myapp              # build all gems for one app
-gemset2nix build myapp nokogiri     # build a single gem from an app
-gemset2nix build --gem nokogiri     # build by name (latest version)
+onix build                    # build every gem in the pool
+onix build myapp              # build all gems for one app
+onix build myapp nokogiri     # build a single gem from an app
+onix build --gem nokogiri     # build by name (latest version)
 ```
 
 Shows live progress during builds. On failure, prints the gem name, whether to create or edit an overlay, and the exact `nix log` command:
@@ -78,8 +78,8 @@ Shows live progress during builds. On failure, prints the gem name, whether to c
 ### 6. Check
 
 ```bash
-gemset2nix check                        # all checks
-gemset2nix check symlinks dep-completeness  # specific ones
+onix check                        # all checks
+onix check symlinks dep-completeness  # specific ones
 ```
 
 Checks: `symlinks` · `nix-eval` · `source-clean` · `secrets` · `dep-completeness` · `require-paths-vs-metadata`. All run in parallel.
@@ -96,7 +96,7 @@ Checks: `symlinks` · `nix-eval` · `source-clean` · `secrets` · `dep-complete
 
 ### devShell (recommended)
 
-The simplest way to use gemset2nix. Handles all Bundler plumbing automatically:
+The simplest way to use onix. Handles all Bundler plumbing automatically:
 
 ```nix
 { pkgs ? import <nixpkgs> {}, ruby ? pkgs.ruby_3_4 }:
@@ -104,7 +104,7 @@ let
   resolve = import ./nix/modules/resolve.nix;
   gems = resolve {
     inherit pkgs ruby;
-    config = { deps.gem.app.rails.enable = true; };
+    config = { onix.apps.rails.enable = true; };
   };
 in gems.devShell {
   buildInputs = with pkgs; [ sqlite postgresql ];
@@ -118,19 +118,19 @@ in gems.devShell {
 If you need more control (CI scripts, Docker images, custom derivations), use `bundlePath` directly:
 
 ```nix
-gems.bundlePath        # → /nix/store/...-gemset2nix-bundle
+gems.bundlePath        # → /nix/store/...-onix-bundle
                        # contains ruby/3.4.0/gems/*, specifications/*, extensions/*,
                        # and bundler/gems/* for git sources
 ```
 
 ### Config namespace
 
-The config uses `deps.gem.*` — namespaced for future package manager support (`deps.npm`, `deps.pip`, etc.):
+The config namespace:
 
 ```nix
 config = {
-  deps.gem.app.rails.enable = true;         # enable an app preset (all locked gems)
-  deps.gem.rack = { enable = true; version = "3.2.4"; };  # pin a specific gem
+  onix.apps.rails.enable = true;         # enable an app preset (all locked gems)
+  onix.ruby.rack = { enable = true; version = "3.2.4"; };  # pin a specific gem
 };
 ```
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Gemset2Nix
+module Onix
   # Scans ext/**/extconf.rb to extract build requirements.
   # Returns raw findings — the nix generator decides how to map them.
   module ExtconfScanner

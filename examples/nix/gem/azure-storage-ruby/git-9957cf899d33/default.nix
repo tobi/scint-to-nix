@@ -1,7 +1,7 @@
 #
-# ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run gemset2nix generate to regen ║
-# ╚══════════════════════════════════════════════════════════════╝
+# ╔══════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit. Run onix generate to regen ║
+# ╚══════════════════════════════════════════════════════╝
 #
 # Git: azure-storage-ruby @ 9957cf899d33
 # URI: https://github.com/chatwoot/azure-storage-ruby

@@ -1,10 +1,10 @@
-# gemset2nix examples — Justfile
+# onix examples — Justfile
 # Run from examples/ directory
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 ruby := "ruby_3_4"
-gem := "ruby -I../lib ../exe/gemset2nix"
+gem := "ruby -I../lib ../exe/onix"
 
 # ── Build ──────────────────────────────────────────────────────────
 

@@ -4,8 +4,8 @@ require "scint"
 require "scint/lockfile/parser"
 require "scint/materializer"
 
-module Gemset2Nix
-  # Represents a gemset2nix project directory — knows all the paths.
+module Onix
+  # Represents a onix project directory — knows all the paths.
   class Project
     attr_reader :root
 

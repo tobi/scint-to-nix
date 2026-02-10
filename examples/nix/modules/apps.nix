@@ -1,9 +1,9 @@
 #
-# ╔══════════════════════════════════════════════════════════════╗
-# ║  GENERATED — do not edit.  Run gemset2nix import to regen  ║
-# ╚══════════════════════════════════════════════════════════════╝
+# ╔════════════════════════════════════════════════════╗
+# ║  GENERATED — do not edit. Run onix import to regen ║
+# ╚════════════════════════════════════════════════════╝
 #
-# App presets for deps.gem.app.<name>.enable = true
+# App presets for onix.apps.<name>.enable = true
 #
 {
   "chatwoot" = import ../app/chatwoot.nix;

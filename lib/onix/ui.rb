@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Gemset2Nix
+module Onix
   # Terminal UI — clean, precise output for a build tool.
   #
   # Aesthetic: monochrome base with amber (#ffb000) accents.
