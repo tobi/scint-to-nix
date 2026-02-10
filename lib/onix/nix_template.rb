@@ -331,7 +331,7 @@ module Onix
 
     def install_phase(nix, name:, version:, key:, has_ext:, has_overlay:,
                       has_prebuilt:, require_paths:, executables:, bindir:)
-      has_native = has_ext || has_prebuilt
+      needs_platform = has_ext || has_prebuilt
       rp = require_paths.map { |p| "\"#{p}\"" }.join(", ")
 
       nix << "  installPhase = ''\n"
@@ -339,16 +339,18 @@ module Onix
       nix << "#{SH}mkdir -p $dest/gems/#{key}\n"
       nix << "#{SH}cp -r . $dest/gems/#{key}/\n"
 
-      extension_setup(nix, key) if has_native
-      platform_links(nix, key)
+      if needs_platform
+        extension_setup(nix, key)
+        platform_links(nix, key)
+      end
 
       gemspec_block(nix, name: name, version: version, key: key, rp: rp,
                     executables: executables, bindir: bindir)
 
-      # Always create platform-qualified gemspecs — Bundler expects them when
-      # the lockfile lists platform variants (e.g. sorbet-static-universal-darwin)
-      platform_gemspec(nix, name: name, version: version, key: key, rp: rp,
-                       executables: executables, bindir: bindir)
+      if needs_platform
+        platform_gemspec(nix, name: name, version: version, key: key, rp: rp,
+                         executables: executables, bindir: bindir)
+      end
 
       binstubs(nix, name: name, version: version, executables: executables) unless executables.empty?
 
