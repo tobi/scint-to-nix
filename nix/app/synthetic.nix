@@ -3,7 +3,7 @@
 # ║  GENERATED — do not edit.  Run bin/import to refresh ║
 # ╚═══════════════════════════════════════════════════════╝
 #
-# SYNTHETIC — 81 gems
+# SYNTHETIC — 80 gems
 # Generated from Gemfile.lock
 #
 [
@@ -22,7 +22,6 @@
   { name = "fugit"; version = "1.12.1"; }
   { name = "globalid"; version = "1.3.0"; }
   { name = "i18n"; version = "1.14.8"; }
-  { name = "importmap-rails"; version = "2.2.2"; }
   { name = "io-console"; version = "0.8.2"; }
   { name = "irb"; version = "1.16.0"; }
   { name = "jbuilder"; version = "2.14.1"; }

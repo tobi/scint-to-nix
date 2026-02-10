@@ -17,6 +17,7 @@
 
 require "json"
 require "fileutils"
+require "pathname"
 
 CACHE_DIR    = File.join(__dir__, "..", "cache")
 SOURCE_DIR   = File.join(CACHE_DIR, "sources")
@@ -238,7 +239,7 @@ meta_by_key.each_value do |meta|
   FileUtils.mkdir_p(gem_dir)
   source_link = File.join(gem_dir, "source")
   FileUtils.rm_f(source_link)
-  FileUtils.ln_s(source_dir, source_link)
+  FileUtils.ln_s(File.expand_path(source_dir), source_link)
 
   has_overlay = overlays.key?(name)
   has_heredoc = true  # installPhase always has gemspec heredoc
