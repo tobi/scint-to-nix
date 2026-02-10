@@ -13,13 +13,13 @@ module Gemset2Nix
     }.freeze
 
     def self.run(argv)
-      if argv.empty? || argv.first.start_with?("-")
+      if argv.empty? || (argv.first.start_with?("-") && !COMMANDS.key?(argv.first))
         if argv.include?("--version") || argv.include?("-v")
           puts "gemset2nix #{VERSION}"
           return
         end
         usage
-        return
+        exit(argv.include?("--help") || argv.include?("-h") ? 0 : 1)
       end
 
       command = argv.shift
@@ -36,14 +36,18 @@ module Gemset2Nix
     end
 
     def self.usage
-      $stderr.puts "Usage: gemset2nix <command> [options]"
-      $stderr.puts
-      $stderr.puts "Commands:"
+      $stderr.puts <<~USAGE
+        gemset2nix — convert Gemfile.lock to hermetic Nix derivations
+
+        Usage: gemset2nix <command> [options]
+
+        Commands:
+      USAGE
       COMMANDS.each do |name, desc|
         $stderr.puts "  %-10s %s" % [name, desc]
       end
       $stderr.puts
-      $stderr.puts "Run 'gemset2nix <command> --help' for details."
+      $stderr.puts "Run 'gemset2nix <command> --help' for command-specific options."
     end
   end
 end

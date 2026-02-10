@@ -4,47 +4,64 @@ module Gemset2Nix
   module Commands
     class Init
       def run(argv)
-        root = argv.shift || "."
-        root = File.expand_path(root)
-
-        dirs = %w[
-          cache/sources cache/meta cache/gems cache/git-clones
-          nix/gem nix/app nix/modules
-          overlays imports
-        ]
-
-        dirs.each do |d|
-          path = File.join(root, d)
-          FileUtils.mkdir_p(path)
-          $stderr.puts "  create #{d}/"
+        while argv.first&.start_with?("-")
+          case argv.shift
+          when "--help", "-h"
+            $stderr.puts "Usage: gemset2nix init [directory]"
+            $stderr.puts
+            $stderr.puts "Initialize a new gemset2nix project in the given directory (default: .)"
+            exit 0
+          end
         end
 
-        # .gitignore for cache
-        gitignore = File.join(root, "cache", ".gitignore")
-        unless File.exist?(gitignore)
-          File.write(gitignore, "gems/\ngit-clones/\n")
-          $stderr.puts "  create cache/.gitignore"
+        root = File.expand_path(argv.shift || ".")
+        name = File.basename(root)
+
+        files = {
+          "cache/sources/"        => :dir,
+          "cache/meta/"           => :dir,
+          "cache/gems/"           => :dir,
+          "cache/git-clones/"     => :dir,
+          "nix/gem/"              => :dir,
+          "nix/app/"              => :dir,
+          "nix/modules/"          => :dir,
+          "overlays/"             => :dir,
+          "imports/"              => :dir,
+          "cache/.gitignore"      => "gems/\ngit-clones/\n",
+          "nix/modules/resolve.nix" => RESOLVE_NIX,
+          "nix/modules/apps.nix"    => "{\n}\n",
+        }
+
+        created = 0
+        files.each do |rel, content|
+          path = File.join(root, rel)
+          if content == :dir
+            unless Dir.exist?(path)
+              FileUtils.mkdir_p(path)
+              $stderr.puts "  create #{rel}"
+              created += 1
+            end
+          else
+            unless File.exist?(path)
+              FileUtils.mkdir_p(File.dirname(path))
+              File.write(path, content)
+              $stderr.puts "  create #{rel}"
+              created += 1
+            end
+          end
         end
 
-        # resolve.nix — the module system entry point
-        resolve = File.join(root, "nix", "modules", "resolve.nix")
-        unless File.exist?(resolve)
-          File.write(resolve, RESOLVE_NIX)
-          $stderr.puts "  create nix/modules/resolve.nix"
+        if created == 0
+          $stderr.puts "Already initialized."
+        else
+          $stderr.puts
+          $stderr.puts "Initialized #{name}/. Now:"
+          $stderr.puts
+          $stderr.puts "  1. gemset2nix import #{name} path/to/Gemfile.lock"
+          $stderr.puts "  2. gemset2nix fetch"
+          $stderr.puts "  3. gemset2nix update"
+          $stderr.puts "  4. gemset2nix build"
         end
-
-        # empty apps registry
-        apps = File.join(root, "nix", "modules", "apps.nix")
-        unless File.exist?(apps)
-          File.write(apps, "{\n}\n")
-          $stderr.puts "  create nix/modules/apps.nix"
-        end
-
-        $stderr.puts "Done. Next steps:"
-        $stderr.puts "  gemset2nix import myapp path/to/Gemfile.lock"
-        $stderr.puts "  gemset2nix fetch"
-        $stderr.puts "  gemset2nix update"
-        $stderr.puts "  gemset2nix build"
       end
 
       RESOLVE_NIX = <<~'NIX'
