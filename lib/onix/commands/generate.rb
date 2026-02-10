@@ -83,7 +83,12 @@ module Onix
 
         new_hashes = {}
         if rubygem_entries.any?
-          needed = rubygem_entries.reject { |e| existing.key?("#{e.name}/#{e.version}") }
+          needed = rubygem_entries.reject { |e|
+            key = "#{e.name}/#{e.version}"
+            # Re-fetch if entry has platform but cached hash doesn't have platform metadata
+            next false if e.platform && existing.key?(key) && !existing.key?("#{key}:platform")
+            existing.key?(key)
+          }
           cached = rubygem_entries.size - needed.size
 
           if needed.empty?
@@ -136,6 +141,10 @@ module Onix
         rubygem_entries.each do |e|
           key = "#{e.name}/#{e.version}"
           sha256_for[key] = existing[key] || new_hashes[key]
+          # Carry platform metadata — only set when the source gem didn't exist
+          # and the platform variant was fetched instead
+          plat_key = "#{key}:platform"
+          sha256_for[plat_key] = new_hashes[plat_key] || existing[plat_key]
         end
 
         git_repos.each_value do |repo|
@@ -184,9 +193,12 @@ module Onix
         Dir.glob(File.join(ruby_dir, "*.nix")).each do |f|
           name = File.basename(f, ".nix")
           content = File.read(f)
-          # Match version blocks with sha256
+          # Match version blocks with sha256 (and optional platform)
           content.scan(/"([^"]+)"\s*=\s*\{[^}]*sha256\s*=\s*"([^"]+)"/) do |version, sha256|
             hashes["#{name}/#{version}"] = sha256
+          end
+          content.scan(/"([^"]+)"\s*=\s*\{[^}]*platform\s*=\s*"([^"]+)"/) do |version, platform|
+            hashes["#{name}/#{version}:platform"] = platform
           end
           # Match git blocks
           content.scan(/url\s*=\s*"([^"]+)";\s*rev\s*=\s*"([^"]+)";\s*sha256\s*=\s*"([^"]+)"/) do |url, rev, sha256|
@@ -208,17 +220,26 @@ module Onix
         threads = jobs.times.map do
           Thread.new do
             while (e = queue.pop)
-              url = "#{e.remote}/gems/#{e.name}-#{e.version}.gem"
-              url = inject_credentials(url)
-              sha256 = nix_prefetch_url(url)
-              key = "#{e.name}/#{e.version}"
+              # Try source gem first (no platform suffix), fall back to platform variant
+              source_url = "#{e.remote}/gems/#{e.name}-#{e.version}.gem"
+              sha256 = nix_prefetch_url(inject_credentials(source_url))
 
+              used_platform = nil
+              if !sha256 && e.platform
+                plat_url = "#{e.remote}/gems/#{e.name}-#{e.version}-#{e.platform}.gem"
+                sha256 = nix_prefetch_url(inject_credentials(plat_url))
+                used_platform = e.platform if sha256
+              end
+
+              key = "#{e.name}/#{e.version}"
               mutex.synchronize do
                 if sha256
                   hashes[key] = sha256
+                  # Track which gems needed platform fetch
+                  hashes["#{key}:platform"] = used_platform if used_platform
                   progress.advance
                 else
-                  errors << "#{e.name} #{e.version}: failed to prefetch from #{url}"
+                  errors << "#{e.name} #{e.version}: failed to prefetch"
                   progress.advance(success: false)
                 end
               end
@@ -296,6 +317,9 @@ module Onix
             nix << "      remotes = [ #{nix_str e.remote} ];\n"
             nix << "      sha256 = #{nix_str sha256};\n"
             nix << "    };\n"
+            # Platform set when only prebuilt gem was available (no source .gem)
+            used_platform = sha256_for["#{e.name}/#{e.version}:platform"]
+            nix << "    platform = #{nix_str used_platform};\n" if used_platform
           end
 
           if e.require_paths && e.require_paths != ["lib"]

@@ -55,6 +55,7 @@ module Onix
 
         entries = []
         git_repos = {}  # key => { uri:, rev:, branch:, ... , gems: [] }
+        rubygem_specs = {}  # name => [{ version:, platform:, source_uri:, deps: }]
 
         lockdata.specs.each do |spec|
           name = spec[:name]
@@ -82,24 +83,44 @@ module Onix
             )
 
           else
-            # Rubygems — skip platform variants, always use "ruby" platform
+            # Rubygems — collect by name, prefer "ruby" platform over native
             platform = spec[:platform] || "ruby"
-            next unless platform == "ruby"
-
             source_uri = spec[:source].respond_to?(:uri) ? spec[:source].uri : "https://rubygems.org/"
+            rubygem_specs[name] ||= []
+            rubygem_specs[name] << { version: version, platform: platform, source_uri: source_uri, deps: deps }
+          end
+        end
 
-            if Packageset::RUBY_STDLIB.include?(name)
-              entries << Packageset::Entry.new(
-                installer: "ruby", name: name, version: version, source: "stdlib",
-              )
-            else
-              entries << Packageset::Entry.new(
-                installer: "ruby", name: name, version: version,
-                source: "rubygems",
-                remote: source_uri.chomp("/"),
-                deps: deps,
-              )
-            end
+        # Resolve platform: prefer "ruby" (source), fall back to matching native platform.
+        # Platform is stored so generate knows the fetch slug for gems that ONLY
+        # ship prebuilt (e.g. sorbet-static). For all others, platform is nil and
+        # the source gem is fetched and built from source.
+        local_platform = Gem::Platform.local.to_s.sub(/-\d+$/, "") # "arm64-darwin"
+        rubygem_specs.each do |name, variants|
+          ruby_variant = variants.find { |v| v[:platform] == "ruby" }
+          native_variant = variants.find { |v| v[:platform]&.start_with?(local_platform) } ||
+                           variants.find { |v| v[:platform] == "universal-darwin" }
+          chosen = ruby_variant || native_variant || variants.first
+          version = chosen[:version]
+          source_uri = chosen[:source_uri]
+          deps = chosen[:deps]
+          # Only store platform when there's no ruby variant — generate will
+          # try source first and use platform as fallback for fetch slug.
+          platform = ruby_variant ? nil : chosen[:platform]
+          platform = nil if platform == "ruby"
+
+          if Packageset::RUBY_STDLIB.include?(name)
+            entries << Packageset::Entry.new(
+              installer: "ruby", name: name, version: version, source: "stdlib",
+            )
+          else
+            entries << Packageset::Entry.new(
+              installer: "ruby", name: name, version: version,
+              platform: platform,
+              source: "rubygems",
+              remote: source_uri.chomp("/"),
+              deps: deps,
+            )
           end
         end
 

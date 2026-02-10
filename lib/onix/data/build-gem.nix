@@ -18,7 +18,7 @@ in
 {
   gemName,
   version,
-  platform ? null,
+  platform ? null,           # non-null for prebuilt-only gems (e.g. sorbet-static)
   source,
   subdir ? ".",              # subdirectory within git repo (monorepo support)
   nativeBuildInputs ? [],
@@ -58,7 +58,8 @@ let
     else
       throw "buildGem: unknown source type '${source.type}' for ${gemName}";
 
-  isPlatformGem = platform != null && source.type == "gem";
+  # Platform gems (e.g. sorbet-static) ship prebuilt binaries — don't strip them.
+  isPlatformGem = platform != null;
 
   # Unpack .gem into a source directory
   sourceDir =
@@ -130,9 +131,7 @@ stdenv.mkDerivation {
   inherit buildInputs;
   dontConfigure = true;
 
-  buildPhase =
-    if isPlatformGem then "true"  # platform gems have prebuilt binaries
-    else gemPathSetup + (
+  buildPhase = gemPathSetup + (
       if buildPhase != null then buildPhase
       else if builtins.pathExists (sourceDir + "/ext") then defaultBuildPhase
       else "true"

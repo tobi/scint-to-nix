@@ -30,6 +30,7 @@ module Onix
       :name,          # gem name
       :version,       # version string
       :source,        # "rubygems" | "git" | "path" | "stdlib"
+      :platform,      # "ruby" (source) or "arm64-darwin" etc. (prebuilt-only, e.g. sorbet-static)
       :remote,        # gem server URL (rubygems only)
       :uri,           # git clone URL (git only)
       :rev,           # full git SHA (git only)
@@ -47,6 +48,7 @@ module Onix
     ) do
       def to_jsonl
         h = { installer: installer, name: name, version: version, source: source }
+        h[:platform] = platform if platform && platform != "ruby"
         h[:remote] = remote if remote
         h[:uri] = uri if uri
         h[:rev] = rev if rev
@@ -101,6 +103,7 @@ module Onix
             name: data[:name],
             version: data[:version],
             source: data[:source],
+            platform: data[:platform],
             remote: data[:remote],
             uri: data[:uri],
             rev: data[:rev],
