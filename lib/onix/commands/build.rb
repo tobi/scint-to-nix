@@ -90,7 +90,8 @@ module Onix
       # nom needs a real TTY to render its TUI. We pipe nix stderr to nom,
       # and tee stdout to capture store paths + errors.
       def run_nix_with_nom(cmd, t0)
-        shell = cmd.map { |a| shellescape(a) }.join(" ") + " 2>&1 | nom"
+        # nom reads nix's stderr (build progress). stdout (store paths) goes to terminal.
+        shell = cmd.map { |a| shellescape(a) }.join(" ") + " 2> >(nom)"
         success = system("bash", "-c", shell)
         elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0
 
