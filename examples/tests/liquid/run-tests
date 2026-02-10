@@ -12,5 +12,5 @@ fi
 cd "$app_dir"
 
 exec nix-shell "$dir/devshell.nix" --run "
-  bundle exec rake test
+  rake test
 "

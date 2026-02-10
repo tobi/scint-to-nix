@@ -17,7 +17,7 @@ else
   projects=("${all_projects[@]}")
 fi
 
-now() { date +%s%3N; }  # milliseconds since epoch
+now() { python3 -c 'import time; print(int(time.time()*1000))'; }  # milliseconds since epoch
 
 fmt_duration() {
   local ms=$1
