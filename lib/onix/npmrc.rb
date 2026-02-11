@@ -50,7 +50,7 @@ module Onix
       host_path = "#{parsed.host}#{parsed.path}"
       segments = host_path.split("/").reject(&:empty?)
 
-      (segments.length).downto(1) do |n|
+      segments.length.downto(1) do |n|
         key = segments[0...n].join("/")
         return @tokens[key] if @tokens.key?(key)
         # Also try with trailing slash

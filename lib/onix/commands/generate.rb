@@ -71,8 +71,7 @@ module Onix
         end
 
         # Partition by installer
-        ruby_entries = all_entries.values.select { |e| e.installer == "ruby" }
-        node_entries = all_entries.values.select { |e| e.installer == "node" }
+        ruby_entries, node_entries = all_entries.values.partition { |e| e.installer == "ruby" }
         ruby_projects = projects.select { |_, entries| entries.any? { |e| e.installer == "ruby" } }
         node_projects = projects.select { |_, entries| entries.any? { |e| e.installer == "node" } }
 
@@ -98,8 +97,8 @@ module Onix
 
         # ── Prefetch rubygems + git ────────────────────────────────────
 
-        ruby_dir = File.join(@project.root, "nix", "ruby")
-        ruby_result = run_prefetch_pipeline(
+        ruby_dir = @project.ruby_dir
+        sha256_for = run_prefetch_pipeline(
           dir: ruby_dir,
           registry_entries: rubygem_entries,
           git_entries: ruby_git_entries,
@@ -107,11 +106,10 @@ module Onix
           label: "rubygems",
           jobs: jobs,
         )
-        sha256_for = ruby_result[:sha256_for]
 
         # ── Write nix/ruby/<name>.nix per gem ────────────────────────
 
-        nix_dir = File.join(@project.root, "nix")
+        nix_dir = @project.nix_dir
         by_name = {}
 
         if ruby_entries.any?
@@ -137,8 +135,8 @@ module Onix
 
         node_by_name = {}
         if node_entries.any?
-          node_dir = File.join(@project.root, "nix", "node")
-          node_result = run_prefetch_pipeline(
+          node_dir = File.join(@project.nix_dir, "node")
+          node_sha256 = run_prefetch_pipeline(
             dir: node_dir,
             registry_entries: npm_entries,
             git_entries: node_git_entries,
@@ -146,7 +144,6 @@ module Onix
             label: "npm",
             jobs: jobs,
           )
-          node_sha256 = node_result[:sha256_for]
 
           # Write nix/node/<name>.nix per package
           FileUtils.mkdir_p(node_dir)
@@ -208,7 +205,7 @@ module Onix
       # runs the given prefetch_fn for registry entries, fetches git repos,
       # and builds a sha256_for lookup.
       #
-      # Returns { sha256_for: Hash, by_name: Hash }
+      # Returns Hash mapping "name/version" => sha256
       def run_prefetch_pipeline(dir:, registry_entries:, git_entries:, prefetch_fn:, label:, jobs:)
         existing = load_existing_hashes(dir)
         UI.info "#{existing.size} cached #{label} hashes" if existing.any?
@@ -280,7 +277,7 @@ module Onix
           end
         end
 
-        { sha256_for: sha256_for }
+        sha256_for
       end
 
       # ── Parallel prefetch ──────────────────────────────────────

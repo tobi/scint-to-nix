@@ -14,6 +14,8 @@ module Onix
     # The output is a JSONL packageset with installer:"node" entries.
     #
     class ImportPnpm
+      DEFAULT_REGISTRY = "https://registry.npmjs.org"
+
       def run(argv)
         @project = Project.new
         name_override = nil
@@ -58,29 +60,28 @@ module Onix
         # ── Classify specs ───────────────────────────────────────────
 
         entries = []
-        seen = Set.new
+        @seen = Set.new
         git_entries = []
+        @packages_section = packages_section
+        @snapshots_section = snapshots_section
 
         # Collect world dep names (custom:* resolution) to skip
-        world_dep_names = Set.new
+        @world_dep_names = Set.new
         packages_section.each do |key, entry|
           res = entry&.dig("resolution") || {}
           if res["type"]&.start_with?("custom:")
             parsed = parse_spec(strip_peers(key))
-            world_dep_names.add(parsed[:name]) if parsed
+            @world_dep_names.add(parsed[:name]) if parsed
           end
         end
 
-        if world_dep_names.any?
-          UI.info "Skipping #{world_dep_names.size} world deps: #{world_dep_names.to_a.join(", ")}"
+        if @world_dep_names.any?
+          UI.info "Skipping #{@world_dep_names.size} world deps: #{@world_dep_names.to_a.join(", ")}"
         end
 
         [packages_section, snapshots_section].each do |section|
           section.each do |key, entry|
-            process_lockfile_entry(
-              key, entry, packages_section, snapshots_section,
-              world_dep_names, seen, entries, git_entries
-            )
+            process_lockfile_entry(key, entry, entries, git_entries)
           end
         end
 
@@ -119,7 +120,7 @@ module Onix
 
       private
 
-      def process_lockfile_entry(key, entry, packages_section, snapshots_section, world_dep_names, seen, entries, git_entries)
+      def process_lockfile_entry(key, entry, entries, git_entries)
         resolution = entry.is_a?(Hash) ? (entry["resolution"] || {}) : {}
 
         # Skip world zone dependencies
@@ -128,17 +129,16 @@ module Onix
         clean = strip_peers(key)
         parsed = parse_spec(clean)
         return unless parsed
-        return if world_dep_names.include?(parsed[:name])
+        return if @world_dep_names.include?(parsed[:name])
 
         spec_key = "#{parsed[:name]}@#{parsed[:version]}"
-        return if seen.include?(spec_key)
-        seen.add(spec_key)
+        return unless @seen.add?(spec_key)
 
         return if handle_git_entry(parsed, resolution, git_entries)
         return if skip_non_version_spec?(parsed[:version])
 
-        pkg_meta = extract_package_metadata(spec_key, key, packages_section)
-        snap_data = extract_snapshot_data(spec_key, key, snapshots_section)
+        pkg_meta = extract_package_metadata(spec_key, key)
+        snap_data = extract_snapshot_data(spec_key, key)
         entries << build_npm_entry(parsed, pkg_meta, snap_data)
       end
 
@@ -158,13 +158,13 @@ module Onix
         version.match?(/^(file:|link:|workspace:|deprecated:)/) || version.include?(":")
       end
 
-      def extract_package_metadata(spec_key, key, packages_section)
-        pkg_entry = packages_section[spec_key] || packages_section[key]
+      def extract_package_metadata(spec_key, key)
+        pkg_entry = @packages_section[spec_key] || @packages_section[key]
         pkg_entry.is_a?(Hash) ? pkg_entry : {}
       end
 
-      def extract_snapshot_data(spec_key, key, snapshots_section)
-        snap_entry = snapshots_section[spec_key] || snapshots_section[key]
+      def extract_snapshot_data(spec_key, key)
+        snap_entry = @snapshots_section[spec_key] || @snapshots_section[key]
         snap_entry.is_a?(Hash) ? snap_entry : {}
       end
 
@@ -176,11 +176,9 @@ module Onix
         # Determine registry: tarball URL > .npmrc scope registry > default
         remote = if tarball_url
           uri = URI.parse(tarball_url) rescue nil
-          uri ? "#{uri.scheme}://#{uri.host}#{uri.path.sub(%r{/[^/]+/-/.*}, "")}" : "https://registry.npmjs.org"
-        elsif (scope_registry = @npmrc&.registry_for(parsed[:name]))
-          scope_registry
+          uri ? "#{uri.scheme}://#{uri.host}#{uri.path.sub(%r{/[^/]+/-/.*}, "")}" : DEFAULT_REGISTRY
         else
-          "https://registry.npmjs.org"
+          @npmrc&.registry_for(parsed[:name]) || DEFAULT_REGISTRY
         end
 
         Packageset::Entry.new(
@@ -222,10 +220,8 @@ module Onix
       end
 
       def detect_native_addon(pkg_meta)
-        (pkg_meta["hasBin"] == false && (
-          pkg_meta.dig("scripts", "install")&.include?("node-gyp") ||
-          pkg_meta["gypfile"] == true
-        )) || false
+        has_gyp = pkg_meta.dig("scripts", "install")&.include?("node-gyp") || pkg_meta["gypfile"] == true
+        !!(has_gyp && pkg_meta["hasBin"] == false)
       end
 
       def extract_platform_list(pkg_meta, key)
