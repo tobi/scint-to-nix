@@ -171,4 +171,80 @@ if [ -n "$plat_pkg" ]; then
 fi
 
 echo ""
+echo "--- Test 9: lockfile version validation (v6 rejected) ---"
+ONIX_ROOT="$(cd "$root/.." && pwd)"
+err_output=$(BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  require "onix/commands/import_pnpm"
+  Onix::Commands::ImportPnpm.new.run(["'"$dir/fixtures/v6-lockfile.yaml"'"])
+' 2>&1 || true)
+if echo "$err_output" | grep -q "Unsupported pnpm lockfile version"; then
+  echo "  v6 lockfile correctly rejected"
+  echo "OK: lockfile version validation works"
+else
+  echo "FAIL: v6 lockfile was not rejected"
+  echo "  output: $err_output"
+  exit 1
+fi
+
+echo ""
+echo "--- Test 10: --node-version flag propagates to meta and nix ---"
+tmpdir=$(mktemp -d)
+trap "rm -rf $tmpdir" EXIT
+
+# Import with --node-version 20
+(BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  class Onix::Project; def initialize(r=nil); @root = r || "'"$tmpdir"'"; end; end
+  require "onix/commands/import_pnpm"
+  Onix::Commands::ImportPnpm.new.run(["--node-version", "20", "--name", "test", "'"$dir/pnpm-lock.yaml"'"])
+' 2>&1) > /dev/null
+
+# Check meta header has node:"20"
+meta_node=$("$NODE" -e "const m=JSON.parse(require('fs').readFileSync('$tmpdir/packagesets/test.jsonl','utf8').split('\n')[0]); console.log(m.node || 'missing')")
+if [ "$meta_node" = "20" ]; then
+  echo "  meta header has node:20"
+else
+  echo "FAIL: meta header node=$meta_node, expected 20"
+  exit 1
+fi
+
+# Generate and check nix uses nodejs_20
+(BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  class Onix::Project; def initialize(r=nil); @root = r || "'"$tmpdir"'"; end; end
+  require "onix/commands/generate"; Onix::Commands::Generate.new.run([])
+' 2>&1) > /dev/null
+
+if grep -q "nodejs_20" "$tmpdir/nix/test.nix"; then
+  echo "  generated nix uses nodejs_20"
+else
+  echo "FAIL: generated nix does not use nodejs_20"
+  grep "nodejs" "$tmpdir/nix/test.nix" | head -1
+  exit 1
+fi
+
+# Verify default (no --node-version) uses nodejs_22
+(BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  class Onix::Project; def initialize(r=nil); @root = r || "'"$tmpdir"'"; end; end
+  require "onix/commands/import_pnpm"
+  Onix::Commands::ImportPnpm.new.run(["--name", "test", "'"$dir/pnpm-lock.yaml"'"])
+' 2>&1) > /dev/null
+(BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  class Onix::Project; def initialize(r=nil); @root = r || "'"$tmpdir"'"; end; end
+  require "onix/commands/generate"; Onix::Commands::Generate.new.run([])
+' 2>&1) > /dev/null
+
+if grep -q "nodejs_22" "$tmpdir/nix/test.nix"; then
+  echo "  default (no flag) uses nodejs_22"
+else
+  echo "FAIL: default does not use nodejs_22"
+  exit 1
+fi
+
+echo "OK: --node-version flag works"
+
+echo ""
 echo "All node-basic tests passed."
