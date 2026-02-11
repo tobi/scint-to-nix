@@ -2,7 +2,9 @@
 
 require "yaml"
 require "fileutils"
+require "uri"
 require_relative "../packageset"
+require_relative "../npmrc"
 
 module Onix
   module Commands
@@ -33,6 +35,7 @@ module Onix
         end
 
         lockfile, project_name = resolve_lockfile(argv.first, name_override)
+        @npmrc = Npmrc.new
 
         UI.header "Import (pnpm)"
         UI.info lockfile
@@ -166,12 +169,27 @@ module Onix
       end
 
       def build_npm_entry(parsed, pkg_meta, snap_data)
+        # Extract tarball URL from lockfile resolution (private registries)
+        resolution = pkg_meta["resolution"] || {}
+        tarball_url = resolution["tarball"]
+
+        # Determine registry: tarball URL > .npmrc scope registry > default
+        remote = if tarball_url
+          uri = URI.parse(tarball_url) rescue nil
+          uri ? "#{uri.scheme}://#{uri.host}#{uri.path.sub(%r{/[^/]+/-/.*}, "")}" : "https://registry.npmjs.org"
+        elsif (scope_registry = @npmrc&.registry_for(parsed[:name]))
+          scope_registry
+        else
+          "https://registry.npmjs.org"
+        end
+
         Packageset::Entry.new(
           installer: "node",
           name: parsed[:name],
           version: parsed[:version],
           source: "npm",
-          remote: "https://registry.npmjs.org",
+          remote: remote,
+          tarball: tarball_url,
           deps: extract_versioned_deps(snap_data),
           bin: extract_bin_entries(parsed[:name], pkg_meta),
           has_native: detect_native_addon(pkg_meta),

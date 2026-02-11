@@ -57,6 +57,7 @@ module Onix
       # ── Node-specific fields ────────────────────────────────────
       :bin,           # { "cli-name" => "./bin/cli.js" } — executable mappings
       :has_native,    # has node-gyp / napi native addon?
+      :tarball,       # exact tarball URL from lockfile (private registries)
       :os,            # ["darwin", "linux"] — platform os constraints
       :cpu,           # ["x64", "arm64"] — platform cpu constraints
       :libc,          # ["glibc", "musl"] — platform libc constraints
@@ -85,6 +86,7 @@ module Onix
         # Node-specific
         h[:bin] = bin if bin && !bin.empty?
         h[:has_native] = true if has_native
+        h[:tarball] = tarball if tarball
         h[:os] = os if os && !os.empty?
         h[:cpu] = cpu if cpu && !cpu.empty?
         h[:libc] = libc if libc && !libc.empty?
@@ -184,6 +186,7 @@ module Onix
             # Node
             bin: data[:bin] || {},
             has_native: data[:has_native] || false,
+            tarball: data[:tarball],
             os: data[:os] || [],
             cpu: data[:cpu] || [],
             libc: data[:libc] || [],

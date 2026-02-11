@@ -18,10 +18,17 @@ module Onix
         threads = jobs.times.map do
           Thread.new do
             while (e = queue.pop)
-              # npm tarball URL: <remote>/<name>/-/<basename>-<version>.tgz
-              basename = e.name.include?("/") ? e.name.split("/").last : e.name
-              url = "#{e.remote}/#{e.name}/-/#{basename}-#{e.version}.tgz"
-              sha256 = nix_prefetch_url(inject_credentials(url))
+              # Use exact tarball URL from lockfile when available (private registries),
+              # otherwise construct from registry URL
+              url = if e.tarball
+                e.tarball
+              else
+                basename = e.name.include?("/") ? e.name.split("/").last : e.name
+                "#{e.remote}/#{e.name}/-/#{basename}-#{e.version}.tgz"
+              end
+              # Use .npmrc auth for private registries, fall back to scint credentials
+              auth_url = @npmrc ? @npmrc.inject_auth(url) : inject_credentials(url)
+              sha256 = nix_prefetch_url(auth_url)
 
               key = "#{e.name}/#{e.version}"
               mutex.synchronize do
@@ -63,6 +70,7 @@ module Onix
             nix << "      type = \"tarball\";\n"
             nix << "      remotes = [ #{nix_str e.remote} ];\n"
             nix << "      sha256 = #{nix_str sha256};\n"
+            nix << "      url = #{nix_str e.tarball};\n" if e.tarball
             nix << "    };\n"
           end
 

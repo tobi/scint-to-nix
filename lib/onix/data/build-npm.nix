@@ -39,8 +39,11 @@ let
   src =
     if source.type == "tarball" then
       fetchurl {
-        urls = map (remote: "${remote}/${pkgName}/-/${builtins.baseNameOf pkgName}-${version}.tgz")
-          (source.remotes or [ "https://registry.npmjs.org" ]);
+        # Use explicit tarball URL from lockfile when available (private registries),
+        # otherwise construct from registry URL
+        urls = if source ? url then [ source.url ]
+          else map (remote: "${remote}/${pkgName}/-/${builtins.baseNameOf pkgName}-${version}.tgz")
+            (source.remotes or [ "https://registry.npmjs.org" ]);
         inherit (source) sha256;
       }
     else if source.type == "git" then

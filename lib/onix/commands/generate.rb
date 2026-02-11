@@ -8,6 +8,7 @@ require "uri"
 require "cgi"
 require "scint/credentials"
 require_relative "../packageset"
+require_relative "../npmrc"
 require_relative "generate_node"
 
 module Onix
@@ -75,8 +76,9 @@ module Onix
         ruby_projects = projects.select { |_, entries| entries.any? { |e| e.installer == "ruby" } }
         node_projects = projects.select { |_, entries| entries.any? { |e| e.installer == "node" } }
 
-        # ── Load credentials for private gem sources ────────────────
+        # ── Load credentials ──────────────────────────────────────────
         @credentials = Scint::Credentials.new
+        @npmrc = Npmrc.new if node_entries.any?
         # Register all unique remotes so credentials can be looked up
         all_entries.values.each do |e|
           next unless (e.source == "rubygems" || e.source == "npm") && e.remote
