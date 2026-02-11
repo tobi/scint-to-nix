@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+dir="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$dir/../.." && pwd)"  # examples/
+
+NM_PATH=$(nix-build --no-out-link "$root/nix/node-basic.nix" -A nodeModules 2>/dev/null)
+export NODE_PATH="$NM_PATH/node_modules"
+
+echo "--- Test 1: pure JS package (ms) ---"
+node -e '
+  const ms = require("ms");
+  const result = ms(3600000);
+  if (result !== "1h") throw new Error("expected 1h, got " + result);
+  console.log("ms " + require("ms/package.json").version + ": " + result);
+  console.log("OK: pure JS package loaded");
+'
+
+echo ""
+echo "--- Test 2: scoped package (@types/node) ---"
+node -e '
+  const pkg = require("@types/node/package.json");
+  if (!pkg.name.startsWith("@types/")) throw new Error("expected scoped name");
+  console.log(pkg.name + " " + pkg.version + ": loaded");
+  console.log("OK: scoped package loaded");
+'
+
+echo ""
+echo "--- Test 3: package with transitive deps (semver) ---"
+node -e '
+  const semver = require("semver");
+  if (!semver.valid("1.2.3")) throw new Error("semver.valid failed");
+  if (!semver.gt("2.0.0", "1.0.0")) throw new Error("semver.gt failed");
+  const range = semver.satisfies("1.2.3", "^1.0.0");
+  if (!range) throw new Error("semver.satisfies failed");
+  console.log("semver " + require("semver/package.json").version + ": valid, gt, satisfies all work");
+  console.log("OK: package with logic loaded and tested");
+'
+
+echo ""
+echo "--- Test 4: package with colors (picocolors) ---"
+node -e '
+  const pc = require("picocolors");
+  const green = pc.green("hello");
+  if (!green.includes("hello")) throw new Error("picocolors output missing text");
+  console.log("picocolors " + require("picocolors/package.json").version + ": " + green);
+  console.log("OK: picocolors works");
+'
+
+echo ""
+echo "--- Test 5: bin entries (tsc, esbuild, semver) ---"
+# Build individual packages to test their bins
+for pkg_name in typescript esbuild semver; do
+  pkg_path=$(nix-build --no-out-link "$root/nix/node-basic.nix" -A "$pkg_name" 2>/dev/null)
+  bin_dir="$pkg_path/node_modules/.bin"
+  if [ ! -d "$bin_dir" ]; then
+    echo "FAIL: $pkg_name has no .bin directory"
+    exit 1
+  fi
+  bins=$(ls "$bin_dir" | tr '\n' ' ')
+  echo "  $pkg_name: $bins"
+done
+
+# Verify tsc runs
+TSC_PATH=$(nix-build --no-out-link "$root/nix/node-basic.nix" -A typescript 2>/dev/null)
+version=$("$TSC_PATH/node_modules/.bin/tsc" --version 2>&1)
+echo "  tsc --version: $version"
+echo "OK: bin entries present and tsc runs"
+
+echo ""
+echo "--- Test 6: platform packages (@esbuild/darwin-arm64) ---"
+# Check that platform-specific esbuild packages are built
+arch=$(uname -m)
+os=$(uname -s | tr '[:upper:]' '[:lower:]')
+if [ "$arch" = "arm64" ] && [ "$os" = "darwin" ]; then
+  plat_pkg="@esbuild/darwin-arm64"
+elif [ "$arch" = "x86_64" ] && [ "$os" = "darwin" ]; then
+  plat_pkg="@esbuild/darwin-x64"
+elif [ "$arch" = "x86_64" ] && [ "$os" = "linux" ]; then
+  plat_pkg="@esbuild/linux-x64"
+elif [ "$arch" = "aarch64" ] && [ "$os" = "linux" ]; then
+  plat_pkg="@esbuild/linux-arm64"
+else
+  echo "  SKIP: unknown platform $arch-$os"
+  plat_pkg=""
+fi
+
+if [ -n "$plat_pkg" ]; then
+  # Check that it was generated (scoped names use -- separator)
+  safe_name=$(echo "$plat_pkg" | sed 's/@//g; s/\//--/g')
+  nix_file="$root/nix/node/${safe_name}.nix"
+  if [ -f "$nix_file" ]; then
+    echo "  $plat_pkg: nix/node/${safe_name}.nix exists"
+  else
+    echo "  WARN: $nix_file not found"
+  fi
+  echo "OK: platform package checked"
+fi
+
+echo ""
+echo "--- Test 7: nodeModules merged layout ---"
+# Verify the merged nodeModules has all expected packages
+expected="ms picocolors semver typescript esbuild @types"
+for name in $expected; do
+  if [ ! -e "$NM_PATH/node_modules/$name" ]; then
+    echo "FAIL: $name missing from nodeModules"
+    exit 1
+  fi
+done
+echo "  All expected packages present in nodeModules"
+
+# Verify merged .bin
+for bin_name in tsc tsserver esbuild semver; do
+  if [ ! -L "$NM_PATH/node_modules/.bin/$bin_name" ]; then
+    echo "FAIL: $bin_name missing from nodeModules/.bin"
+    exit 1
+  fi
+done
+echo "  All expected bin entries present in nodeModules/.bin"
+echo "OK: nodeModules layout correct"
+
+echo ""
+echo "All node-basic tests passed."

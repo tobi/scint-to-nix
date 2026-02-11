@@ -13,11 +13,17 @@ module Onix
   module Commands
     # `onix generate` — reads JSONL packagesets, prefetches hashes, writes nix.
     #
-    # Output:
+    # Output (Ruby):
     #   nix/ruby/<name>.nix   — per-gem: all known versions + sha256 hashes
     #   nix/<project>.nix     — per-project: selects gem versions
     #   nix/build-gem.nix     — generic builder
     #   nix/gem-config.nix    — overlay loader
+    #
+    # Output (Node):
+    #   nix/node/<name>.nix   — per-package: all known versions + sha256 hashes
+    #   nix/<project>.nix     — per-project: selects package versions
+    #   nix/build-npm.nix     — generic builder
+    #   nix/npm-config.nix    — overlay loader
     #
     class Generate
       def run(argv)
@@ -54,24 +60,36 @@ module Onix
           projects[project_name] = entries
 
           entries.each do |e|
-            next if e.source == "stdlib" || e.source == "path"
+            next if e.source == "stdlib" || e.source == "path" || e.source == "builtin"
             key = "#{e.name}/#{e.version}"
             all_entries[key] ||= e
           end
         end
 
+        # Partition by installer
+        ruby_entries = all_entries.values.select { |e| e.installer == "ruby" }
+        node_entries = all_entries.values.select { |e| e.installer == "node" }
+        ruby_projects = projects.select { |_, entries| entries.any? { |e| e.installer == "ruby" } }
+        node_projects = projects.select { |_, entries| entries.any? { |e| e.installer == "node" } }
+
         # ── Load credentials for private gem sources ────────────────
         @credentials = Scint::Credentials.new
         # Register all unique remotes so credentials can be looked up
         all_entries.values.each do |e|
-          next unless e.source == "rubygems" && e.remote
+          next unless (e.source == "rubygems" || e.source == "npm") && e.remote
           @credentials.register_uri(e.remote)
         end
 
-        rubygem_entries = all_entries.values.select { |e| e.source == "rubygems" }
-        git_entries = all_entries.values.select { |e| e.source == "git" }
-        UI.info "#{packagesets.size} packagesets, #{all_entries.size} unique gems " \
-                "(#{rubygem_entries.size} rubygems, #{git_entries.size} git)"
+        rubygem_entries = ruby_entries.select { |e| e.source == "rubygems" }
+        ruby_git_entries = ruby_entries.select { |e| e.source == "git" }
+        npm_entries = node_entries.select { |e| e.source == "npm" }
+        node_git_entries = node_entries.select { |e| e.source == "git" }
+
+        parts = []
+        parts << "#{rubygem_entries.size} rubygems" if rubygem_entries.any?
+        parts << "#{npm_entries.size} npm" if npm_entries.any?
+        parts << "#{ruby_git_entries.size + node_git_entries.size} git" if ruby_git_entries.any? || node_git_entries.any?
+        UI.info "#{packagesets.size} packagesets, #{all_entries.size} unique packages (#{parts.join(", ")})"
 
         # ── Load existing hashes ─────────────────────────────────────
 
@@ -105,10 +123,10 @@ module Onix
           end
         end
 
-        # ── Prefetch git repos ───────────────────────────────────────
+        # ── Prefetch git repos (ruby) ─────────────────────────────────
 
         git_repos = {}
-        git_entries.each do |e|
+        ruby_git_entries.each do |e|
           key = "#{e.uri}@#{e.rev}"
           git_repos[key] ||= { uri: e.uri, rev: e.rev, gems: [] }
           git_repos[key][:gems] << e
@@ -157,40 +175,132 @@ module Onix
         # ── Write nix/ruby/<name>.nix per gem ────────────────────────
 
         nix_dir = File.join(@project.root, "nix")
-        FileUtils.mkdir_p(ruby_dir)
-
         by_name = {}
-        all_entries.each_value do |e|
-          (by_name[e.name] ||= []) << e
+
+        if ruby_entries.any?
+          FileUtils.mkdir_p(ruby_dir)
+
+          ruby_entries.each do |e|
+            (by_name[e.name] ||= []) << e
+          end
+
+          by_name.each do |name, entries|
+            write_gem_nix(ruby_dir, name, entries, sha256_for)
+          end
+          UI.wrote "nix/ruby/ (#{by_name.size} gems)"
+
+          # Write per-project nix for ruby projects
+          ruby_projects.each do |name, entries|
+            ruby_only = entries.select { |e| e.installer == "ruby" }
+            write_project_nix(nix_dir, name, ruby_only, all_meta[name])
+          end
         end
 
-        by_name.each do |name, entries|
-          write_gem_nix(ruby_dir, name, entries, sha256_for)
-        end
-        UI.wrote "nix/ruby/ (#{by_name.size} gems)"
+        # ── Node: prefetch and write ──────────────────────────────────
 
-        # ── Write per-project nix ────────────────────────────────────
+        node_by_name = {}
+        if node_entries.any?
+          node_dir = File.join(@project.root, "nix", "node")
+          existing_node = load_existing_hashes(node_dir)
+          UI.info "#{existing_node.size} cached node hashes" if existing_node.any?
 
-        projects.each do |name, entries|
-          write_project_nix(nix_dir, name, entries, all_meta[name])
+          node_new_hashes = {}
+          if npm_entries.any?
+            needed = npm_entries.reject { |e| existing_node.key?("#{e.name}/#{e.version}") }
+            cached = npm_entries.size - needed.size
+
+            if needed.empty?
+              UI.done "#{npm_entries.size} npm packages (all cached)"
+            else
+              progress = UI::Progress.new(npm_entries.size, label: "Prefetch npm")
+              cached.times { progress.advance(skip: true) }
+              errors = prefetch_npm(needed, jobs, node_new_hashes, progress)
+              progress.finish
+              if errors.any?
+                errors.each { |e| UI.fail e }
+                exit 1
+              end
+            end
+          end
+
+          # Prefetch git repos for node
+          node_git_repos = {}
+          node_git_entries.each do |e|
+            gkey = "#{e.uri}@#{e.rev}"
+            node_git_repos[gkey] ||= { uri: e.uri, rev: e.rev, packages: [] }
+            node_git_repos[gkey][:packages] << e
+          end
+
+          if node_git_repos.any?
+            progress = UI::Progress.new(node_git_repos.size, label: "Prefetch git")
+            node_git_repos.each_value do |repo|
+              cache_key = "git:#{repo[:uri]}@#{repo[:rev]}"
+              sha256 = existing_node[cache_key]
+              unless sha256
+                sha256 = nix_prefetch_git(repo[:uri], repo[:rev])
+                unless sha256
+                  progress.finish
+                  UI.fail "Failed to prefetch #{repo[:uri]} @ #{repo[:rev]}"
+                  exit 1
+                end
+                node_new_hashes[cache_key] = sha256
+              end
+              repo[:sha256] = sha256 || existing_node[cache_key]
+              progress.advance
+            end
+            progress.finish
+          end
+
+          # Build node sha256 lookup
+          node_sha256 = {}
+          npm_entries.each do |e|
+            key = "#{e.name}/#{e.version}"
+            node_sha256[key] = existing_node[key] || node_new_hashes[key]
+          end
+          node_git_repos.each_value do |repo|
+            repo[:packages].each do |e|
+              node_sha256["#{e.name}/#{e.version}"] = repo[:sha256]
+            end
+          end
+
+          # Write nix/node/<name>.nix per package
+          FileUtils.mkdir_p(node_dir)
+          node_entries.each do |e|
+            (node_by_name[e.name] ||= []) << e
+          end
+
+          node_by_name.each do |name, pkg_entries|
+            write_npm_nix(node_dir, name, pkg_entries, node_sha256)
+          end
+          UI.wrote "nix/node/ (#{node_by_name.size} packages)"
+
+          # Write per-project nix for node projects
+          node_projects.each do |name, entries|
+            node_only = entries.select { |e| e.installer == "node" }
+            write_node_project_nix(nix_dir, name, node_only, all_meta[name])
+          end
         end
 
         # ── Copy support files ───────────────────────────────────────
 
-        copy_support_files(nix_dir)
+        copy_support_files(nix_dir, has_node: node_entries.any?)
 
-        UI.done "#{by_name.size} gems, #{projects.size} projects"
+        parts = []
+        parts << "#{by_name.size} gems" if by_name.any?
+        parts << "#{node_by_name.size} npm packages" if node_by_name.any?
+        parts << "#{projects.size} projects"
+        UI.done parts.join(", ")
       end
 
       private
 
       # ── Existing hash loader ─────────────────────────────────────
 
-      def load_existing_hashes(ruby_dir)
+      def load_existing_hashes(dir)
         hashes = {}
-        return hashes unless Dir.exist?(ruby_dir)
+        return hashes unless Dir.exist?(dir)
 
-        Dir.glob(File.join(ruby_dir, "*.nix")).each do |f|
+        Dir.glob(File.join(dir, "*.nix")).each do |f|
           name = File.basename(f, ".nix")
           content = File.read(f)
           # Match version blocks with sha256 (and optional platform)
@@ -400,12 +510,156 @@ module Onix
         UI.wrote "nix/#{project_name}.nix"
       end
 
-      def copy_support_files(dir)
+      # ── Node prefetch ─────────────────────────────────────────
+
+      def prefetch_npm(packages, jobs, hashes, progress)
+        errors = []
+        mutex = Mutex.new
+        queue = Queue.new
+        packages.each { |p| queue << p }
+        jobs.times { queue << nil }
+
+        threads = jobs.times.map do
+          Thread.new do
+            while (e = queue.pop)
+              # npm tarball URL: <remote>/<name>/-/<basename>-<version>.tgz
+              basename = e.name.include?("/") ? e.name.split("/").last : e.name
+              url = "#{e.remote}/#{e.name}/-/#{basename}-#{e.version}.tgz"
+              sha256 = nix_prefetch_url(inject_credentials(url))
+
+              key = "#{e.name}/#{e.version}"
+              mutex.synchronize do
+                if sha256
+                  hashes[key] = sha256
+                  progress.advance
+                else
+                  errors << "#{e.name} #{e.version}: failed to prefetch"
+                  progress.advance(success: false)
+                end
+              end
+            end
+          end
+        end
+        threads.each(&:join)
+        errors
+      end
+
+      # ── Node nix writers ─────────────────────────────────────
+
+      def write_npm_nix(dir, name, entries, sha256_for)
+        nix = +"# #{name} — generated by onix. Do not edit.\n{\n"
+
+        entries.sort_by(&:version).each do |e|
+          sha256 = sha256_for["#{e.name}/#{e.version}"]
+          nix << "  #{nix_str e.version} = {\n"
+          nix << "    version = #{nix_str e.version};\n"
+
+          if e.source == "git"
+            nix << "    source = {\n"
+            nix << "      type = \"git\";\n"
+            nix << "      url = #{nix_str e.uri};\n"
+            nix << "      rev = #{nix_str e.rev};\n"
+            nix << "      sha256 = #{nix_str sha256};\n"
+            nix << "    };\n"
+            nix << "    subdir = #{nix_str e.subdir};\n" if e.subdir && e.subdir != "."
+          else
+            nix << "    source = {\n"
+            nix << "      type = \"tarball\";\n"
+            nix << "      remotes = [ #{nix_str e.remote} ];\n"
+            nix << "      sha256 = #{nix_str sha256};\n"
+            nix << "    };\n"
+          end
+
+          if e.bin && !e.bin.empty?
+            nix << "    bin = {\n"
+            e.bin.sort.each do |bin_name, bin_path|
+              nix << "      #{nix_str bin_name} = #{nix_str bin_path};\n"
+            end
+            nix << "    };\n"
+          end
+
+          nix << "    hasNative = true;\n" if e.has_native
+          nix << "  };\n"
+        end
+
+        nix << "}\n"
+        # Scoped packages: use flat filename with -- separator
+        safe_name = name.gsub("/", "--").gsub("@", "")
+        File.write(File.join(dir, "#{safe_name}.nix"), nix)
+      end
+
+      def write_node_project_nix(dir, project_name, entries, meta)
+        buildable = entries.reject { |e| e.source == "builtin" || e.source == "path" }
+
+        nix = +"# #{project_name} — generated by onix. Do not edit.\n"
+        nix << "{ pkgs ? import <nixpkgs> {}, nodejs ? pkgs.nodejs_22 }:\n"
+        nix << "let\n"
+        nix << "  buildNpm = import ./build-npm.nix { inherit pkgs nodejs; };\n"
+        nix << "  buildPackageByName = name:\n"
+        nix << "    let\n"
+        nix << "      versions = import (./node + \"/\${name}.nix\");\n"
+        nix << "      version = builtins.head (builtins.attrNames versions);\n"
+        nix << "      spec = versions.\${version};\n"
+        nix << "    in buildNpm (spec // { pkgName = name; });\n"
+        nix << "  npmConfig = import ./npm-config.nix {\n"
+        nix << "    inherit pkgs nodejs;\n"
+        nix << "    overlayDir = ../overlays;\n"
+        nix << "    nodeDir = ./node;\n"
+        nix << "    buildPackageFn = buildPackageByName;\n"
+        nix << "  };\n"
+        nix << "\n"
+        nix << "  build = name: version:\n"
+        nix << "    let\n"
+        nix << "      safeName = builtins.replaceStrings [\"/\" \"@\"] [\"--\" \"\"] name;\n"
+        nix << "      versions = import (./node + \"/\${safeName}.nix\");\n"
+        nix << "      spec = versions.\${version};\n"
+        nix << "      config = npmConfig.\${name} or {};\n"
+        nix << "    in buildNpm (spec // {\n"
+        nix << "      pkgName = name;\n"
+        nix << "      hasNative = spec.hasNative or false;\n"
+        nix << "      nativeBuildInputs = config.deps or [];\n"
+        nix << "      buildFlags = config.buildFlags or \"\";\n"
+        nix << "      beforeBuild = config.beforeBuild or \"\";\n"
+        nix << "      afterBuild = config.afterBuild or \"\";\n"
+        nix << "    } // (if config ? buildPhase then { inherit (config) buildPhase; } else {})\n"
+        nix << "      // (if config ? postInstall then { inherit (config) postInstall; } else {})\n"
+        nix << "      // (if config ? skip then { inherit (config) skip; } else {})\n"
+        nix << "      // (if config ? buildPackages then { inherit (config) buildPackages; } else {}));\n"
+        nix << "\n"
+        nix << "  packages = {\n"
+        buildable.sort_by(&:name).each do |e|
+          nix << "    #{nix_key(e.name)} = build #{nix_str e.name} #{nix_str e.version};\n"
+        end
+        nix << "  };\n"
+        nix << "\n"
+        nix << "  nodeModules = pkgs.buildEnv {\n"
+        nix << "    name = #{nix_str "#{project_name}-node-modules"};\n"
+        nix << "    paths = builtins.attrValues packages;\n"
+        nix << "  };\n"
+        nix << "in packages // {\n"
+        nix << "  inherit nodeModules;\n"
+        nix << "  devShell = { buildInputs ? [], shellHook ? \"\", ... }@args:\n"
+        nix << "    pkgs.mkShell (builtins.removeAttrs args [\"buildInputs\" \"shellHook\"] // {\n"
+        nix << "      name = #{nix_str "#{project_name}-devshell"};\n"
+        nix << "      buildInputs = [ nodejs ] ++ buildInputs;\n"
+        nix << "      shellHook = ''\n"
+        nix << "        export NODE_PATH=\"${nodeModules}\"\n"
+        nix << "      '' + shellHook;\n"
+        nix << "    });\n"
+        nix << "}\n"
+
+        File.write(File.join(dir, "#{project_name}.nix"), nix)
+        UI.wrote "nix/#{project_name}.nix"
+      end
+
+      def copy_support_files(dir, has_node: false)
         data_dir = File.expand_path("../data", __dir__)
-        %w[build-gem.nix gem-config.nix].each do |f|
+        files = %w[build-gem.nix gem-config.nix]
+        files += %w[build-npm.nix npm-config.nix] if has_node
+        files.each do |f|
           FileUtils.cp(File.join(data_dir, f), File.join(dir, f))
         end
-        UI.wrote "nix/build-gem.nix, nix/gem-config.nix"
+        UI.wrote files.map { |f| "nix/#{f}" }.join(", ")
       end
 
       def nix_key(name)
