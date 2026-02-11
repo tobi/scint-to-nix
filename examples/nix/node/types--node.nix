@@ -8,4 +8,12 @@
       sha256 = "100z31n82hcanqq1ws5z3kl1kjyk9d4zrn870ambzinrfh460j1w";
     };
   };
+  "25.2.3" = {
+    version = "25.2.3";
+    source = {
+      type = "tarball";
+      remotes = [ "https://registry.npmjs.org" ];
+      sha256 = "0h4vwj599h7fwivdj6icmwidbss0c240q37qhpj0z1lif2iqs2qq";
+    };
+  };
 }

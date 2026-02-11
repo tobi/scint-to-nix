@@ -8,4 +8,12 @@
       sha256 = "0vldbr517hhwc3kpbxmwqag2inxvdzibaj6nvkj74qv7zzyak33j";
     };
   };
+  "7.16.0" = {
+    version = "7.16.0";
+    source = {
+      type = "tarball";
+      remotes = [ "https://registry.npmjs.org" ];
+      sha256 = "1bzqndp6yf7582badgp5yzb31kfqw731q2z87148l4d42bxf5dak";
+    };
+  };
 }
