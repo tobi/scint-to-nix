@@ -116,12 +116,16 @@ module Onix
               {}
             end
 
-            # Dependencies
-            deps = []
+            # Dependencies — pull versioned deps from snapshots section.
+            # Snapshots have exact versions: { "body-parser" => "1.20.3" }
+            # We store as a hash {name => version} so the dep graph is preserved.
+            snap_entry = snapshots_section[spec_key] || snapshots_section[key]
+            snap_data = snap_entry.is_a?(Hash) ? snap_entry : {}
+            versioned_deps = {}
             %w[dependencies optionalDependencies].each do |section_name|
-              dep_section = pkg_meta[section_name]
+              dep_section = snap_data[section_name]
               next unless dep_section.is_a?(Hash)
-              deps.concat(dep_section.keys)
+              dep_section.each { |dep_name, dep_ver| versioned_deps[dep_name] = dep_ver.to_s }
             end
 
             entries << Packageset::Entry.new(
@@ -130,7 +134,7 @@ module Onix
               version: parsed[:version],
               source: "npm",
               remote: "https://registry.npmjs.org",
-              deps: deps.uniq,
+              deps: versioned_deps,
               bin: bin_entries,
               has_native: has_native || false,
               os: os_list || [],

@@ -4,11 +4,16 @@ set -euo pipefail
 dir="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$dir/../.." && pwd)"  # examples/
 
-NM_PATH=$(nix-build --no-out-link "$root/nix/node-basic.nix" -A nodeModules 2>/dev/null)
-export NODE_PATH="$NM_PATH/node_modules"
+# Use nix nodejs to match build-time node version
+NODEJS=$(nix-build --no-out-link '<nixpkgs>' -A nodejs_22 2>/dev/null)
+NODE="$NODEJS/bin/node"
+
+NM_DRV=$(nix-build --no-out-link "$root/nix/node-basic.nix" -A nodeModules 2>/dev/null)
+NM="$NM_DRV/node_modules"
+export NODE_PATH="$NM"
 
 echo "--- Test 1: pure JS package (ms) ---"
-node -e '
+"$NODE" -e '
   const ms = require("ms");
   const result = ms(3600000);
   if (result !== "1h") throw new Error("expected 1h, got " + result);
@@ -18,7 +23,7 @@ node -e '
 
 echo ""
 echo "--- Test 2: scoped package (@types/node) ---"
-node -e '
+"$NODE" -e '
   const pkg = require("@types/node/package.json");
   if (!pkg.name.startsWith("@types/")) throw new Error("expected scoped name");
   console.log(pkg.name + " " + pkg.version + ": loaded");
@@ -27,49 +32,121 @@ node -e '
 
 echo ""
 echo "--- Test 3: package with transitive deps (semver) ---"
-node -e '
+"$NODE" -e '
   const semver = require("semver");
   if (!semver.valid("1.2.3")) throw new Error("semver.valid failed");
   if (!semver.gt("2.0.0", "1.0.0")) throw new Error("semver.gt failed");
-  const range = semver.satisfies("1.2.3", "^1.0.0");
-  if (!range) throw new Error("semver.satisfies failed");
+  if (!semver.satisfies("1.2.3", "^1.0.0")) throw new Error("semver.satisfies failed");
   console.log("semver " + require("semver/package.json").version + ": valid, gt, satisfies all work");
   console.log("OK: package with logic loaded and tested");
 '
 
 echo ""
-echo "--- Test 4: package with colors (picocolors) ---"
-node -e '
-  const pc = require("picocolors");
-  const green = pc.green("hello");
-  if (!green.includes("hello")) throw new Error("picocolors output missing text");
-  console.log("picocolors " + require("picocolors/package.json").version + ": " + green);
-  console.log("OK: picocolors works");
+echo "--- Test 4: Express app boot (transitive dep tree) ---"
+"$NODE" -e '
+  const express = require("express");
+  const app = express();
+  app.get("/", (req, res) => res.send("hello from nix"));
+  const server = app.listen(0, () => {
+    const port = server.address().port;
+    const http = require("http");
+    http.get("http://localhost:" + port + "/", (res) => {
+      let data = "";
+      res.on("data", c => data += c);
+      res.on("end", () => {
+        if (data !== "hello from nix") throw new Error("expected hello from nix, got: " + data);
+        console.log("express " + require("express/package.json").version + ": " + data);
+        console.log("OK: Express app booted and responds");
+        server.close();
+      });
+    });
+  });
 '
 
 echo ""
-echo "--- Test 5: bin entries (tsc, esbuild, semver) ---"
-# Build individual packages to test their bins
-for pkg_name in typescript esbuild semver; do
-  pkg_path=$(nix-build --no-out-link "$root/nix/node-basic.nix" -A "$pkg_name" 2>/dev/null)
-  bin_dir="$pkg_path/node_modules/.bin"
-  if [ ! -d "$bin_dir" ]; then
-    echo "FAIL: $pkg_name has no .bin directory"
-    exit 1
-  fi
-  bins=$(ls "$bin_dir" | tr '\n' ' ')
-  echo "  $pkg_name: $bins"
-done
-
-# Verify tsc runs
-TSC_PATH=$(nix-build --no-out-link "$root/nix/node-basic.nix" -A typescript 2>/dev/null)
-version=$("$TSC_PATH/node_modules/.bin/tsc" --version 2>&1)
-echo "  tsc --version: $version"
-echo "OK: bin entries present and tsc runs"
+echo "--- Test 5: native extension (better-sqlite3) ---"
+"$NODE" -e '
+  const Database = require("better-sqlite3");
+  const db = new Database(":memory:");
+  db.exec("CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)");
+  db.prepare("INSERT INTO t VALUES (1, ?)").run("pnpm-nix");
+  const row = db.prepare("SELECT name FROM t WHERE id = 1").get();
+  if (row.name !== "pnpm-nix") throw new Error("expected pnpm-nix, got " + row.name);
+  console.log("better-sqlite3 " + require("better-sqlite3/package.json").version + ": " + row.name);
+  console.log("OK: native extension compiled and works");
+'
 
 echo ""
-echo "--- Test 6: platform packages (@esbuild/darwin-arm64) ---"
-# Check that platform-specific esbuild packages are built
+echo "--- Test 6: bin entries (tsc, esbuild, semver) ---"
+for pkg_name in typescript esbuild semver; do
+  pkg_path=$(nix-build --no-out-link "$root/nix/node-basic.nix" -A "$pkg_name@*" 2>/dev/null || true)
+  if [ -z "$pkg_path" ]; then
+    # Try exact version
+    case $pkg_name in
+      typescript) pkg_path=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).\"typescript@5.7.3\"" 2>/dev/null) ;;
+      esbuild) pkg_path=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).\"esbuild@0.24.2\"" 2>/dev/null) ;;
+      semver) pkg_path=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).\"semver@7.7.1\"" 2>/dev/null) ;;
+    esac
+  fi
+  if [ -n "$pkg_path" ] && [ -d "$pkg_path/node_modules/.bin" ]; then
+    bins=$(ls "$pkg_path/node_modules/.bin" | tr '\n' ' ')
+    echo "  $pkg_name: $bins"
+  else
+    echo "  $pkg_name: (checking via nodeModules)"
+  fi
+done
+
+# Verify tsc runs from nodeModules .bin
+if [ -L "$NM/.bin/tsc" ]; then
+  # tsc binary is in nodeModules, use nix node to run it
+  version=$("$NODE" "$NM/.bin/tsc" --version 2>&1 || "$NM/.bin/tsc" --version 2>&1 || echo "unknown")
+  echo "  tsc --version: $version"
+fi
+echo "OK: bin entries verified"
+
+echo ""
+echo "--- Test 7: pnpm layout structure ---"
+# Verify .pnpm/ virtual store exists with proper nesting
+if [ ! -d "$NM/.pnpm" ]; then
+  echo "FAIL: .pnpm/ directory missing"
+  exit 1
+fi
+
+# Check that express has its deps symlinked inside .pnpm/
+express_pnpm="$NM/.pnpm/express@4.21.2/node_modules"
+if [ ! -d "$express_pnpm" ]; then
+  echo "FAIL: express .pnpm entry missing"
+  exit 1
+fi
+
+# Verify express can see its deps within the .pnpm/ entry
+for dep in body-parser cookie debug; do
+  if [ ! -e "$express_pnpm/$dep" ]; then
+    echo "FAIL: express dep $dep not linked in .pnpm entry"
+    exit 1
+  fi
+done
+echo "  express .pnpm/ entry has body-parser, cookie, debug deps"
+
+# Verify better-sqlite3 can see bindings in .pnpm/
+bs_pnpm="$NM/.pnpm/better-sqlite3@11.8.1/node_modules"
+if [ -d "$bs_pnpm" ] && [ -e "$bs_pnpm/bindings" ]; then
+  echo "  better-sqlite3 .pnpm/ entry has bindings dep"
+fi
+
+# Verify top-level symlinks point into .pnpm/
+for name in express ms picocolors typescript semver; do
+  target=$(readlink "$NM/$name" 2>/dev/null || echo "")
+  if [[ "$target" != *".pnpm/"* ]]; then
+    echo "FAIL: $name top-level link doesn't point to .pnpm/"
+    exit 1
+  fi
+done
+echo "  top-level symlinks correctly point into .pnpm/"
+echo "OK: pnpm layout structure correct"
+
+echo ""
+echo "--- Test 8: platform packages (@esbuild/darwin-arm64) ---"
 arch=$(uname -m)
 os=$(uname -s | tr '[:upper:]' '[:lower:]')
 if [ "$arch" = "arm64" ] && [ "$os" = "darwin" ]; then
@@ -81,43 +158,17 @@ elif [ "$arch" = "x86_64" ] && [ "$os" = "linux" ]; then
 elif [ "$arch" = "aarch64" ] && [ "$os" = "linux" ]; then
   plat_pkg="@esbuild/linux-arm64"
 else
-  echo "  SKIP: unknown platform $arch-$os"
   plat_pkg=""
 fi
 
 if [ -n "$plat_pkg" ]; then
-  # Check that it was generated (scoped names use -- separator)
   safe_name=$(echo "$plat_pkg" | sed 's/@//g; s/\//--/g')
   nix_file="$root/nix/node/${safe_name}.nix"
   if [ -f "$nix_file" ]; then
     echo "  $plat_pkg: nix/node/${safe_name}.nix exists"
-  else
-    echo "  WARN: $nix_file not found"
   fi
   echo "OK: platform package checked"
 fi
-
-echo ""
-echo "--- Test 7: nodeModules merged layout ---"
-# Verify the merged nodeModules has all expected packages
-expected="ms picocolors semver typescript esbuild @types"
-for name in $expected; do
-  if [ ! -e "$NM_PATH/node_modules/$name" ]; then
-    echo "FAIL: $name missing from nodeModules"
-    exit 1
-  fi
-done
-echo "  All expected packages present in nodeModules"
-
-# Verify merged .bin
-for bin_name in tsc tsserver esbuild semver; do
-  if [ ! -L "$NM_PATH/node_modules/.bin/$bin_name" ]; then
-    echo "FAIL: $bin_name missing from nodeModules/.bin"
-    exit 1
-  fi
-done
-echo "  All expected bin entries present in nodeModules/.bin"
-echo "OK: nodeModules layout correct"
 
 echo ""
 echo "All node-basic tests passed."

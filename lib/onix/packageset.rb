@@ -110,6 +110,14 @@ module Onix
       end
     end
 
+    # Normalize deps from JSON: symbolized hash keys → string keys, or default to [].
+    def self.normalize_deps(raw)
+      return [] if raw.nil?
+      return raw if raw.is_a?(Array)
+      return raw.transform_keys(&:to_s) if raw.is_a?(Hash)
+      []
+    end
+
     # Write a packageset to a JSONL file.
     def self.write(path, meta:, entries:)
       File.open(path, "w") do |f|
@@ -152,7 +160,8 @@ module Onix
             subdir: data[:subdir],
             submodules: data[:submodules],
             path: data[:path],
-            deps: data[:deps] || [],
+            # deps: array of names (ruby) or hash {name => version} (node)
+            deps: normalize_deps(data[:deps]),
             # Ruby
             require_paths: data[:require_paths] || ["lib"],
             executables: data[:executables] || [],
