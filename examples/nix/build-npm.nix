@@ -37,19 +37,17 @@ in
 let
   key = "${pkgName}-${version}";
 
-  npmOs = if stdenv.isDarwin then "darwin"
-          else if stdenv.isLinux then "linux"
+  npmOs = if stdenv.hostPlatform.isDarwin then "darwin"
+          else if stdenv.hostPlatform.isLinux then "linux"
           else "unknown";
-  npmCpu = if stdenv.isx86_64 then "x64"
-           else if stdenv.isAarch64 then "arm64"
+  npmCpu = if stdenv.hostPlatform.isx86_64 then "x64"
+           else if stdenv.hostPlatform.isAarch64 then "arm64"
            else "unknown";
   matchesConstraint = wanted: current:
     builtins.any (w:
       let
         isNegation = lib.hasPrefix "!" w;
-        value = if isNegation
-                then builtins.substring 1 (builtins.stringLength w - 1) w
-                else w;
+        value = lib.removePrefix "!" w;
       in
         if isNegation then current != value else current == value
     ) wanted;
@@ -90,9 +88,9 @@ let
 
   nodeModulesSetup = lib.optionalString (buildPackages != []) ''
     mkdir -p node_modules
-    ${builtins.concatStringsSep "\n" (map (p:
+    ${lib.concatMapStringsSep "\n" (p:
       "ln -sf ${p} node_modules/${p.pname or (builtins.parseDrvName p.name).name}"
-    ) buildPackages)}
+    ) buildPackages}
   '';
 
   defaultBuildPhase = ''
@@ -139,7 +137,7 @@ stdenv.mkDerivation {
     # If explicit bin entries are passed, use those; otherwise read package.json
     ${if bin != {} then ''
       mkdir -p "$out/node_modules/.bin"
-      ${builtins.concatStringsSep "\n" (lib.mapAttrsToList (name: path: ''
+      ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: path: ''
         ln -sf "$dest/${path}" "$out/node_modules/.bin/${name}"
       '') bin)}
     '' else ''
@@ -170,5 +168,6 @@ stdenv.mkDerivation {
 
   meta = {
     description = "${pkgName} npm package";
+    platforms = lib.platforms.all;
   };
 }

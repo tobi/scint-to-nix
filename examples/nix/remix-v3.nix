@@ -5,13 +5,13 @@
 #   node_modules/.pnpm/<name>@<version>/node_modules/<dep>   <- symlink to dep's .pnpm entry
 #   node_modules/<name>                                      <- symlink to .pnpm entry
 #
-{ pkgs ? import <nixpkgs> {}, nodejs ? pkgs.nodejs_22 }:
+{ pkgs ? import <nixpkgs> { config = {}; overlays = []; }, nodejs ? pkgs.nodejs_22 }:
 let
   buildNpm = import ./build-npm.nix { inherit pkgs nodejs; };
   buildPackageByName = name:
     let
       versions = import (./node + "/${name}.nix");
-      version = builtins.head (builtins.attrNames versions);
+      version = pkgs.lib.last (builtins.attrNames versions);
       spec = versions.${version};
     in buildNpm (spec // { pkgName = name; });
   npmConfig = import ./npm-config.nix {

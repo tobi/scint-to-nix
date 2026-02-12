@@ -127,13 +127,13 @@ module Onix
           major = meta.node.to_s.split(".").first
           nodejs_attr = "nodejs_#{major}" if major.to_i >= 18
         end
-        nix << "{ pkgs ? import <nixpkgs> {}, nodejs ? pkgs.#{nodejs_attr} }:\n"
+        nix << "{ pkgs ? import <nixpkgs> { config = {}; overlays = []; }, nodejs ? pkgs.#{nodejs_attr} }:\n"
         nix << "let\n"
         nix << "  buildNpm = import ./build-npm.nix { inherit pkgs nodejs; };\n"
         nix << "  buildPackageByName = name:\n"
         nix << "    let\n"
         nix << "      versions = import (./node + \"/\${name}.nix\");\n"
-        nix << "      version = builtins.head (builtins.attrNames versions);\n"
+        nix << "      version = pkgs.lib.last (builtins.attrNames versions);\n"
         nix << "      spec = versions.\${version};\n"
         nix << "    in buildNpm (spec // { pkgName = name; });\n"
         nix << "  npmConfig = import ./npm-config.nix {\n"
