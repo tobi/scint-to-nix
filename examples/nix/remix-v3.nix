@@ -63,8 +63,8 @@ let
     "alien-signals@3.1.2" = build "alien-signals" "3.1.2";
     "arctic@3.7.0" = build "arctic" "3.7.0";
     "bun-types@1.3.9" = build "bun-types" "1.3.9";
-    "remix-auth-oauth2@3.4.1" = build "remix-auth-oauth2" "3.4.1";
     "remix-auth@4.2.0" = build "remix-auth" "4.2.0";
+    "remix-auth-oauth2@3.4.1" = build "remix-auth-oauth2" "3.4.1";
     "typescript@5.9.3" = build "typescript" "5.9.3";
     "undici-types@7.16.0" = build "undici-types" "7.16.0";
   };
@@ -146,10 +146,10 @@ let
     cp -r ${packages."bun-types@1.3.9"}/node_modules/bun-types/. $out/node_modules/.pnpm/bun-types@1.3.9/node_modules/bun-types
     mkdir -p $out/node_modules/.pnpm/bun-types@1.3.9/node_modules/@types
     ln -sf ../../@types+node@25.2.3/node_modules/@types/node $out/node_modules/.pnpm/bun-types@1.3.9/node_modules/@types/node
-    mkdir -p $out/node_modules/.pnpm/remix-auth-oauth2@3.4.1/node_modules
-    cp -r ${packages."remix-auth-oauth2@3.4.1"}/node_modules/remix-auth-oauth2/. $out/node_modules/.pnpm/remix-auth-oauth2@3.4.1/node_modules/remix-auth-oauth2
     mkdir -p $out/node_modules/.pnpm/remix-auth@4.2.0/node_modules
     cp -r ${packages."remix-auth@4.2.0"}/node_modules/remix-auth/. $out/node_modules/.pnpm/remix-auth@4.2.0/node_modules/remix-auth
+    mkdir -p $out/node_modules/.pnpm/remix-auth-oauth2@3.4.1/node_modules
+    cp -r ${packages."remix-auth-oauth2@3.4.1"}/node_modules/remix-auth-oauth2/. $out/node_modules/.pnpm/remix-auth-oauth2@3.4.1/node_modules/remix-auth-oauth2
     mkdir -p $out/node_modules/.pnpm/typescript@5.9.3/node_modules
     cp -r ${packages."typescript@5.9.3"}/node_modules/typescript/. $out/node_modules/.pnpm/typescript@5.9.3/node_modules/typescript
     mkdir -p $out/node_modules/.pnpm/undici-types@7.16.0/node_modules
@@ -333,16 +333,16 @@ let
         ln -sf $out/node_modules/.pnpm/bun-types@1.3.9/node_modules/bun-types/$(readlink $b | sed "s|.*node_modules/bun-types/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
-    if [ -d ${packages."remix-auth-oauth2@3.4.1"}/node_modules/.bin ]; then
-      for b in ${packages."remix-auth-oauth2@3.4.1"}/node_modules/.bin/*; do
-        bname=$(basename $b)
-        ln -sf $out/node_modules/.pnpm/remix-auth-oauth2@3.4.1/node_modules/remix-auth-oauth2/$(readlink $b | sed "s|.*node_modules/remix-auth-oauth2/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
-      done
-    fi
     if [ -d ${packages."remix-auth@4.2.0"}/node_modules/.bin ]; then
       for b in ${packages."remix-auth@4.2.0"}/node_modules/.bin/*; do
         bname=$(basename $b)
         ln -sf $out/node_modules/.pnpm/remix-auth@4.2.0/node_modules/remix-auth/$(readlink $b | sed "s|.*node_modules/remix-auth/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
+      done
+    fi
+    if [ -d ${packages."remix-auth-oauth2@3.4.1"}/node_modules/.bin ]; then
+      for b in ${packages."remix-auth-oauth2@3.4.1"}/node_modules/.bin/*; do
+        bname=$(basename $b)
+        ln -sf $out/node_modules/.pnpm/remix-auth-oauth2@3.4.1/node_modules/remix-auth-oauth2/$(readlink $b | sed "s|.*node_modules/remix-auth-oauth2/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
     if [ -d ${packages."typescript@5.9.3"}/node_modules/.bin ]; then

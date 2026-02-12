@@ -91,8 +91,8 @@ let
     "picomatch@4.0.3" = build "picomatch" "4.0.3";
     "quansync@1.0.0" = build "quansync" "1.0.0";
     "resolve-pkg-maps@1.0.0" = build "resolve-pkg-maps" "1.0.0";
-    "rolldown-plugin-dts@0.22.1" = build "rolldown-plugin-dts" "0.22.1";
     "rolldown@1.0.0-rc.3" = build "rolldown" "1.0.0-rc.3";
+    "rolldown-plugin-dts@0.22.1" = build "rolldown-plugin-dts" "0.22.1";
     "semver@7.7.4" = build "semver" "7.7.4";
     "tinyexec@1.0.2" = build "tinyexec" "1.0.2";
     "tinyglobby@0.2.15" = build "tinyglobby" "0.2.15";
@@ -254,8 +254,6 @@ let
     cp -r ${packages."quansync@1.0.0"}/node_modules/quansync/. $out/node_modules/.pnpm/quansync@1.0.0/node_modules/quansync
     mkdir -p $out/node_modules/.pnpm/resolve-pkg-maps@1.0.0/node_modules
     cp -r ${packages."resolve-pkg-maps@1.0.0"}/node_modules/resolve-pkg-maps/. $out/node_modules/.pnpm/resolve-pkg-maps@1.0.0/node_modules/resolve-pkg-maps
-    mkdir -p $out/node_modules/.pnpm/rolldown-plugin-dts@0.22.1/node_modules
-    cp -r ${packages."rolldown-plugin-dts@0.22.1"}/node_modules/rolldown-plugin-dts/. $out/node_modules/.pnpm/rolldown-plugin-dts@0.22.1/node_modules/rolldown-plugin-dts
     mkdir -p $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules
     cp -r ${packages."rolldown@1.0.0-rc.3"}/node_modules/rolldown/. $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/rolldown
     mkdir -p $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/@oxc-project
@@ -288,6 +286,8 @@ let
     ln -sf ../../@rolldown+binding-win32-arm64-msvc@1.0.0-rc.3/node_modules/@rolldown/binding-win32-arm64-msvc $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/@rolldown/binding-win32-arm64-msvc
     mkdir -p $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/@rolldown
     ln -sf ../../@rolldown+binding-win32-x64-msvc@1.0.0-rc.3/node_modules/@rolldown/binding-win32-x64-msvc $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/@rolldown/binding-win32-x64-msvc
+    mkdir -p $out/node_modules/.pnpm/rolldown-plugin-dts@0.22.1/node_modules
+    cp -r ${packages."rolldown-plugin-dts@0.22.1"}/node_modules/rolldown-plugin-dts/. $out/node_modules/.pnpm/rolldown-plugin-dts@0.22.1/node_modules/rolldown-plugin-dts
     mkdir -p $out/node_modules/.pnpm/semver@7.7.4/node_modules
     cp -r ${packages."semver@7.7.4"}/node_modules/semver/. $out/node_modules/.pnpm/semver@7.7.4/node_modules/semver
     mkdir -p $out/node_modules/.pnpm/tinyexec@1.0.2/node_modules
@@ -708,16 +708,16 @@ let
         ln -sf $out/node_modules/.pnpm/resolve-pkg-maps@1.0.0/node_modules/resolve-pkg-maps/$(readlink $b | sed "s|.*node_modules/resolve-pkg-maps/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
-    if [ -d ${packages."rolldown-plugin-dts@0.22.1"}/node_modules/.bin ]; then
-      for b in ${packages."rolldown-plugin-dts@0.22.1"}/node_modules/.bin/*; do
-        bname=$(basename $b)
-        ln -sf $out/node_modules/.pnpm/rolldown-plugin-dts@0.22.1/node_modules/rolldown-plugin-dts/$(readlink $b | sed "s|.*node_modules/rolldown-plugin-dts/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
-      done
-    fi
     if [ -d ${packages."rolldown@1.0.0-rc.3"}/node_modules/.bin ]; then
       for b in ${packages."rolldown@1.0.0-rc.3"}/node_modules/.bin/*; do
         bname=$(basename $b)
         ln -sf $out/node_modules/.pnpm/rolldown@1.0.0-rc.3/node_modules/rolldown/$(readlink $b | sed "s|.*node_modules/rolldown/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
+      done
+    fi
+    if [ -d ${packages."rolldown-plugin-dts@0.22.1"}/node_modules/.bin ]; then
+      for b in ${packages."rolldown-plugin-dts@0.22.1"}/node_modules/.bin/*; do
+        bname=$(basename $b)
+        ln -sf $out/node_modules/.pnpm/rolldown-plugin-dts@0.22.1/node_modules/rolldown-plugin-dts/$(readlink $b | sed "s|.*node_modules/rolldown-plugin-dts/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
     if [ -d ${packages."semver@7.7.4"}/node_modules/.bin ]; then

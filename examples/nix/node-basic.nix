@@ -42,15 +42,15 @@ let
   # Per-package derivations (used by .pnpm/ entries)
   packages = {
     "@esbuild/aix-ppc64@0.24.2" = build "@esbuild/aix-ppc64" "0.24.2";
-    "@esbuild/android-arm64@0.24.2" = build "@esbuild/android-arm64" "0.24.2";
     "@esbuild/android-arm@0.24.2" = build "@esbuild/android-arm" "0.24.2";
+    "@esbuild/android-arm64@0.24.2" = build "@esbuild/android-arm64" "0.24.2";
     "@esbuild/android-x64@0.24.2" = build "@esbuild/android-x64" "0.24.2";
     "@esbuild/darwin-arm64@0.24.2" = build "@esbuild/darwin-arm64" "0.24.2";
     "@esbuild/darwin-x64@0.24.2" = build "@esbuild/darwin-x64" "0.24.2";
     "@esbuild/freebsd-arm64@0.24.2" = build "@esbuild/freebsd-arm64" "0.24.2";
     "@esbuild/freebsd-x64@0.24.2" = build "@esbuild/freebsd-x64" "0.24.2";
-    "@esbuild/linux-arm64@0.24.2" = build "@esbuild/linux-arm64" "0.24.2";
     "@esbuild/linux-arm@0.24.2" = build "@esbuild/linux-arm" "0.24.2";
+    "@esbuild/linux-arm64@0.24.2" = build "@esbuild/linux-arm64" "0.24.2";
     "@esbuild/linux-ia32@0.24.2" = build "@esbuild/linux-ia32" "0.24.2";
     "@esbuild/linux-loong64@0.24.2" = build "@esbuild/linux-loong64" "0.24.2";
     "@esbuild/linux-mips64el@0.24.2" = build "@esbuild/linux-mips64el" "0.24.2";
@@ -81,8 +81,8 @@ let
     "chownr@1.1.4" = build "chownr" "1.1.4";
     "content-disposition@0.5.4" = build "content-disposition" "0.5.4";
     "content-type@1.0.5" = build "content-type" "1.0.5";
-    "cookie-signature@1.0.6" = build "cookie-signature" "1.0.6";
     "cookie@0.7.1" = build "cookie" "0.7.1";
+    "cookie-signature@1.0.6" = build "cookie-signature" "1.0.6";
     "debug@2.6.9" = build "debug" "2.6.9";
     "decompress-response@6.0.0" = build "decompress-response" "6.0.0";
     "deep-extend@0.6.0" = build "deep-extend" "0.6.0";
@@ -124,9 +124,9 @@ let
     "media-typer@0.3.0" = build "media-typer" "0.3.0";
     "merge-descriptors@1.0.3" = build "merge-descriptors" "1.0.3";
     "methods@1.1.2" = build "methods" "1.1.2";
+    "mime@1.6.0" = build "mime" "1.6.0";
     "mime-db@1.52.0" = build "mime-db" "1.52.0";
     "mime-types@2.1.35" = build "mime-types" "2.1.35";
-    "mime@1.6.0" = build "mime" "1.6.0";
     "mimic-response@3.1.0" = build "mimic-response" "3.1.0";
     "minimist@1.2.8" = build "minimist" "1.2.8";
     "mkdirp-classic@0.5.3" = build "mkdirp-classic" "0.5.3";
@@ -155,10 +155,10 @@ let
     "send@0.19.0" = build "send" "0.19.0";
     "serve-static@1.16.2" = build "serve-static" "1.16.2";
     "setprototypeof@1.2.0" = build "setprototypeof" "1.2.0";
+    "side-channel@1.1.0" = build "side-channel" "1.1.0";
     "side-channel-list@1.0.0" = build "side-channel-list" "1.0.0";
     "side-channel-map@1.0.1" = build "side-channel-map" "1.0.1";
     "side-channel-weakmap@1.0.2" = build "side-channel-weakmap" "1.0.2";
-    "side-channel@1.1.0" = build "side-channel" "1.1.0";
     "simple-concat@1.0.1" = build "simple-concat" "1.0.1";
     "simple-get@4.0.1" = build "simple-get" "4.0.1";
     "statuses@2.0.1" = build "statuses" "2.0.1";
@@ -183,10 +183,10 @@ let
     mkdir -p $out/node_modules/.pnpm $out/node_modules/.bin
     mkdir -p $out/node_modules/.pnpm/@esbuild+aix-ppc64@0.24.2/node_modules/@esbuild
     cp -r ${packages."@esbuild/aix-ppc64@0.24.2"}/node_modules/@esbuild/aix-ppc64/. $out/node_modules/.pnpm/@esbuild+aix-ppc64@0.24.2/node_modules/@esbuild/aix-ppc64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+android-arm64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/android-arm64@0.24.2"}/node_modules/@esbuild/android-arm64/. $out/node_modules/.pnpm/@esbuild+android-arm64@0.24.2/node_modules/@esbuild/android-arm64
     mkdir -p $out/node_modules/.pnpm/@esbuild+android-arm@0.24.2/node_modules/@esbuild
     cp -r ${packages."@esbuild/android-arm@0.24.2"}/node_modules/@esbuild/android-arm/. $out/node_modules/.pnpm/@esbuild+android-arm@0.24.2/node_modules/@esbuild/android-arm
+    mkdir -p $out/node_modules/.pnpm/@esbuild+android-arm64@0.24.2/node_modules/@esbuild
+    cp -r ${packages."@esbuild/android-arm64@0.24.2"}/node_modules/@esbuild/android-arm64/. $out/node_modules/.pnpm/@esbuild+android-arm64@0.24.2/node_modules/@esbuild/android-arm64
     mkdir -p $out/node_modules/.pnpm/@esbuild+android-x64@0.24.2/node_modules/@esbuild
     cp -r ${packages."@esbuild/android-x64@0.24.2"}/node_modules/@esbuild/android-x64/. $out/node_modules/.pnpm/@esbuild+android-x64@0.24.2/node_modules/@esbuild/android-x64
     mkdir -p $out/node_modules/.pnpm/@esbuild+darwin-arm64@0.24.2/node_modules/@esbuild
@@ -197,10 +197,10 @@ let
     cp -r ${packages."@esbuild/freebsd-arm64@0.24.2"}/node_modules/@esbuild/freebsd-arm64/. $out/node_modules/.pnpm/@esbuild+freebsd-arm64@0.24.2/node_modules/@esbuild/freebsd-arm64
     mkdir -p $out/node_modules/.pnpm/@esbuild+freebsd-x64@0.24.2/node_modules/@esbuild
     cp -r ${packages."@esbuild/freebsd-x64@0.24.2"}/node_modules/@esbuild/freebsd-x64/. $out/node_modules/.pnpm/@esbuild+freebsd-x64@0.24.2/node_modules/@esbuild/freebsd-x64
-    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-arm64@0.24.2/node_modules/@esbuild
-    cp -r ${packages."@esbuild/linux-arm64@0.24.2"}/node_modules/@esbuild/linux-arm64/. $out/node_modules/.pnpm/@esbuild+linux-arm64@0.24.2/node_modules/@esbuild/linux-arm64
     mkdir -p $out/node_modules/.pnpm/@esbuild+linux-arm@0.24.2/node_modules/@esbuild
     cp -r ${packages."@esbuild/linux-arm@0.24.2"}/node_modules/@esbuild/linux-arm/. $out/node_modules/.pnpm/@esbuild+linux-arm@0.24.2/node_modules/@esbuild/linux-arm
+    mkdir -p $out/node_modules/.pnpm/@esbuild+linux-arm64@0.24.2/node_modules/@esbuild
+    cp -r ${packages."@esbuild/linux-arm64@0.24.2"}/node_modules/@esbuild/linux-arm64/. $out/node_modules/.pnpm/@esbuild+linux-arm64@0.24.2/node_modules/@esbuild/linux-arm64
     mkdir -p $out/node_modules/.pnpm/@esbuild+linux-ia32@0.24.2/node_modules/@esbuild
     cp -r ${packages."@esbuild/linux-ia32@0.24.2"}/node_modules/@esbuild/linux-ia32/. $out/node_modules/.pnpm/@esbuild+linux-ia32@0.24.2/node_modules/@esbuild/linux-ia32
     mkdir -p $out/node_modules/.pnpm/@esbuild+linux-loong64@0.24.2/node_modules/@esbuild
@@ -289,10 +289,10 @@ let
     ln -sf ../../safe-buffer@5.2.1/node_modules/safe-buffer $out/node_modules/.pnpm/content-disposition@0.5.4/node_modules/safe-buffer
     mkdir -p $out/node_modules/.pnpm/content-type@1.0.5/node_modules
     cp -r ${packages."content-type@1.0.5"}/node_modules/content-type/. $out/node_modules/.pnpm/content-type@1.0.5/node_modules/content-type
-    mkdir -p $out/node_modules/.pnpm/cookie-signature@1.0.6/node_modules
-    cp -r ${packages."cookie-signature@1.0.6"}/node_modules/cookie-signature/. $out/node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature
     mkdir -p $out/node_modules/.pnpm/cookie@0.7.1/node_modules
     cp -r ${packages."cookie@0.7.1"}/node_modules/cookie/. $out/node_modules/.pnpm/cookie@0.7.1/node_modules/cookie
+    mkdir -p $out/node_modules/.pnpm/cookie-signature@1.0.6/node_modules
+    cp -r ${packages."cookie-signature@1.0.6"}/node_modules/cookie-signature/. $out/node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature
     mkdir -p $out/node_modules/.pnpm/debug@2.6.9/node_modules
     cp -r ${packages."debug@2.6.9"}/node_modules/debug/. $out/node_modules/.pnpm/debug@2.6.9/node_modules/debug
     ln -sf ../../ms@2.0.0/node_modules/ms $out/node_modules/.pnpm/debug@2.6.9/node_modules/ms
@@ -489,13 +489,13 @@ let
     cp -r ${packages."merge-descriptors@1.0.3"}/node_modules/merge-descriptors/. $out/node_modules/.pnpm/merge-descriptors@1.0.3/node_modules/merge-descriptors
     mkdir -p $out/node_modules/.pnpm/methods@1.1.2/node_modules
     cp -r ${packages."methods@1.1.2"}/node_modules/methods/. $out/node_modules/.pnpm/methods@1.1.2/node_modules/methods
+    mkdir -p $out/node_modules/.pnpm/mime@1.6.0/node_modules
+    cp -r ${packages."mime@1.6.0"}/node_modules/mime/. $out/node_modules/.pnpm/mime@1.6.0/node_modules/mime
     mkdir -p $out/node_modules/.pnpm/mime-db@1.52.0/node_modules
     cp -r ${packages."mime-db@1.52.0"}/node_modules/mime-db/. $out/node_modules/.pnpm/mime-db@1.52.0/node_modules/mime-db
     mkdir -p $out/node_modules/.pnpm/mime-types@2.1.35/node_modules
     cp -r ${packages."mime-types@2.1.35"}/node_modules/mime-types/. $out/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-types
     ln -sf ../../mime-db@1.52.0/node_modules/mime-db $out/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-db
-    mkdir -p $out/node_modules/.pnpm/mime@1.6.0/node_modules
-    cp -r ${packages."mime@1.6.0"}/node_modules/mime/. $out/node_modules/.pnpm/mime@1.6.0/node_modules/mime
     mkdir -p $out/node_modules/.pnpm/mimic-response@3.1.0/node_modules
     cp -r ${packages."mimic-response@3.1.0"}/node_modules/mimic-response/. $out/node_modules/.pnpm/mimic-response@3.1.0/node_modules/mimic-response
     mkdir -p $out/node_modules/.pnpm/minimist@1.2.8/node_modules
@@ -600,6 +600,13 @@ let
     ln -sf ../../send@0.19.0/node_modules/send $out/node_modules/.pnpm/serve-static@1.16.2/node_modules/send
     mkdir -p $out/node_modules/.pnpm/setprototypeof@1.2.0/node_modules
     cp -r ${packages."setprototypeof@1.2.0"}/node_modules/setprototypeof/. $out/node_modules/.pnpm/setprototypeof@1.2.0/node_modules/setprototypeof
+    mkdir -p $out/node_modules/.pnpm/side-channel@1.1.0/node_modules
+    cp -r ${packages."side-channel@1.1.0"}/node_modules/side-channel/. $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel
+    ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/es-errors
+    ln -sf ../../object-inspect@1.13.4/node_modules/object-inspect $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/object-inspect
+    ln -sf ../../side-channel-list@1.0.0/node_modules/side-channel-list $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel-list
+    ln -sf ../../side-channel-map@1.0.1/node_modules/side-channel-map $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel-map
+    ln -sf ../../side-channel-weakmap@1.0.2/node_modules/side-channel-weakmap $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel-weakmap
     mkdir -p $out/node_modules/.pnpm/side-channel-list@1.0.0/node_modules
     cp -r ${packages."side-channel-list@1.0.0"}/node_modules/side-channel-list/. $out/node_modules/.pnpm/side-channel-list@1.0.0/node_modules/side-channel-list
     ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/side-channel-list@1.0.0/node_modules/es-errors
@@ -617,13 +624,6 @@ let
     ln -sf ../../get-intrinsic@1.3.0/node_modules/get-intrinsic $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/get-intrinsic
     ln -sf ../../object-inspect@1.13.4/node_modules/object-inspect $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/object-inspect
     ln -sf ../../side-channel-map@1.0.1/node_modules/side-channel-map $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/side-channel-map
-    mkdir -p $out/node_modules/.pnpm/side-channel@1.1.0/node_modules
-    cp -r ${packages."side-channel@1.1.0"}/node_modules/side-channel/. $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel
-    ln -sf ../../es-errors@1.3.0/node_modules/es-errors $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/es-errors
-    ln -sf ../../object-inspect@1.13.4/node_modules/object-inspect $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/object-inspect
-    ln -sf ../../side-channel-list@1.0.0/node_modules/side-channel-list $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel-list
-    ln -sf ../../side-channel-map@1.0.1/node_modules/side-channel-map $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel-map
-    ln -sf ../../side-channel-weakmap@1.0.2/node_modules/side-channel-weakmap $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel-weakmap
     mkdir -p $out/node_modules/.pnpm/simple-concat@1.0.1/node_modules
     cp -r ${packages."simple-concat@1.0.1"}/node_modules/simple-concat/. $out/node_modules/.pnpm/simple-concat@1.0.1/node_modules/simple-concat
     mkdir -p $out/node_modules/.pnpm/simple-get@4.0.1/node_modules
@@ -843,16 +843,16 @@ let
         ln -sf $out/node_modules/.pnpm/@esbuild+aix-ppc64@0.24.2/node_modules/@esbuild/aix-ppc64/$(readlink $b | sed "s|.*node_modules/@esbuild/aix-ppc64/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
-    if [ -d ${packages."@esbuild/android-arm64@0.24.2"}/node_modules/.bin ]; then
-      for b in ${packages."@esbuild/android-arm64@0.24.2"}/node_modules/.bin/*; do
-        bname=$(basename $b)
-        ln -sf $out/node_modules/.pnpm/@esbuild+android-arm64@0.24.2/node_modules/@esbuild/android-arm64/$(readlink $b | sed "s|.*node_modules/@esbuild/android-arm64/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
-      done
-    fi
     if [ -d ${packages."@esbuild/android-arm@0.24.2"}/node_modules/.bin ]; then
       for b in ${packages."@esbuild/android-arm@0.24.2"}/node_modules/.bin/*; do
         bname=$(basename $b)
         ln -sf $out/node_modules/.pnpm/@esbuild+android-arm@0.24.2/node_modules/@esbuild/android-arm/$(readlink $b | sed "s|.*node_modules/@esbuild/android-arm/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
+      done
+    fi
+    if [ -d ${packages."@esbuild/android-arm64@0.24.2"}/node_modules/.bin ]; then
+      for b in ${packages."@esbuild/android-arm64@0.24.2"}/node_modules/.bin/*; do
+        bname=$(basename $b)
+        ln -sf $out/node_modules/.pnpm/@esbuild+android-arm64@0.24.2/node_modules/@esbuild/android-arm64/$(readlink $b | sed "s|.*node_modules/@esbuild/android-arm64/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
     if [ -d ${packages."@esbuild/android-x64@0.24.2"}/node_modules/.bin ]; then
@@ -885,16 +885,16 @@ let
         ln -sf $out/node_modules/.pnpm/@esbuild+freebsd-x64@0.24.2/node_modules/@esbuild/freebsd-x64/$(readlink $b | sed "s|.*node_modules/@esbuild/freebsd-x64/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
-    if [ -d ${packages."@esbuild/linux-arm64@0.24.2"}/node_modules/.bin ]; then
-      for b in ${packages."@esbuild/linux-arm64@0.24.2"}/node_modules/.bin/*; do
-        bname=$(basename $b)
-        ln -sf $out/node_modules/.pnpm/@esbuild+linux-arm64@0.24.2/node_modules/@esbuild/linux-arm64/$(readlink $b | sed "s|.*node_modules/@esbuild/linux-arm64/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
-      done
-    fi
     if [ -d ${packages."@esbuild/linux-arm@0.24.2"}/node_modules/.bin ]; then
       for b in ${packages."@esbuild/linux-arm@0.24.2"}/node_modules/.bin/*; do
         bname=$(basename $b)
         ln -sf $out/node_modules/.pnpm/@esbuild+linux-arm@0.24.2/node_modules/@esbuild/linux-arm/$(readlink $b | sed "s|.*node_modules/@esbuild/linux-arm/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
+      done
+    fi
+    if [ -d ${packages."@esbuild/linux-arm64@0.24.2"}/node_modules/.bin ]; then
+      for b in ${packages."@esbuild/linux-arm64@0.24.2"}/node_modules/.bin/*; do
+        bname=$(basename $b)
+        ln -sf $out/node_modules/.pnpm/@esbuild+linux-arm64@0.24.2/node_modules/@esbuild/linux-arm64/$(readlink $b | sed "s|.*node_modules/@esbuild/linux-arm64/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
     if [ -d ${packages."@esbuild/linux-ia32@0.24.2"}/node_modules/.bin ]; then
@@ -1077,16 +1077,16 @@ let
         ln -sf $out/node_modules/.pnpm/content-type@1.0.5/node_modules/content-type/$(readlink $b | sed "s|.*node_modules/content-type/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
-    if [ -d ${packages."cookie-signature@1.0.6"}/node_modules/.bin ]; then
-      for b in ${packages."cookie-signature@1.0.6"}/node_modules/.bin/*; do
-        bname=$(basename $b)
-        ln -sf $out/node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature/$(readlink $b | sed "s|.*node_modules/cookie-signature/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
-      done
-    fi
     if [ -d ${packages."cookie@0.7.1"}/node_modules/.bin ]; then
       for b in ${packages."cookie@0.7.1"}/node_modules/.bin/*; do
         bname=$(basename $b)
         ln -sf $out/node_modules/.pnpm/cookie@0.7.1/node_modules/cookie/$(readlink $b | sed "s|.*node_modules/cookie/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
+      done
+    fi
+    if [ -d ${packages."cookie-signature@1.0.6"}/node_modules/.bin ]; then
+      for b in ${packages."cookie-signature@1.0.6"}/node_modules/.bin/*; do
+        bname=$(basename $b)
+        ln -sf $out/node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature/$(readlink $b | sed "s|.*node_modules/cookie-signature/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
     if [ -d ${packages."debug@2.6.9"}/node_modules/.bin ]; then
@@ -1335,6 +1335,12 @@ let
         ln -sf $out/node_modules/.pnpm/methods@1.1.2/node_modules/methods/$(readlink $b | sed "s|.*node_modules/methods/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
+    if [ -d ${packages."mime@1.6.0"}/node_modules/.bin ]; then
+      for b in ${packages."mime@1.6.0"}/node_modules/.bin/*; do
+        bname=$(basename $b)
+        ln -sf $out/node_modules/.pnpm/mime@1.6.0/node_modules/mime/$(readlink $b | sed "s|.*node_modules/mime/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
+      done
+    fi
     if [ -d ${packages."mime-db@1.52.0"}/node_modules/.bin ]; then
       for b in ${packages."mime-db@1.52.0"}/node_modules/.bin/*; do
         bname=$(basename $b)
@@ -1345,12 +1351,6 @@ let
       for b in ${packages."mime-types@2.1.35"}/node_modules/.bin/*; do
         bname=$(basename $b)
         ln -sf $out/node_modules/.pnpm/mime-types@2.1.35/node_modules/mime-types/$(readlink $b | sed "s|.*node_modules/mime-types/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
-      done
-    fi
-    if [ -d ${packages."mime@1.6.0"}/node_modules/.bin ]; then
-      for b in ${packages."mime@1.6.0"}/node_modules/.bin/*; do
-        bname=$(basename $b)
-        ln -sf $out/node_modules/.pnpm/mime@1.6.0/node_modules/mime/$(readlink $b | sed "s|.*node_modules/mime/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
     if [ -d ${packages."mimic-response@3.1.0"}/node_modules/.bin ]; then
@@ -1521,6 +1521,12 @@ let
         ln -sf $out/node_modules/.pnpm/setprototypeof@1.2.0/node_modules/setprototypeof/$(readlink $b | sed "s|.*node_modules/setprototypeof/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
+    if [ -d ${packages."side-channel@1.1.0"}/node_modules/.bin ]; then
+      for b in ${packages."side-channel@1.1.0"}/node_modules/.bin/*; do
+        bname=$(basename $b)
+        ln -sf $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel/$(readlink $b | sed "s|.*node_modules/side-channel/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
+      done
+    fi
     if [ -d ${packages."side-channel-list@1.0.0"}/node_modules/.bin ]; then
       for b in ${packages."side-channel-list@1.0.0"}/node_modules/.bin/*; do
         bname=$(basename $b)
@@ -1537,12 +1543,6 @@ let
       for b in ${packages."side-channel-weakmap@1.0.2"}/node_modules/.bin/*; do
         bname=$(basename $b)
         ln -sf $out/node_modules/.pnpm/side-channel-weakmap@1.0.2/node_modules/side-channel-weakmap/$(readlink $b | sed "s|.*node_modules/side-channel-weakmap/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
-      done
-    fi
-    if [ -d ${packages."side-channel@1.1.0"}/node_modules/.bin ]; then
-      for b in ${packages."side-channel@1.1.0"}/node_modules/.bin/*; do
-        bname=$(basename $b)
-        ln -sf $out/node_modules/.pnpm/side-channel@1.1.0/node_modules/side-channel/$(readlink $b | sed "s|.*node_modules/side-channel/||" ) $out/node_modules/.bin/$bname 2>/dev/null || true
       done
     fi
     if [ -d ${packages."simple-concat@1.0.1"}/node_modules/.bin ]; then

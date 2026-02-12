@@ -7,5 +7,7 @@
       remotes = [ "https://registry.npmjs.org" ];
       sha256 = "0fqkx3c4pphsvagdl7kvbr2kbyv768iisnvrd92rwdlzsj3qx80q";
     };
+    os = [ "darwin" ];
+    cpu = [ "arm64" ];
   };
 }

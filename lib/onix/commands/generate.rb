@@ -37,8 +37,10 @@ module Onix
         while argv.first&.start_with?("-")
           case argv.shift
           when "-j", "--jobs" then jobs = argv.shift.to_i
+          when "--platforms" then @platforms_arg = argv.shift
+          when "--all-platforms" then @platforms_arg = "all"
           when "--help", "-h"
-            $stderr.puts "Usage: onix generate [-j JOBS]"
+            $stderr.puts "Usage: onix generate [-j JOBS] [--platforms TRIPLES] [--all-platforms]"
             exit 0
           end
         end
@@ -136,6 +138,13 @@ module Onix
         node_by_name = {}
         if node_entries.any?
           node_dir = File.join(@project.nix_dir, "node")
+          if target_platforms = resolve_target_platforms(@platforms_arg)
+            npm_entries, skipped = npm_entries.partition { |e| platform_matches?(e, target_platforms) }
+            if skipped.any?
+              labels = target_platforms.map { |o, c| "#{c}-#{o}" }.join(", ")
+              UI.info "Skipped #{skipped.size} platform packages (targeting #{labels})"
+            end
+          end
           node_sha256 = run_prefetch_pipeline(
             dir: node_dir,
             registry_entries: npm_entries,

@@ -164,10 +164,61 @@ fi
 if [ -n "$plat_pkg" ]; then
   safe_name=$(echo "$plat_pkg" | sed 's/@//g; s/\//--/g')
   nix_file="$root/nix/node/${safe_name}.nix"
-  if [ -f "$nix_file" ]; then
-    echo "  $plat_pkg: nix/node/${safe_name}.nix exists"
+
+  # Check host platform .nix has real hash (non-empty sha256)
+  if grep -q 'sha256 = "";' "$nix_file"; then
+    echo "FAIL: host platform $plat_pkg has empty sha256"
+    exit 1
   fi
-  echo "OK: platform package checked"
+  echo "  $plat_pkg: has real hash"
+
+  # Check wrong-platform has empty hash
+  wrong_file="$root/nix/node/esbuild--aix-ppc64.nix"
+  if [ -f "$wrong_file" ]; then
+    if grep -q 'sha256 = "";' "$wrong_file"; then
+      echo "  @esbuild/aix-ppc64: has empty hash (correct — wrong platform)"
+    else
+      echo "  @esbuild/aix-ppc64: has real hash (expected empty for wrong platform)"
+    fi
+  fi
+
+  # Check os/cpu metadata present in platform package
+  if grep -q 'os = \[' "$nix_file" && grep -q 'cpu = \[' "$nix_file"; then
+    echo "  $plat_pkg: has os/cpu metadata"
+  else
+    echo "FAIL: $plat_pkg missing os/cpu metadata"
+    exit 1
+  fi
+
+  # Count esbuild variants: only host platform(s) should have real hashes
+  real_count=0
+  empty_count=0
+  for f in "$root"/nix/node/esbuild--*.nix; do
+    if grep -q 'sha256 = "";' "$f"; then
+      empty_count=$((empty_count + 1))
+    else
+      real_count=$((real_count + 1))
+    fi
+  done
+  echo "  esbuild variants: $real_count real, $empty_count empty"
+  if [ "$real_count" -lt 1 ] || [ "$real_count" -gt 3 ]; then
+    echo "FAIL: expected 1-3 real esbuild hashes (host platform), got $real_count"
+    exit 1
+  fi
+
+  # Verify esbuild binary works (confirms correct platform variant linked)
+  tmpjs=$(mktemp /tmp/esbuild-test-XXXXXX.js)
+  echo 'console.log("ok")' > "$tmpjs"
+  if "$NM/.bin/esbuild" --bundle "$tmpjs" --outfile=/dev/null 2>/dev/null; then
+    echo "  esbuild binary executes successfully"
+  else
+    echo "FAIL: esbuild binary failed to execute"
+    rm -f "$tmpjs"
+    exit 1
+  fi
+  rm -f "$tmpjs"
+
+  echo "OK: platform filtering verified"
 fi
 
 echo ""
@@ -245,6 +296,113 @@ else
 fi
 
 echo "OK: --node-version flag works"
+
+echo ""
+echo "--- Test 11: platform matching unit tests ---"
+BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+require "onix/packageset"
+require "onix/commands/generate_node"
+require "onix/ui"
+
+# Wrap in a test class to access private methods
+class PlatformTest
+  include Onix::Commands::NodeGenerator
+
+  def run_tests
+    test_matches_constraint
+    test_platform_matches
+    test_resolve_target_platforms
+    puts "OK: platform matching unit tests passed"
+  end
+
+  def assert(cond, msg)
+    raise "FAIL: #{msg}" unless cond
+  end
+
+  def refute(cond, msg)
+    raise "FAIL: #{msg}" if cond
+  end
+
+  def test_matches_constraint
+    # Positive match
+    assert matches_constraint?(["darwin"], "darwin"), "darwin should match darwin"
+    # Positive miss
+    refute matches_constraint?(["darwin"], "linux"), "darwin should not match linux"
+    # Negation match (not win32, and we are darwin)
+    assert matches_constraint?(["!win32"], "darwin"), "!win32 should match darwin"
+    # Negation miss (not darwin, and we are darwin)
+    refute matches_constraint?(["!darwin"], "darwin"), "!darwin should not match darwin"
+    # Multiple constraints (any match wins)
+    assert matches_constraint?(["linux", "darwin"], "darwin"), "linux|darwin should match darwin"
+    refute matches_constraint?(["linux", "win32"], "darwin"), "linux|win32 should not match darwin"
+    puts "  matches_constraint?: 6/6 passed"
+  end
+
+  def test_platform_matches
+    # Cross-platform (empty os and cpu) always passes
+    entry = Onix::Packageset::Entry.new(os: [], cpu: [])
+    assert platform_matches?(entry, [["darwin", "arm64"]]), "empty os/cpu should always match"
+
+    # Matching platform
+    entry = Onix::Packageset::Entry.new(os: ["darwin"], cpu: ["arm64"])
+    assert platform_matches?(entry, [["darwin", "arm64"]]), "darwin/arm64 should match"
+
+    # Non-matching platform
+    refute platform_matches?(entry, [["linux", "x64"]]), "darwin/arm64 should not match linux/x64"
+
+    # os-only constraint (cpu empty = any cpu)
+    entry = Onix::Packageset::Entry.new(os: ["darwin"], cpu: [])
+    assert platform_matches?(entry, [["darwin", "x64"]]), "os-only darwin should match any darwin cpu"
+    refute platform_matches?(entry, [["linux", "x64"]]), "os-only darwin should not match linux"
+
+    # Multiple target platforms (any match wins)
+    entry = Onix::Packageset::Entry.new(os: ["linux"], cpu: ["x64"])
+    assert platform_matches?(entry, [["darwin", "arm64"], ["linux", "x64"]]), "should match second target"
+
+    # Negation in os
+    entry = Onix::Packageset::Entry.new(os: ["!win32"], cpu: ["x64"])
+    assert platform_matches?(entry, [["linux", "x64"]]), "!win32 should match linux"
+    assert platform_matches?(entry, [["darwin", "x64"]]), "!win32 should match darwin"
+
+    puts "  platform_matches?: 8/8 passed"
+  end
+
+  def test_resolve_target_platforms
+    # --all-platforms returns nil (no filtering)
+    assert resolve_target_platforms("all").nil?, "--all-platforms should return nil"
+
+    # nil arg = host only (should return 1 platform)
+    result = resolve_target_platforms(nil)
+    assert result.is_a?(Array) && result.size == 1, "nil should return host platform only"
+
+    # Valid triple adds to host
+    result = resolve_target_platforms("x86_64-linux")
+    assert result.size >= 2, "should have host + x86_64-linux"
+    assert result.include?(["linux", "x64"]), "should include linux/x64"
+
+    # Multiple triples
+    result = resolve_target_platforms("x86_64-linux,aarch64-linux")
+    assert result.include?(["linux", "x64"]), "should include linux/x64"
+    assert result.include?(["linux", "arm64"]), "should include linux/arm64"
+
+    # Unknown triple raises error
+    begin
+      resolve_target_platforms("arm64-windows")
+      raise "FAIL: should have raised for unknown platform"
+    rescue SystemExit
+      # UI.fail calls exit — expected
+    end
+
+    puts "  resolve_target_platforms: 5/5 passed"
+  end
+end
+
+PlatformTest.new.run_tests
+' 2>&1
+if [ $? -ne 0 ]; then
+  echo "FAIL: platform matching unit tests failed"
+  exit 1
+fi
 
 echo ""
 echo "All node-basic tests passed."

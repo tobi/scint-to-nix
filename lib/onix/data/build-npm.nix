@@ -30,10 +30,31 @@ in
   buildPhase ? null,
   postInstall ? "",
   skip ? false,
+  os ? [],
+  cpu ? [],
 }:
 
 let
   key = "${pkgName}-${version}";
+
+  npmOs = if stdenv.isDarwin then "darwin"
+          else if stdenv.isLinux then "linux"
+          else "unknown";
+  npmCpu = if stdenv.isx86_64 then "x64"
+           else if stdenv.isAarch64 then "arm64"
+           else "unknown";
+  matchesConstraint = wanted: current:
+    builtins.any (w:
+      let
+        isNegation = lib.hasPrefix "!" w;
+        value = if isNegation
+                then builtins.substring 1 (builtins.stringLength w - 1) w
+                else w;
+      in
+        if isNegation then current != value else current == value
+    ) wanted;
+  platformOk = (os == [] || matchesConstraint os npmOs)
+            && (cpu == [] || matchesConstraint cpu npmCpu);
 
   # npm tarballs contain a package/ prefix directory
   src =
@@ -85,7 +106,7 @@ let
   '';
 
 in
-if skip then
+if skip || !platformOk then
   # Produce an empty derivation for packages we can't build
   pkgs.runCommand key {} ''
     mkdir -p "$out/node_modules/${pkgName}"

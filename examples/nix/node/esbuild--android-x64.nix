@@ -5,7 +5,9 @@
     source = {
       type = "tarball";
       remotes = [ "https://registry.npmjs.org" ];
-      sha256 = "1jvgb3kh3kj9yxr72596sgjvja1bjk0bbm3rsp96zvps7c4k9vh2";
+      sha256 = "";
     };
+    os = [ "android" ];
+    cpu = [ "x64" ];
   };
 }
