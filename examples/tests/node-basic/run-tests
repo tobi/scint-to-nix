@@ -623,4 +623,110 @@ echo "OK: user shellHook passthrough verified"
 chmod -R u+w "$devshell_dir" 2>/dev/null; rm -rf "$devshell_dir"
 
 echo ""
+echo "--- Test 18: syncScript builds (writeShellApplication) ---"
+# Build the syncScript derivation — verifies shellcheck passes at build time
+SYNC_SCRIPT=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).syncScript" 2>&1)
+if [ $? -ne 0 ]; then
+  echo "FAIL: syncScript failed to build"
+  echo "  output: $SYNC_SCRIPT"
+  exit 1
+fi
+if [ ! -x "$SYNC_SCRIPT/bin/node-basic-onix-sync" ]; then
+  echo "FAIL: syncScript binary not found at $SYNC_SCRIPT/bin/node-basic-onix-sync"
+  exit 1
+fi
+echo "  syncScript built successfully (shellcheck passed)"
+echo "  binary: $SYNC_SCRIPT/bin/node-basic-onix-sync"
+echo "OK: syncScript builds"
+
+echo ""
+echo "--- Test 19: syncScript syncs node_modules ---"
+# Run the standalone sync script in a fresh directory
+sync_dir=$(mktemp -d)
+cp "$dir/package.json" "$sync_dir/"
+cp "$dir/pnpm-lock.yaml" "$sync_dir/"
+
+sync_output=$(cd "$sync_dir" && "$SYNC_SCRIPT/bin/node-basic-onix-sync" 2>&1)
+if [ $? -ne 0 ]; then
+  echo "FAIL: syncScript exited with error"
+  echo "  output: $sync_output"
+  chmod -R u+w "$sync_dir" 2>/dev/null; rm -rf "$sync_dir"
+  exit 1
+fi
+
+# node_modules should be created
+if [ ! -d "$sync_dir/node_modules" ]; then
+  echo "FAIL: syncScript did not create node_modules"
+  chmod -R u+w "$sync_dir" 2>/dev/null; rm -rf "$sync_dir"
+  exit 1
+fi
+echo "  node_modules/ created by syncScript"
+
+# Sentinel should exist
+if [ ! -f "$sync_dir/node_modules/.nix-sentinel" ]; then
+  echo "FAIL: syncScript did not write sentinel"
+  chmod -R u+w "$sync_dir" 2>/dev/null; rm -rf "$sync_dir"
+  exit 1
+fi
+echo "  .nix-sentinel present"
+
+# Packages should be reachable
+if [ ! -d "$sync_dir/node_modules/.pnpm/express@4.21.2/node_modules/express" ]; then
+  echo "FAIL: express not found in .pnpm/ after syncScript"
+  chmod -R u+w "$sync_dir" 2>/dev/null; rm -rf "$sync_dir"
+  exit 1
+fi
+echo "  express present in .pnpm/"
+
+# Module loading should work
+NODE_PATH="$sync_dir/node_modules" "$NODE" -e "require('express')" || {
+  echo "FAIL: require(express) failed after syncScript"
+  chmod -R u+w "$sync_dir" 2>/dev/null; rm -rf "$sync_dir"
+  exit 1
+}
+echo "  require(express) works after syncScript"
+
+# Ready message should appear
+if ! echo "$sync_output" | grep -q "onix: node_modules ready"; then
+  echo "FAIL: syncScript did not print ready message"
+  echo "  output: $sync_output"
+  chmod -R u+w "$sync_dir" 2>/dev/null; rm -rf "$sync_dir"
+  exit 1
+fi
+echo "  ready message printed"
+echo "OK: syncScript syncs node_modules"
+
+echo ""
+echo "--- Test 20: syncScript sentinel warm start ---"
+# Re-run syncScript — should skip sync (sentinel hit)
+warm_output=$(cd "$sync_dir" && "$SYNC_SCRIPT/bin/node-basic-onix-sync" 2>&1)
+if echo "$warm_output" | grep -q "onix: node_modules ready"; then
+  echo "FAIL: syncScript re-synced on warm start (sentinel should have skipped)"
+  chmod -R u+w "$sync_dir" 2>/dev/null; rm -rf "$sync_dir"
+  exit 1
+fi
+echo "  re-run skipped sync (sentinel hit)"
+
+# Invalidate sentinel and verify re-sync
+echo "/nix/store/fake-stale-drv" > "$sync_dir/node_modules/.nix-sentinel"
+resync_output=$(cd "$sync_dir" && "$SYNC_SCRIPT/bin/node-basic-onix-sync" 2>&1)
+if ! echo "$resync_output" | grep -q "onix: node_modules ready"; then
+  echo "FAIL: syncScript did not re-sync after sentinel mismatch"
+  echo "  output: $resync_output"
+  chmod -R u+w "$sync_dir" 2>/dev/null; rm -rf "$sync_dir"
+  exit 1
+fi
+echo "  stale sentinel triggered re-sync"
+
+# Verify modules still work after re-sync
+NODE_PATH="$sync_dir/node_modules" "$NODE" -e "require('express')" || {
+  echo "FAIL: require(express) failed after syncScript re-sync"
+  chmod -R u+w "$sync_dir" 2>/dev/null; rm -rf "$sync_dir"
+  exit 1
+}
+echo "  require(express) works after re-sync"
+chmod -R u+w "$sync_dir" 2>/dev/null; rm -rf "$sync_dir"
+echo "OK: syncScript sentinel warm start verified"
+
+echo ""
 echo "All node-basic tests passed."
