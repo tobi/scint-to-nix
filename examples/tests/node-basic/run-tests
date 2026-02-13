@@ -472,53 +472,125 @@ echo "  re-entry skipped sync (sentinel hit)"
 echo "OK: sentinel warm start verified"
 
 echo ""
-echo "--- Test 14: pnpm metadata files ---"
+echo "--- Test 14: pnpm recognizes synced node_modules ---"
 (cd "$devshell_dir" && nix-shell "$dir/devshell.nix" --run '
-  # .modules.yaml should exist with storeDir
+  # .modules.yaml should exist with correct settings
   if [ ! -f node_modules/.modules.yaml ]; then
-    echo "WARN: .modules.yaml not generated (pnpm may not be available)"
-    exit 0
-  fi
-  if ! grep -q "storeDir:" node_modules/.modules.yaml; then
-    echo "FAIL: .modules.yaml missing storeDir"
+    echo "FAIL: .modules.yaml not generated"
     exit 1
   fi
-  echo "  .modules.yaml has storeDir"
+  grep -q "storeDir:" node_modules/.modules.yaml || { echo "FAIL: .modules.yaml missing storeDir"; exit 1; }
+  grep -q "nodeLinker: isolated" node_modules/.modules.yaml || { echo "FAIL: .modules.yaml missing nodeLinker"; exit 1; }
+  echo "  .modules.yaml has storeDir + nodeLinker: isolated"
 
-  if ! grep -q "nodeLinker: isolated" node_modules/.modules.yaml; then
-    echo "FAIL: .modules.yaml missing nodeLinker"
+  # .pnpm/lock.yaml should exist (current lockfile = wanted lockfile)
+  if [ ! -f node_modules/.pnpm/lock.yaml ]; then
+    echo "FAIL: .pnpm/lock.yaml missing"
     exit 1
   fi
-  echo "  .modules.yaml has nodeLinker: isolated"
+  echo "  .pnpm/lock.yaml present"
 
-  # workspace state should exist with far-future timestamp
-  if [ ! -f node_modules/.pnpm-workspace-state-v1.json ]; then
-    echo "WARN: workspace state not generated"
-    exit 0
-  fi
-  if ! grep -q "32503680000000" node_modules/.pnpm-workspace-state-v1.json; then
-    echo "FAIL: workspace state missing far-future timestamp"
+  # pnpm install MUST report "Already up to date" after onix sync
+  if ! command -v pnpm >/dev/null 2>&1; then
+    echo "FAIL: pnpm not available — required for this test"
     exit 1
   fi
-  echo "  workspace state has far-future timestamp"
+  pnpm_output=$(pnpm install 2>&1 || true)
+  if ! echo "$pnpm_output" | grep -qi "Already up to date"; then
+    echo "  pnpm install output: $pnpm_output"
+    echo "FAIL: pnpm install did not report Already up to date after sync"
+    exit 1
+  fi
+  echo "  pnpm install: Already up to date"
 
-  # pnpm install should exit immediately if pnpm is available
-  if command -v pnpm >/dev/null 2>&1; then
-    pnpm_output=$(pnpm install 2>&1 || true)
-    if echo "$pnpm_output" | grep -qi "Already up to date"; then
-      echo "  pnpm install: Already up to date"
-    else
-      echo "  pnpm install output: $pnpm_output"
-      echo "  WARN: pnpm install did not report up-to-date (may need metadata tuning)"
-    fi
-  else
-    echo "  pnpm not available — skipping pnpm install check"
+  # Verify each package variation still works after pnpm accepts the tree
+
+  # Pure JS package
+  node -e "const ms = require(\"ms\"); if (ms(3600000) !== \"1h\") throw new Error(\"ms failed\")" \
+    || { echo "FAIL: pure JS package (ms) broken"; exit 1; }
+  echo "  pure JS (ms): ok"
+
+  # Scoped package
+  node -e "const p = require(\"@types/node/package.json\"); if (!p.name.startsWith(\"@types/\")) throw new Error()" \
+    || { echo "FAIL: scoped package (@types/node) broken"; exit 1; }
+  echo "  scoped (@types/node): ok"
+
+  # Transitive deps
+  node -e "const s = require(\"semver\"); if (!s.valid(\"1.2.3\")) throw new Error()" \
+    || { echo "FAIL: transitive deps (semver) broken"; exit 1; }
+  echo "  transitive deps (semver): ok"
+
+  # Deep dependency tree (express boots an HTTP server)
+  node -e "require(\"express\")" \
+    || { echo "FAIL: deep dep tree (express) broken"; exit 1; }
+  echo "  deep dep tree (express): ok"
+
+  # Native extension (compiled .node binary)
+  node -e "const db = require(\"better-sqlite3\")(\":memory:\"); db.exec(\"SELECT 1\")" \
+    || { echo "FAIL: native extension (better-sqlite3) broken"; exit 1; }
+  echo "  native extension (better-sqlite3): ok"
+
+  # Bin entries
+  if [ -L node_modules/.bin/tsc ]; then
+    node node_modules/.bin/tsc --version >/dev/null 2>&1 \
+      || { echo "FAIL: bin entry (tsc) broken"; exit 1; }
+    echo "  bin entry (tsc): ok"
+  fi
+
+  # Platform-specific package (esbuild binary)
+  if [ -L node_modules/.bin/esbuild ]; then
+    tmpjs=$(mktemp /tmp/esbuild-test-XXXXXX.js)
+    echo "console.log(42)" > "$tmpjs"
+    node_modules/.bin/esbuild --bundle "$tmpjs" --outfile=/dev/null 2>/dev/null \
+      || { echo "FAIL: platform package (esbuild) broken"; rm -f "$tmpjs"; exit 1; }
+    rm -f "$tmpjs"
+    echo "  platform binary (esbuild): ok"
   fi
 ') 2>&1
-echo "OK: pnpm metadata verified"
+echo "OK: pnpm recognizes synced node_modules"
 
 echo ""
-echo "--- Test 15: sentinel miss (deps changed) ---"
+echo "--- Test 15: pnpm add/update after sync ---"
+# Developers need to iterate with pnpm between onix runs.
+# Verify pnpm can add a new package and update an existing one
+# on top of the onix-synced node_modules.
+(cd "$devshell_dir" && nix-shell "$dir/devshell.nix" --run '
+  # Add a new package not in the original lockfile
+  pnpm_output=$(pnpm add is-odd 2>&1 || true)
+  if echo "$pnpm_output" | grep -qi "error"; then
+    echo "  pnpm add output: $pnpm_output"
+    echo "FAIL: pnpm add is-odd failed"
+    exit 1
+  fi
+  node -e "if (require(\"is-odd\")(3) !== true) throw new Error()" \
+    || { echo "FAIL: newly added package (is-odd) not usable"; exit 1; }
+  echo "  pnpm add is-odd: ok"
+
+  # Existing packages still work after add
+  node -e "require(\"express\")" \
+    || { echo "FAIL: express broken after pnpm add"; exit 1; }
+  node -e "const db = require(\"better-sqlite3\")(\":memory:\"); db.exec(\"SELECT 1\")" \
+    || { echo "FAIL: better-sqlite3 broken after pnpm add"; exit 1; }
+  echo "  existing packages still work after add"
+
+  # Update an existing package (use --latest to force a lockfile change)
+  pnpm_output=$(pnpm update ms 2>&1 || true)
+  if echo "$pnpm_output" | grep -qi "error"; then
+    echo "  pnpm update output: $pnpm_output"
+    echo "FAIL: pnpm update ms failed"
+    exit 1
+  fi
+  node -e "require(\"ms\")" \
+    || { echo "FAIL: updated package (ms) not usable"; exit 1; }
+  echo "  pnpm update ms: ok"
+
+  # Remove the test package to clean up
+  pnpm remove is-odd 2>&1 >/dev/null || true
+') 2>&1
+echo "OK: pnpm add/update after sync works"
+
+echo ""
+echo "--- Test 16: sentinel miss (deps changed) ---"
 # Write a fake sentinel to simulate a derivation change, then re-enter
 (cd "$devshell_dir" && echo "/nix/store/fake-old-derivation" > node_modules/.nix-sentinel)
 sync_output=$(cd "$devshell_dir" && nix-shell "$dir/devshell.nix" --run '
@@ -546,7 +618,7 @@ echo "  sentinel updated to current derivation"
 echo "OK: sentinel miss (deps changed) verified"
 
 echo ""
-echo "--- Test 16: no-pnpm fallback ---"
+echo "--- Test 17: no-pnpm fallback ---"
 # Enter devShell with pnpm removed from PATH — sync should work, metadata skipped
 nopnpm_dir=$(mktemp -d)
 cp "$dir/package.json" "$nopnpm_dir/"
@@ -588,7 +660,7 @@ chmod -R u+w "$nopnpm_dir" 2>/dev/null; rm -rf "$nopnpm_dir"
 echo "OK: no-pnpm fallback verified"
 
 echo ""
-echo "--- Test 17: user shellHook passthrough ---"
+echo "--- Test 18: user shellHook passthrough ---"
 # Create a devshell.nix that passes a custom shellHook
 custom_devshell=$(mktemp -d)/devshell.nix
 cat > "$custom_devshell" << NIXEOF
@@ -623,7 +695,7 @@ echo "OK: user shellHook passthrough verified"
 chmod -R u+w "$devshell_dir" 2>/dev/null; rm -rf "$devshell_dir"
 
 echo ""
-echo "--- Test 18: syncScript builds (writeShellApplication) ---"
+echo "--- Test 19: syncScript builds (writeShellApplication) ---"
 # Build the syncScript derivation — verifies shellcheck passes at build time
 SYNC_SCRIPT=$(nix-build --no-out-link -E "(import $root/nix/node-basic.nix {}).syncScript" 2>&1)
 if [ $? -ne 0 ]; then
@@ -640,7 +712,7 @@ echo "  binary: $SYNC_SCRIPT/bin/node-basic-onix-sync"
 echo "OK: syncScript builds"
 
 echo ""
-echo "--- Test 19: syncScript syncs node_modules ---"
+echo "--- Test 20: syncScript syncs node_modules ---"
 # Run the standalone sync script in a fresh directory
 sync_dir=$(mktemp -d)
 cp "$dir/package.json" "$sync_dir/"
@@ -697,7 +769,7 @@ echo "  ready message printed"
 echo "OK: syncScript syncs node_modules"
 
 echo ""
-echo "--- Test 20: syncScript sentinel warm start ---"
+echo "--- Test 21: syncScript sentinel warm start ---"
 # Re-run syncScript — should skip sync (sentinel hit)
 warm_output=$(cd "$sync_dir" && "$SYNC_SCRIPT/bin/node-basic-onix-sync" 2>&1)
 if echo "$warm_output" | grep -q "onix: node_modules ready"; then

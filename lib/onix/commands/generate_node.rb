@@ -245,11 +245,15 @@ module Onix
                 chmod -R u+w node_modules
 
                 # Copy lockfile as pnpm's "current lockfile" (what's installed = what's desired)
+                # pnpm compares this with pnpm-lock.yaml using deep structural equality
+                # after YAML parse — an exact file copy guarantees match.
                 if [ -f pnpm-lock.yaml ]; then
                   cp pnpm-lock.yaml node_modules/.pnpm/lock.yaml
                 fi
 
-                # Generate pnpm metadata (optional — only if pnpm available)
+                # Generate pnpm metadata so headless install sees matching state.
+                # The .modules.yaml tells pnpm about its settings; the workspace state
+                # tells the optimistic fast-path that deps were already validated.
                 if command -v pnpm >/dev/null 2>&1; then
                   _pnpm_version=$(pnpm --version 2>/dev/null || echo "9.0.0")
                   _store_dir=$(pnpm store path 2>/dev/null || echo "''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store/v3")
@@ -272,15 +276,6 @@ module Onix
           virtualStoreDir: .pnpm
           virtualStoreDirMaxLength: 120
           MODULES
-
-                  cat > node_modules/.pnpm-workspace-state-v1.json << WSSTATE
-          {
-            "lastValidatedTimestamp": 32503680000000,
-            "settings": {
-              "nodeLinker": "isolated"
-            }
-          }
-          WSSTATE
                 fi
 
                 # Write sentinel
