@@ -241,8 +241,8 @@ module Onix
                 # Sync: copy symlink tree from Nix store
                 cp -rP "$_onix_nm/node_modules" node_modules
 
-                # Make the copied directory writable (for metadata files)
-                chmod u+w node_modules node_modules/.pnpm
+                # Make the copied tree writable (pnpm needs write access to subdirs)
+                chmod -R u+w node_modules
 
                 # Copy lockfile as pnpm's "current lockfile" (what's installed = what's desired)
                 if [ -f pnpm-lock.yaml ]; then
