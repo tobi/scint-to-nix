@@ -486,7 +486,7 @@ module Onix
       def copy_support_files(dir, has_node: false)
         data_dir = File.expand_path("../data", __dir__)
         files = %w[build-gem.nix gem-config.nix]
-        files += %w[build-npm.nix npm-config.nix] if has_node
+        files += %w[build-npm.nix npm-config.nix pnpmfile.cjs] if has_node
         files.each do |f|
           FileUtils.cp(File.join(data_dir, f), File.join(dir, f))
         end
