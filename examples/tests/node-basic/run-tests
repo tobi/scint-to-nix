@@ -455,28 +455,67 @@ for removed in nodeModules syncScript devShell syncBash; do
 done
 echo "OK: generated nix structure correct"
 
+echo ""
+echo "--- Test 14: pnpmfile.cjs API surface (v10 + v11) ---"
+cd "$dir"
+ONIX_PACKAGE_DIR="$PKG_DIR" "$NODE" -e '
+const f = require("./nix/pnpmfile.cjs")
+
+// v11 API: top-level fetchers array with canFetch/fetch
+if (!Array.isArray(f.fetchers)) throw new Error("fetchers is not an array (v11 API)")
+if (typeof f.fetchers[0].canFetch !== "function") throw new Error("canFetch not a function (v11)")
+if (typeof f.fetchers[0].fetch !== "function") throw new Error("fetch not a function (v11)")
+
+// v10 API: hooks.fetchers.remoteTarball factory
+if (typeof f.hooks !== "object") throw new Error("hooks not an object (v10 API)")
+if (typeof f.hooks.fetchers !== "object") throw new Error("hooks.fetchers not an object (v10)")
+if (typeof f.hooks.fetchers.remoteTarball !== "function") throw new Error("remoteTarball factory not a function (v10)")
+
+// v10: factory returns a fetcher function when called
+const mockDefault = { remoteTarball: () => "fallback" }
+const fetcher = f.hooks.fetchers.remoteTarball({ defaultFetchers: mockDefault })
+if (typeof fetcher !== "function") throw new Error("factory did not return a function (v10)")
+
+// v10: fetcher calls defaultFetchers when package not in Nix store
+const result = fetcher(null, { integrity: "sha512-notreal" }, {})
+if (result !== "fallback") throw new Error("v10 fetcher did not fall back to defaultFetchers")
+
+// v11: canFetch returns false for unknown package
+if (f.fetchers[0].canFetch("unknown@0.0.0", { integrity: "sha512-notreal" })) {
+  throw new Error("canFetch should return false for unknown package")
+}
+
+console.log("  v11 API: fetchers[].canFetch/fetch OK")
+console.log("  v10 API: hooks.fetchers.remoteTarball factory OK")
+console.log("  v10 fallback to defaultFetchers OK")
+console.log("  canFetch returns false for unknown packages OK")
+'
+echo "OK: pnpmfile.cjs API surface"
+
 # Check if pnpm is available
 if ! command -v pnpm >/dev/null 2>&1; then
   echo ""
-  echo "SKIP: pnpm not installed (Tests 14-16 require pnpm >= 9.0)"
+  echo "SKIP: pnpm not installed (Tests 15-17 require pnpm >= 10)"
   echo "      Install pnpm: npm install -g pnpm"
 else
   echo ""
-  echo "--- Test 14: pnpm install with custom fetcher ---"
+  echo "--- Test 15: pnpm install with custom fetcher ---"
   cd "$dir"  # examples/tests/node-basic/
   # pnpm copies files from the Nix store preserving read-only permissions,
   # so rm -rf alone can't remove a leftover node_modules/ from a previous run.
   chmod -R u+w node_modules 2>/dev/null || true
   rm -rf node_modules
   pkg_dir=$(nix-build "$root/nix/node-basic.nix" -A packageDir --no-out-link)
-  ONIX_PACKAGE_DIR="$pkg_dir" pnpm install --frozen-lockfile --ignore-scripts --config.global-pnpmfile=nix/pnpmfile.cjs
+  # --no-frozen-lockfile: pnpm v11+ writes a pnpmfileChecksum into the lockfile,
+  # which changes whenever pnpmfile.cjs changes. Safe here since this is a test dir.
+  ONIX_PACKAGE_DIR="$pkg_dir" pnpm install --no-frozen-lockfile --ignore-scripts --config.global-pnpmfile=nix/pnpmfile.cjs
   test -d node_modules/.pnpm || { echo "FAIL: .pnpm virtual store not created"; exit 1; }
   test -L node_modules/express || { echo "FAIL: express not symlinked"; exit 1; }
   echo "  node_modules/ tree created via custom fetcher"
   echo "OK: pnpm install with custom fetcher"
 
   echo ""
-  echo "--- Test 15: require works from pnpm-installed node_modules ---"
+  echo "--- Test 16: require works from pnpm-installed node_modules ---"
   cd "$dir"
   output=$("$NODE" -e "const e = require('express'); console.log(typeof e)")
   if [ "$output" != "function" ]; then
@@ -493,7 +532,7 @@ else
   echo "OK: require works"
 
   echo ""
-  echo "--- Test 16: bin entries linked ---"
+  echo "--- Test 17: bin entries linked ---"
   cd "$dir"
   test -x node_modules/.bin/tsc || { echo "FAIL: tsc bin not executable"; exit 1; }
   test -x node_modules/.bin/esbuild || { echo "FAIL: esbuild bin not executable"; exit 1; }
