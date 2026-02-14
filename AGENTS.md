@@ -2,6 +2,8 @@
 
 ## Architecture
 
+### Ruby (gems)
+
 ```
 Gemfile.lock
     ↓
@@ -12,6 +14,48 @@ onix generate         prefetch hashes → nix/ruby/<name>.nix (per gem)
     ↓
 onix build            nix-build → /nix/store/<hash>-<gem>-<ver>/
 ```
+
+### Node (pnpm)
+
+```
+pnpm-lock.yaml
+    ↓
+onix import-pnpm      parse lockfile → packagesets/<name>.jsonl (installer:"node")
+    ↓
+onix generate         prefetch hashes → nix/node/<name>.nix (per package)
+                                      → nix/<project>.nix (packageDir)
+                                      → nix/pnpmfile.cjs (custom fetcher)
+    ↓
+nix-build -A packageDir   builds all packages → /nix/store/...-packages/ (symlinks)
+    ↓
+ONIX_PACKAGE_DIR=$pkg_dir pnpm install --frozen-lockfile --config.global-pnpmfile=nix/pnpmfile.cjs
+    → pnpmfile.cjs intercepts fetches, serves files from Nix store
+    → pnpm materializes node_modules/ with virtual store, symlinks, bin entries
+```
+
+### Key differences from Ruby
+
+- **Versioned deps.** Node JSONL entries store deps as `{"body-parser":"1.20.3"}` (hash with versions), not `["body-parser"]` (array of names). This preserves the full dependency graph for pnpm layout.
+- **packageDir, not nodeModules.** The generated `nix/<project>.nix` produces a `packageDir` — a directory of symlinks (`express@4.21.2 → /nix/store/...`) rather than assembling a full `node_modules/` tree. pnpm handles the tree layout via a custom fetcher.
+- **pnpm custom fetcher.** `nix/pnpmfile.cjs` intercepts pnpm's package fetching and serves files directly from the Nix store. It indexes packages by integrity hash (primary) and name@version (fallback), supports scoped packages, and falls back to standard pnpm fetchers for packages not in the Nix store.
+- **Bin auto-detection.** `build-npm.nix` reads `package.json` at build time to discover and link bin entries — no need to specify them in the packageset.
+- **Platform filtering.** Platform-specific packages (e.g. `@esbuild/darwin-arm64`) have `os`/`cpu` constraints in the JSONL. Only host-platform packages are prefetched and built — wrong-platform packages get empty sha256 hashes. Use `--platforms` to include additional targets or `--all-platforms` to disable filtering.
+- **Overlay signature.** Node overlays use `{ pkgs, nodejs, buildPackage, ... }:` instead of `{ pkgs, ruby, buildGem, ... }:`.
+
+### pnpm custom fetcher
+
+The custom fetcher (`nix/pnpmfile.cjs`) bridges pnpm's headless install with the Nix store:
+
+1. **Module load.** Reads `ONIX_PACKAGE_DIR` env var (fails with actionable error if missing).
+2. **Index building.** Walks `packageDir` symlinks (including scoped `@scope/` directories), resolves each to its Nix store path, reads `.onix-manifest` for integrity hash. Builds two indexes:
+   - `byIntegrity`: `Map<sha512-..., {storePath, pkgName}>` (primary lookup)
+   - `byNameVersion`: `Map<name@version, {storePath, pkgName}>` (fallback)
+3. **canFetch(pkgId, resolution).** Returns `true` if the package exists in either index.
+4. **fetch(cafs, resolution, opts, fetchers).** Builds a `filesMap` (Map<relPath, absPath>) by walking the package's files in the Nix store, skipping `node_modules/` and `.bin/` subdirs. Returns `{filesMap, manifest, requiresBuild: false}`. Falls back to `fetchers.remoteTarball(...)` if not found.
+
+pnpm then handles all the heavy lifting: virtual store layout (`.pnpm/`), dependency symlinking, bin linking, and `.modules.yaml` metadata.
+
+**Why `requiresBuild: false`?** Nix already compiled native addons (e.g., better-sqlite3's `.node` binary). Skipping pnpm's build step avoids redundant compilation and the `ERR_PNPM_IGNORED_BUILDS` error.
 
 Everything under `nix/` is generated. Never hand-edit — run `onix generate` to regenerate.
 
@@ -223,6 +267,70 @@ $BUNDLE_PATH/ruby/3.4.0/
 ### Git sources
 
 Git gems use `bundler/gems/<base>-<shortref>/` with real `.gemspec` files inside. Bundler resolves them via `Bundler::Source::Git` → `load_spec_files`, not through `specifications/`. The shortref is the first 12 chars of the commit SHA.
+
+## Tests
+
+Integration tests live in `examples/tests/`. Each project has a `run-tests` script.
+
+### Running tests
+
+```bash
+cd examples
+
+# Run one project's tests
+tests/node-basic/run-tests       # 19 tests: packageDir, packages, manifests, platform, pnpm custom fetcher
+tests/tsdown-starter/run-tests   # 5 tests: Rust NAPI, TS bundling, platform bindings
+tests/remix-v3/run-tests         # 6 tests: ESM, scoped packages, reactive primitives
+
+# Run all Ruby project tests
+tests/run-all
+
+# Run just the Justfile targets
+just test node-basic
+just test-all
+```
+
+### Regenerating nix after code changes
+
+After modifying `lib/onix/commands/generate_node.rb` (or any generator code), you must regenerate the nix files before tests will reflect your changes:
+
+```bash
+cd examples
+ONIX_ROOT="$(cd .. && pwd)"
+BUNDLE_GEMFILE="$ONIX_ROOT/Gemfile" bundle exec ruby -I"$ONIX_ROOT/lib" -e '
+  require "onix/packageset"; require "onix/project"; require "onix/ui"; require "onix/version"
+  class Onix::Project; def initialize(r=nil); @root = r || Dir.pwd; end; end
+  require "onix/commands/generate"; Onix::Commands::Generate.new.run([])
+'
+```
+
+The generated `nix/` files are committed — they must be regenerated and re-committed when the generator changes. Tests that use `nix-build` or `nix-shell` read the generated nix, not the Ruby source directly.
+
+### Node test coverage
+
+| Test | What it verifies |
+|------|-----------------|
+| 1 | packageDir builds: symlinks point to Nix store |
+| 2 | Individual package build (express): correct package.json |
+| 3 | Pure JS package (ms): runtime execution |
+| 4 | Native extension (better-sqlite3): compiled .node binary |
+| 5 | .onix-manifest: present in all packages |
+| 6 | .onix-manifest sha512 spot-check: hash and size match |
+| 7 | Bin entries in individual packages (tsc, esbuild, semver) |
+| 8 | Integrity field in generated .nix files |
+| 9 | Platform packages: host-only hashes, os/cpu metadata |
+| 10 | Lockfile version validation (v6 rejected) |
+| 11 | --node-version flag propagation |
+| 12 | Platform matching unit tests |
+| 13 | Generated nix structure: has packageDir, no removed attrs |
+| 14 | pnpmfile.cjs API surface: v10 hooks.fetchers + v11 fetchers array |
+| 15 | pnpm install with custom fetcher: virtual store + symlinks (requires pnpm >= 10) |
+| 16 | require works from pnpm-installed node_modules (express, ms) |
+| 17 | ESM imports from pnpm-installed node_modules (ms, picocolors, semver) |
+| 18 | Bin entries linked (tsc, esbuild) |
+| 19 | pnpm add after Nix store install: fallback to remoteTarball, existing packages still work |
+
+Test 14 always runs (only needs Node). Tests 15-19 skip gracefully if pnpm is not installed.
 
 ## Lint suite
 
