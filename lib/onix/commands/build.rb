@@ -167,7 +167,7 @@ module Onix
         IO.popen(env, cmd, err: [:child, :out]) do |io|
           io.set_encoding("UTF-8", invalid: :replace)
           io.each_line do |line|
-            $stderr.print "  #{line}" if UI.tty?
+            $stderr.print "  #{sanitize_output_line(line)}" if UI.tty?
             output_lines << line
             stripped = line.strip
 
@@ -207,6 +207,10 @@ module Onix
           if failed_drvs.any?
             $stderr.puts
             $stderr.puts "  See #{UI.dim("docs/overlays.md")}"
+          end
+          if (hint = auth_failure_hint_for(cmd, output_lines))
+            $stderr.puts
+            UI.fail hint
           end
           print_tail(output_lines)
           exit 1 unless @keep_going
@@ -312,7 +316,23 @@ module Onix
         return if tail.empty?
         $stderr.puts
         $stderr.puts UI.dim("  ── last #{tail.size} lines ──")
-        tail.each { |l| $stderr.puts UI.dim("  #{l.rstrip}") }
+        tail.each { |l| $stderr.puts UI.dim("  #{sanitize_output_line(l).rstrip}") }
+      end
+
+      def sanitize_output_line(line)
+        line
+          .gsub(/(\/\/[^:\s]+\/:_authToken=)[^\s"']+/i, '\1[REDACTED]')
+          .gsub(/(_authToken=)[^\s"']+/i, '\1[REDACTED]')
+          .gsub(/(Authorization:\s*Bearer\s+)[^\s"']+/i, '\1[REDACTED]')
+      end
+
+      def auth_failure_hint_for(cmd, output_lines)
+        return nil unless cmd.include?("nodeModules")
+
+        output = output_lines.join("\n")
+        return nil unless output.match?(/(E401|ERR_PNPM_FETCH_401|Unauthorized|authentication|requires auth)/i)
+
+        "Node registry authentication may be missing. Set NPM_TOKEN (or scoped NPM_TOKEN_<HOST>) or configure .npmrc/.netrc, then retry."
       end
 
       def shellescape(s)

@@ -688,14 +688,12 @@ module Onix
       end
 
       def sort_versions(entries)
-        entries.sort_by { |e| version_sort_key(e.version.to_s) }
-      end
-
-      def version_sort_key(version)
-        parsed = parse_semver(version)
-        return [0, parsed] if parsed
-
-        [1, version.to_s]
+        entries.each_with_index
+          .sort_by do |entry, index|
+            parsed = parse_semver(entry.version.to_s)
+            parsed ? [0, parsed, index] : [1, index]
+          end
+          .map(&:first)
       end
 
       def parse_semver(value)

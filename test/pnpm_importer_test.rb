@@ -119,6 +119,27 @@ class PnpmImporterTest < Minitest::Test
     end
   end
 
+  def test_import_resolves_name_version_snapshot_key
+    Dir.mktmpdir do |dir|
+      lockfile = File.join(dir, "pnpm-lock.yaml")
+      File.write(lockfile, File.read(fixture_path("pnpm", "scope-name", "pnpm-lock.yaml")))
+      File.write(File.join(dir, "package.json"), "{}\n")
+
+      @command.instance_variable_set(:@project, stub_project(dir))
+      @command.send(:import_pnpm, lockfile, "workspace")
+
+      packageset = File.join(dir, "packagesets", "workspace.jsonl")
+      _meta, entries = Onix::Packageset.read(packageset)
+      scoped = entries.find { |entry| entry.name == "@scope/foo" }
+
+      assert scoped
+      assert_equal "2.0.0", scoped.version
+      assert_includes scoped.deps, "bar"
+      assert_equal "pnpm", scoped.source
+      assert_equal ["default"], scoped.groups
+    end
+  end
+
   def test_import_stores_workspace_script_policy
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "simple", "pnpm-lock.yaml")))

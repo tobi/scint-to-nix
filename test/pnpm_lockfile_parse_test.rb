@@ -44,4 +44,31 @@ class PnpmLockfileParseTest < Minitest::Test
     assert_equal ["1.0.0(bar@2.0.0)", "1.0.0", "foo@1.0.0(bar@2.0.0)", "foo@1.0.0"].uniq,
       lockfile.canonical_snapshot_keys("foo", "1.0.0(bar@2.0.0)")
   end
+
+  def test_snapshot_lookup_resolves_name_version_when_dep_version_is_plain
+    lockfile_yaml = <<~YAML
+      lockfileVersion: '9.0'
+      importers:
+        .:
+          dependencies:
+            "@scope/foo":
+              specifier: ^2.0.0
+              version: 2.0.0
+      snapshots:
+        "@scope/foo@2.0.0":
+          dependencies:
+            bar: 1.0.0
+      packages: {}
+    YAML
+
+    Dir.mktmpdir do |dir|
+      lockfile = File.join(dir, "pnpm-lock.yaml")
+      File.write(lockfile, lockfile_yaml)
+      parsed = Onix::Pnpm::Lockfile.parse(lockfile)
+      dependency = parsed.importers.fetch(".").dependencies.fetch("@scope/foo")
+      snapshot = parsed.snapshot_for("@scope/foo", dependency.version)
+      assert_equal "@scope/foo@2.0.0", snapshot.key
+      assert_equal({ "bar" => "1.0.0" }, snapshot.dependencies)
+    end
+  end
 end

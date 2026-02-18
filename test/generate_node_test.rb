@@ -136,6 +136,18 @@ class GenerateNodeTest < Minitest::Test
     end
   end
 
+  def test_sort_versions_keeps_non_semver_in_input_order
+    entries = [
+      Onix::Packageset::Entry.new(installer: "node", name: "pkg", version: "file:../b", source: "file"),
+      Onix::Packageset::Entry.new(installer: "node", name: "pkg", version: "2.0.0", source: "pnpm"),
+      Onix::Packageset::Entry.new(installer: "node", name: "pkg", version: "link:../a", source: "link"),
+      Onix::Packageset::Entry.new(installer: "node", name: "pkg", version: "1.0.0", source: "pnpm"),
+    ]
+
+    sorted = @command.send(:sort_versions, entries)
+    assert_equal ["1.0.0", "2.0.0", "file:../b", "link:../a"], sorted.map(&:version)
+  end
+
   def test_generate_creates_scoped_node_package_path
     Dir.mktmpdir do |dir|
       packagesets_dir = File.join(dir, "packagesets")

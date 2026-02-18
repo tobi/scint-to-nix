@@ -66,6 +66,20 @@ module Onix
       end
     end
 
+    def with_clean_npm_token_env
+      saved = {}
+      ENV.each_key do |key|
+        next unless key == "NPM_TOKEN" || key == "NODE_AUTH_TOKEN" || key.start_with?("NPM_TOKEN_")
+
+        saved[key] = ENV[key]
+      end
+
+      saved.each_key { |key| ENV.delete(key) }
+      yield
+    ensure
+      saved.each { |key, value| ENV[key] = value }
+    end
+
     def test_hydrate_node_modules_copies_and_skips_by_sentinel
       Dir.mktmpdir do |dir|
         project = Onix::Commands::Build.new
@@ -152,23 +166,114 @@ module Onix
       end
     end
 
+  class StubRunNixBuild < Onix::Commands::Build
+      attr_reader :direct_calls
+
+      def initialize
+        @direct_calls = []
+        @keep_going = false
+      end
+
+      def run_nix_direct(cmd, _t0, out_link: nil, return_paths: false, env: {})
+        @direct_calls << {
+          command: cmd.dup,
+          out_link: out_link,
+          return_paths: return_paths,
+          env: env,
+        }
+
+        if return_paths && out_link
+          FileUtils.rm_f(out_link)
+          FileUtils.mkdir_p(File.dirname(out_link))
+          fake_store = File.join(Dir.mktmpdir("onix-run-nix"), "node_modules")
+          FileUtils.mkdir_p(fake_store)
+          File.symlink(fake_store, out_link)
+          return fake_store
+        end
+
+        "/nix/store/fake-return-path"
+      end
+
+      def hydrate_node_modules(*)
+        # no-op
+      end
+    end
+
+    class StubBuildNodeModules < Onix::Commands::Build
+      attr_reader :run_calls
+      attr_reader :store_root
+
+      def initialize
+        @run_calls = 0
+        @keep_going = false
+        @store_root = File.join(Dir.mktmpdir("onix-node-store"), "node_modules")
+        FileUtils.mkdir_p(@store_root)
+      end
+
+      def run_nix(cmd, return_paths: false, env: {})
+        @run_calls += 1
+
+        return super if !cmd.include?("nodeModules")
+
+        marker = File.join(@store_root, ".node_modules_id")
+        File.write(marker, "#{@store_root}\n") unless File.exist?(marker)
+
+        @store_root
+      end
+
+      def create_source_marker(value)
+        node_modules = File.join(@store_root, "node_modules")
+        FileUtils.mkdir_p(node_modules)
+        FileUtils.mkdir_p(File.join(node_modules, "foo"))
+        File.write(File.join(node_modules, "foo", "marker.txt"), value)
+      end
+    end
+
+    def test_build_node_modules_uses_returned_path_and_skip_when_unchanged
+      Dir.mktmpdir do |dir|
+        project_file = File.join(dir, "nix")
+        FileUtils.mkdir_p(project_file)
+        File.write(File.join(project_file, "workspace.nix"), "{}\n")
+
+        command = StubBuildNodeModules.new
+        command.instance_variable_set(:@project, StubProject.new(dir))
+
+        root = command.store_root
+        command.create_source_marker("v1")
+
+        command.send(:build_node_modules, "workspace")
+        source = File.join(command.store_root, "node_modules")
+        target = File.join(dir, "node_modules")
+
+        assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
+        assert_equal root, File.read(File.join(dir, ".node_modules_id")).strip
+        assert_equal root, File.read(File.join(target, ".node_modules_id")).strip
+
+        File.write(File.join(source, "foo", "marker.txt"), "v2")
+        command.send(:build_node_modules, "workspace", skip_if_unchanged: true)
+
+        assert_equal 2, command.run_calls
+        assert_equal "v1", File.read(File.join(target, "foo", "marker.txt"))
+        assert_equal root, File.read(File.join(target, ".node_modules_id")).strip
+      end
+    end
+
     def test_build_env_includes_runtime_tls_and_token_vars
       Dir.mktmpdir do |dir|
         command = StubBuild.new
         command.instance_variable_set(:@project, StubProject.new(dir))
+        with_clean_npm_token_env do
+          ENV["NPM_TOKEN"] = "token-123"
+          ENV["SSL_CERT_FILE"] = "/tmp/ca.pem"
+          ENV["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
 
-        token = ENV["NPM_TOKEN"]
-        ENV["NPM_TOKEN"] = "token-123"
-        ENV["SSL_CERT_FILE"] = "/tmp/ca.pem"
-        ENV["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
+          env = command.send(:pnpm_build_env)
 
-        env = command.send(:pnpm_build_env)
-
-        assert_match "token-123", env["ONIX_NPM_TOKEN_LINES"]
-        assert_equal "/tmp/ca.pem", env["SSL_CERT_FILE"]
-        assert_equal "0", env["NODE_TLS_REJECT_UNAUTHORIZED"]
+          assert_match "token-123", env["ONIX_NPM_TOKEN_LINES"]
+          assert_equal "/tmp/ca.pem", env["SSL_CERT_FILE"]
+          assert_equal "0", env["NODE_TLS_REJECT_UNAUTHORIZED"]
+        end
       ensure
-        ENV["NPM_TOKEN"] = token
         ENV.delete("SSL_CERT_FILE")
         ENV.delete("NODE_TLS_REJECT_UNAUTHORIZED")
       end
@@ -189,30 +294,112 @@ module Onix
           end
         end
 
-        token = ENV["NPM_TOKEN"]
-        ENV["NPM_TOKEN"] = "token-456"
-        ENV["SSL_CERT_FILE"] = "/tmp/ca.pem"
+        with_clean_npm_token_env do
+          ENV["NPM_TOKEN"] = "token-456"
+          ENV["SSL_CERT_FILE"] = "/tmp/ca.pem"
 
-        project_file = File.join(dir, "packagesets")
-        FileUtils.mkdir_p(project_file)
-        FileUtils.mkdir_p(File.join(dir, "nix"))
-        Onix::Packageset.write(
-          File.join(project_file, "workspace.jsonl"),
-          meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
-          entries: [
-            Onix::Packageset::Entry.new(installer: "node", name: "vite", version: "5.0.0", source: "pnpm"),
-          ],
-        )
-        File.write(File.join(dir, "nix", "workspace.nix"), "{}\n")
-        command.send(:build_node_modules, "workspace")
+          project_file = File.join(dir, "packagesets")
+          FileUtils.mkdir_p(project_file)
+          FileUtils.mkdir_p(File.join(dir, "nix"))
+          Onix::Packageset.write(
+            File.join(project_file, "workspace.jsonl"),
+            meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+            entries: [
+              Onix::Packageset::Entry.new(installer: "node", name: "vite", version: "5.0.0", source: "pnpm"),
+            ],
+          )
+          File.write(File.join(dir, "nix", "workspace.nix"), "{}\n")
+          command.send(:build_node_modules, "workspace")
 
-        assert_includes(captured_env.keys, "ONIX_NPM_TOKEN_LINES")
-        assert_includes(captured_env["ONIX_NPM_TOKEN_LINES"], "token-456")
-        assert_equal "/tmp/ca.pem", captured_env["SSL_CERT_FILE"]
+          assert_includes(captured_env.keys, "ONIX_NPM_TOKEN_LINES")
+          assert_includes(captured_env["ONIX_NPM_TOKEN_LINES"], "token-456")
+          assert_equal "/tmp/ca.pem", captured_env["SSL_CERT_FILE"]
+        end
       ensure
-        ENV["NPM_TOKEN"] = token
         ENV.delete("SSL_CERT_FILE")
       end
+    end
+
+    def test_run_nix_with_return_paths_uses_out_link_and_returns_realpath
+      Dir.mktmpdir do |dir|
+        command = StubRunNixBuild.new
+        command.instance_variable_set(:@project, StubProject.new(dir))
+
+        command.instance_variable_set(:@keep_going, false)
+        workspace_nix = File.join(dir, "workspace.nix")
+        File.write(workspace_nix, "{}\n")
+
+        result = command.send(
+          :run_nix,
+          ["nix-build", "--no-out-link", "#{dir}/workspace.nix", "-A", "nodeModules"],
+          return_paths: true,
+        )
+        direct = command.direct_calls.last
+
+        assert result.start_with?(Dir.tmpdir)
+        assert_kind_of String, result
+        assert_equal direct[:out_link], command.instance_variable_get(:@direct_calls).last[:out_link]
+        assert_includes direct[:command], "--out-link"
+        refute_includes direct[:command], "--no-out-link"
+        assert direct[:return_paths]
+      end
+    end
+
+    def test_sanitize_output_line_masks_registry_and_bearer_tokens
+      command = Onix::Commands::Build.new
+      masked = command.send(
+        :sanitize_output_line,
+        "//registry.npmjs.org/:_authToken=abc123 Authorization: Bearer topsecret _authToken=another-token"
+      )
+
+      refute_includes masked, "abc123"
+      refute_includes masked, "topsecret"
+      refute_includes masked, "another-token"
+      assert_includes masked, "[REDACTED]"
+    end
+
+    def test_auth_failure_hint_for_node_modules_command
+      command = Onix::Commands::Build.new
+      hint = command.send(
+        :auth_failure_hint_for,
+        ["nix-build", "--no-out-link", "nix/workspace.nix", "-A", "nodeModules"],
+        ["ERR_PNPM_FETCH_401 GET https://npm.pkg.github.com/foo Unauthorized"],
+      )
+      assert_includes hint, "Node registry authentication may be missing"
+      assert_includes hint, "NPM_TOKEN"
+    end
+
+    def test_auth_failure_hint_skips_non_node_or_non_auth_errors
+      command = Onix::Commands::Build.new
+      assert_nil command.send(
+        :auth_failure_hint_for,
+        ["nix-build", "--no-out-link", "nix/workspace.nix", "-A", "bundlePath"],
+        ["ERR_PNPM_FETCH_401 GET https://npm.pkg.github.com/foo Unauthorized"],
+      )
+
+      assert_nil command.send(
+        :auth_failure_hint_for,
+        ["nix-build", "--no-out-link", "nix/workspace.nix", "-A", "nodeModules"],
+        ["builder for '/nix/store/foo.drv' failed with exit code 1"],
+      )
+    end
+
+    def test_print_tail_redacts_tokens_in_stderr_output
+      command = Onix::Commands::Build.new
+      line = "E401 //registry.npmjs.org/:_authToken=supersecret Authorization: Bearer abc123\n"
+      old_stderr = $stderr
+      buffer = StringIO.new
+      $stderr = buffer
+
+      command.send(:print_tail, [line])
+      rendered = buffer.string
+
+      refute_includes rendered, "supersecret"
+      refute_includes rendered, "abc123"
+      assert_includes rendered, "_authToken=[REDACTED]"
+      assert_includes rendered, "Authorization: Bearer [REDACTED]"
+    ensure
+      $stderr = old_stderr
     end
   end
 end

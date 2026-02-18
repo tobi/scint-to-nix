@@ -38,6 +38,9 @@
 - [x] Deterministic `fetchPnpmDeps` hash strategy (`lib/onix/commands/generate.rb`), including probe-and-parse output hash and environment token injection.
 - [x] Vite pilot validation and startup latency measurements.
 - [x] Tighten script policy surface to `none|allowed` for `onix generate --scripts` input.
+- [x] End-to-end validation rerun after hardening updates (2026-02-18):
+  - `nix develop ... ruby exe/onix check` => `3 passed · 0 failed`
+  - `rake test` => `58 runs, 243 assertions, 0 failures`
 
 ## Engineering Principles
 
@@ -167,6 +170,10 @@ Use pnpm tests as inspiration from:
 - token resolution from env + `.npmrc`
 - credentials not present in output files
 - failures show actionable errors without leaking secrets
+- completed 2026-02-18:
+  - `onix build` now redacts `_authToken` and `Authorization: Bearer` values in console output tail
+  - node build failures with auth indicators (`E401` / `ERR_PNPM_FETCH_401` / unauthorized) emit an actionable credential hint
+  - coverage added in `test/build_node_test.rb`, including direct `print_tail` stderr redaction assertions
 
 ## Phased Task Plan
 
