@@ -768,5 +768,25 @@ class GenerateNodeTest < Minitest::Test
     assert_includes output, "NPM_CONFIG_CAFILE"
     assert_includes output, "ONIX_NPM_TOKEN_LINES"
   end
+
+  def test_prefetch_pnpm_deps_expr_normalizes_nonstandard_lockfile_name
+    command = Onix::Commands::Generate.new
+    expr = command.send(:prefetch_pnpm_deps_expr, "/tmp/workspace.pnpm-lock.yaml")
+
+    assert_includes expr, "lockfilePath = /tmp/workspace.pnpm-lock.yaml;"
+    assert_includes expr, 'builtins.baseNameOf lockfilePath == "pnpm-lock.yaml"'
+    assert_includes expr, 'cp ${lockfilePath} "$out/pnpm-lock.yaml"'
+    assert_includes expr, "src = prefetchSrc;"
+  end
+
+  def test_build_node_modules_template_normalizes_nonstandard_lockfile_name
+    build_node_modules_nix = File.read(File.join(__dir__, "..", "lib", "onix", "data", "build-node-modules.nix"))
+
+    assert_includes build_node_modules_nix, "normalizedSourceRoot"
+    assert_includes build_node_modules_nix, 'builtins.baseNameOf (toString lockfile)'
+    assert_includes build_node_modules_nix, 'cp ${lockfile} "$out/pnpm-lock.yaml"'
+    assert_includes build_node_modules_nix, 'cp "${toString lockfile}" pnpm-lock.yaml'
+    assert_includes build_node_modules_nix, "src = normalizedSourceRoot;"
+  end
 end
 end

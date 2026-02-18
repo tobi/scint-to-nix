@@ -41,6 +41,10 @@
 - [x] End-to-end validation rerun after hardening updates (2026-02-18):
   - `nix develop ... ruby exe/onix check` => `3 passed · 0 failed`
   - `rake test` => `58 runs, 243 assertions, 0 failures`
+- [x] Nonstandard pnpm lockfile-name support hardening (2026-02-18):
+  - prefetch expression now normalizes `<project>.pnpm-lock.yaml` to `pnpm-lock.yaml` for `fetchPnpmDeps`
+  - `build-node-modules.nix` normalizes lockfile naming for both prefetch and install phases
+  - coverage added in `test/generate_node_test.rb`
 
 ## Engineering Principles
 

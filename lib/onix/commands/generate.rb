@@ -369,16 +369,27 @@ module Onix
       end
 
       def prefetch_pnpm_deps_expr(lockfile)
-        lockfile_dir = File.expand_path(File.dirname(lockfile))
+        lockfile_path = File.expand_path(lockfile)
+        lockfile_dir = File.expand_path(File.dirname(lockfile_path))
         project_name = File.basename(lockfile_dir)
         <<~NIX
           let
             pkgs = import <nixpkgs> {};
+            lockfilePath = #{nix_path(lockfile_path)};
+            lockfileDir = builtins.dirOf lockfilePath;
+            prefetchSrc =
+              if builtins.baseNameOf lockfilePath == "pnpm-lock.yaml"
+              then lockfileDir
+              else pkgs.runCommand "onix-#{project_name}-prefetch-src" { } ''
+                cp -R ${lockfileDir}/. "$out/"
+                chmod -R +w "$out"
+                cp ${lockfilePath} "$out/pnpm-lock.yaml"
+              '';
           in
           pkgs.fetchPnpmDeps {
             pname = #{nix_str("onix-#{project_name}-pnpm-deps")};
             version = "0";
-            src = #{nix_path(lockfile_dir)};
+            src = prefetchSrc;
             pnpm = pkgs.pnpm;
             fetcherVersion = 3;
             hash = "";
