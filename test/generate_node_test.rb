@@ -516,6 +516,61 @@ class GenerateNodeTest < Minitest::Test
     end
   end
 
+  def test_generate_wires_node_overlays_via_node_config
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+      overlays_dir = File.join(dir, "overlays", "node")
+      FileUtils.mkdir_p(overlays_dir)
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "vite.jsonl"),
+        meta: Onix::Packageset::Meta.new(
+          ruby: nil,
+          bundler: nil,
+          platforms: [],
+          script_policy: "allowed",
+        ),
+        entries: [
+          Onix::Packageset::Entry.new(
+            installer: "node",
+            name: "vite",
+            version: "5.0.0",
+            source: "pnpm",
+            deps: ["esbuild"],
+          ),
+        ],
+      )
+
+      File.write(
+        File.join(overlays_dir, "vite.nix"),
+        <<~NIX
+          { pkgs }:
+          {
+            deps = [ pkgs.python3 ];
+            preInstall = "echo preInstall from overlay";
+            pnpmInstallFlags = [ "--link-workspace-packages=false" ];
+          }
+        NIX
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "vite.nix"))
+      assert_includes project_contents, "overlayDir = ../overlays/node;"
+      assert_includes project_contents, "nodeConfig = import ./node-config.nix {"
+      assert_includes project_contents, "inherit nodeConfig;"
+
+      build_nix = File.read(File.join(dir, "nix", "build-node-modules.nix"))
+      assert_includes build_nix, "nodeConfig ? {}"
+      assert_includes build_nix, "nodeOverlayDeps"
+      assert_includes build_nix, "nodePreInstall"
+      assert_includes build_nix, "nodePnpmInstallFlags"
+    end
+  end
+
   def test_build_node_modules_copy_is_constrained_to_project_root
     build_node_modules_nix = File.read(File.join(__dir__, "..", "lib", "onix", "data", "build-node-modules.nix"))
 

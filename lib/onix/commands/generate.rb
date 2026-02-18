@@ -515,6 +515,10 @@ module Onix
         nix << "    rubyDir = ./ruby;\n"
         nix << "    buildGemFn = buildGemByName;\n"
         nix << "  };\n"
+        nix << "  nodeConfig = import ./node-config.nix {\n"
+        nix << "    inherit pkgs;\n"
+        nix << "    overlayDir = ../overlays/node;\n"
+        nix << "  };\n"
         nix << "\n"
         nix << "  build = name: version:\n"
         nix << "    let\n"
@@ -555,6 +559,7 @@ module Onix
         if nodes.any?
           nix << "  nodeModules = pkgs.callPackage ./build-node-modules.nix {\n"
           nix << "    inherit nodePackages;\n"
+          nix << "    inherit nodeConfig;\n"
           nix << "    project = #{nix_str project_name};\n"
           nix << "    projectRoot = #{nix_path(project_root)};\n"
           nix << "    lockfile = #{nix_path(lockfile)};\n"
@@ -609,10 +614,10 @@ module Onix
 
       def copy_support_files(dir)
         data_dir = File.expand_path("../data", __dir__)
-        %w[build-gem.nix build-node-modules.nix gem-config.nix].each do |f|
+        %w[build-gem.nix build-node-modules.nix gem-config.nix node-config.nix].each do |f|
           FileUtils.cp(File.join(data_dir, f), File.join(dir, f))
         end
-        UI.wrote "nix/build-gem.nix, nix/build-node-modules.nix, nix/gem-config.nix"
+        UI.wrote "nix/build-gem.nix, nix/build-node-modules.nix, nix/gem-config.nix, nix/node-config.nix"
       end
 
       def nix_key(name)

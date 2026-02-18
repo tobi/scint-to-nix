@@ -98,6 +98,8 @@ generation — Ruby already provides them.
 - `version` values are preserved verbatim for deterministic peer-suffix keying.
 - `source: "link"` / `source: "file"` entries carry lockfile path targets in `path`.
 - `script_policy` is applied in generated node install phase as either `--ignore-scripts` (`none`) or default pnpm behavior (`allowed`).
+- Node-specific overrides can be provided as `overlays/node/<package>.nix` and are loaded through
+  `nix/node-config.nix`. Overlay contracts are deterministic and do not receive secret inputs.
 
 ## The `installer` field
 

@@ -95,7 +95,7 @@ Captured data:
 - Emit node-specific Nix artifacts (parallel to Ruby outputs), initially:
   - `nix/node/<project>.nix`
   - `nix/build-node-modules.nix`
-  - `nix/pnpm-config.nix` (if needed)
+  - `nix/node-config.nix`
 - Use nixpkgs `fetchPnpmDeps` + `pnpmConfigHook` primitives for store prefetch + offline install.
 - Produce derivation outputs containing a pre-materialized `node_modules` tree for workspace root hydration.
 
@@ -401,10 +401,12 @@ Tasks:
   - [x] deprecate/remove `--scripts=all`
   - [x] keep `none|allowed` only
   - [x] preserve default `allowed`, fallback `none`
-- [ ] Define node overlay contract (parallel to Ruby overlays):
+- [x] Define node overlay contract (parallel to Ruby overlays):
   - location: `overlays/node/<package>.nix`
   - support deps/build tools/env/hooks for known script-heavy/native packages
-  - ensure overlays are deterministic and never receive secrets in generated files
+  - implemented loader in `lib/onix/data/node-config.nix` and wired via generator
+- [x] Add node overlay wiring integration test:
+  - coverage in `test/generate_node_test.rb` for `overlays/node/<package>.nix` pass-through to generated Nix
 - [ ] Add node codegen inference in `onix generate`:
   - infer known build deps/flags from lock/package metadata where deterministic
   - emit inferred requirements directly in generated Nix when possible

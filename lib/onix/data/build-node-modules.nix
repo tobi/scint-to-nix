@@ -1,4 +1,4 @@
-{ pkgs, lib, nodePackages, project, lockfile, projectRoot, scriptPolicy ? "none", packageManager ? null, pnpmDepsHash ? "", pnpmWorkspaces ? [ ], workspacePaths ? [ ] }:
+{ pkgs, lib, nodePackages, project, lockfile, projectRoot, scriptPolicy ? "none", packageManager ? null, pnpmDepsHash ? "", pnpmWorkspaces ? [ ], workspacePaths ? [ ], nodeConfig ? {} }:
 
 let
   safeProject = lib.replaceStrings [ "/" ":" "@" ] [ "_" "_" "_" ] (if project != null then project else "project");
@@ -17,6 +17,13 @@ let
         else lib.removePrefix (root + "/") abs;
     in
     rel == "" || !(isIgnoredPath rel);
+  nodePackagesValues = builtins.attrValues nodePackages;
+  nodePackageNames = lib.unique (builtins.map (pkg: pkg.name) nodePackagesValues);
+  nodeConfigs = builtins.map (name: nodeConfig.${name} or {}) nodePackageNames;
+  nodeOverlayDeps = lib.unique (lib.concatMap (cfg: cfg.deps or [ ]) nodeConfigs);
+  nodePreInstall = lib.concatStringsSep "\n" (lib.concatMap (cfg: lib.optionals (cfg ? preInstall) [ cfg.preInstall ]) nodeConfigs);
+  nodePrePnpmInstall = lib.concatStringsSep "\n" (lib.concatMap (cfg: lib.optionals (cfg ? prePnpmInstall) [ cfg.prePnpmInstall ]) nodeConfigs);
+  nodePnpmInstallFlags = lib.unique (lib.concatMap (cfg: cfg.pnpmInstallFlags or [ ]) nodeConfigs);
   filteredSourceRoot = lib.cleanSourceWith {
     src = sourceRoot;
     filter = sourceFilter sourceRoot;
@@ -26,7 +33,8 @@ let
     filter = sourceFilter projectRoot;
   };
   isScriptless = scriptPolicy == "none";
-  installFlags = if isScriptless then [ "--ignore-scripts" ] else [ ];
+  baseInstallFlags = if isScriptless then [ "--ignore-scripts" ] else [ ];
+  installFlags = lib.unique (baseInstallFlags ++ nodePnpmInstallFlags);
   workspaceFilters = map (w: "--filter=${w}") pnpmWorkspaces;
   pnpmDeps = pkgs.fetchPnpmDeps {
     pname = "onix-${safeProject}-pnpm-deps";
@@ -39,7 +47,7 @@ let
       pnpm config set package-import-method clone-or-copy
       pnpm config set side-effects-cache false
       pnpm config set update-notifier false
-    '';
+    '' + nodePrePnpmInstall + nodePreInstall;
     pnpmInstallFlags = [ "--force" ];
     pnpmWorkspaces = pnpmWorkspaces;
   };
@@ -56,7 +64,7 @@ pkgs.stdenv.mkDerivation {
     pkgs.nodejs
     pkgs.pnpm
     pkgs.zstd
-  ];
+  ] ++ nodeOverlayDeps;
 
   pnpmDeps = pnpmDeps;
   dontBuild = true;

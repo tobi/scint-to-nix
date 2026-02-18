@@ -61,6 +61,7 @@ Prefetches hashes for Ruby deps via `nix-prefetch-url`/`nix-prefetch-git`, then 
 - `nix/build-gem.nix` — wrapper around nixpkgs `buildRubyGem`
 - `nix/build-node-modules.nix` — materializes `node_modules` with offline pnpm install
 - `nix/gem-config.nix` — overlay loader
+- `nix/node-config.nix` — node overlay loader
 
 ### 4. Build
 
@@ -247,6 +248,7 @@ my-packages/
     ├── rails.nix      # Per-project entry point
     ├── build-gem.nix
     ├── build-node-modules.nix
+    ├── node-config.nix
     ├── node/          # Per-node package metadata
     └── gem-config.nix
 ```
