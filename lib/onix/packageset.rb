@@ -85,7 +85,9 @@ module Onix
     def self.write(path, meta:, entries:)
       File.open(path, "w") do |f|
         f.puts meta.to_jsonl
-        entries.sort_by(&:name).each { |e| f.puts e.to_jsonl }
+        entries
+          .sort_by { |e| [e.installer.to_s, e.name.to_s, e.version.to_s, e.source.to_s, e.path.to_s] }
+          .each { |e| f.puts e.to_jsonl }
       end
     end
 

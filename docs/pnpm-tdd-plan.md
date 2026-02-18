@@ -50,6 +50,9 @@
   - generate prefers `_meta.lockfile_path` before heuristic lockfile candidates
   - docs updated: `docs/packageset-format.md`
   - coverage added in `test/pnpm_importer_test.rb` and `test/generate_node_test.rb`
+- [x] Deterministic packageset serialization ordering (2026-02-18):
+  - `Packageset.write` now sorts by installer/name/version/source/path for stable duplicate-name output
+  - regression coverage added in `test/packageset_test.rb`
 
 ## Engineering Principles
 
