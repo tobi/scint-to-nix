@@ -295,14 +295,14 @@ Acceptance:
 ## Pilot Results (2026-02-18)
 
 - Command: `scripts/pilot-pnpm-onix.sh /Users/vsumner/src/github.com/vitejs/vite`
-- Generate duration: `83s`
-- First `onix build vite` (hydrate): `34s`
+- Generate duration: `79s`
+- First `onix build vite` (hydrate): `45s` (+ `~2.1s` cached eval+`~42.9s` pnpm install phase in this run)
 - Second `onix build vite` (no-op hydration): `23s`
 - First/second sentinel id:
   - `sha256-qQ8wy5NcZCL++bICwOU5vDDGuJ1amy8oq57sMEFWJ8Y=/vite/allowed`
 - No-op confirmation: second pass logged `node_modules unchanged`.
 - Hydrated size snapshot: `2.3G node_modules`.
-- Secret scan: no credential matches in pilot output path scan.
+- Secret scan (textual grep in project root): no credential matches tied to secrets; only `npm`/`token` strings in lockfile/package metadata remain.
 
 ## Phase 5 Runbook (actualized)
 
