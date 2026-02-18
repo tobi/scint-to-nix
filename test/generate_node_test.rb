@@ -401,7 +401,7 @@ class GenerateNodeTest < Minitest::Test
     end
   end
 
-  def test_generate_legacy_script_policy_all_is_treated_as_allowed
+  def test_generate_rejects_invalid_script_policy_meta_value
     Dir.mktmpdir do |dir|
       packagesets_dir = File.join(dir, "packagesets")
       FileUtils.mkdir_p(packagesets_dir)
@@ -426,12 +426,11 @@ class GenerateNodeTest < Minitest::Test
         ],
       )
 
-      Dir.chdir(dir) do
-        @command.run([])
+      assert_raises(SystemExit) do
+        Dir.chdir(dir) do
+          @command.run([])
+        end
       end
-
-      project_contents = File.read(File.join(dir, "nix", "vite.nix"))
-      assert_includes project_contents, %(scriptPolicy = "allowed";)
     end
   end
 

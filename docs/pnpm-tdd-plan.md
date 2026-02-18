@@ -407,7 +407,7 @@ Tasks:
   - implemented loader in `lib/onix/data/node-config.nix` and wired via generator
 - [x] Add node overlay wiring integration test:
   - coverage in `test/generate_node_test.rb` for `overlays/node/<package>.nix` pass-through to generated Nix
-- [ ] Add node codegen inference in `onix generate`:
+- [x] Add node codegen inference in `onix generate`:
   - infer known build deps/flags from lock/package metadata where deterministic
   - emit inferred requirements directly in generated Nix when possible
   - reserve overlays for non-inferable cases
@@ -415,8 +415,9 @@ Tasks:
   - node completeness and render-validity checks
   - node secret-surface checks over `packagesets/**`, `nix/**`, and logs
 - [ ] Add integration tests:
-  - [x] script policy behavior (`none` vs `allowed`) without `all` (`test/generate_node_test.rb`)
-  - [x] overlay application path for one fixture package (`test/generate_node_test.rb`)
+- [x] script policy behavior (`none` vs `allowed`) without `all` (`test/generate_node_test.rb`)
+- [x] legacy metadata `script_policy: "all"` is rejected with actionable error (`SystemExit`) (`test/generate_node_test.rb`)
+- [x] overlay application path for one fixture package (`test/generate_node_test.rb`)
   - [x] no-op second hydration assertion with stable sentinel (`test/build_node_test.rb`)
 
 Acceptance:

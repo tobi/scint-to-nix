@@ -684,10 +684,7 @@ module Onix
         candidate = @script_policy_override || meta.script_policy || "none"
         return "none" if candidate == "none"
         return "allowed" if candidate == "allowed"
-        return "allowed" if candidate == "all"
-
-        UI.warn "Unsupported script policy #{candidate.inspect}; defaulting to allowed"
-        "allowed"
+        abort "Unsupported script policy #{candidate.inspect}; expected none|allowed"
       end
 
       def sort_versions(entries)
