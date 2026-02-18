@@ -52,6 +52,7 @@ For pnpm projects, entries are marked with `installer: "node"` and consumed by a
 ```bash
 onix generate        # default: 20 parallel prefetch jobs
 onix generate -j 8   # fewer jobs
+onix generate --scripts none|allowed   # pnpm lifecycle control (default: none if no allowlist metadata)
 ```
 
 Prefetches hashes for Ruby deps via `nix-prefetch-url`/`nix-prefetch-git`, then writes:
@@ -125,6 +126,12 @@ Use the helper script (creates markdown-friendly timing output):
 ```bash
 scripts/pilot-pnpm-onix.sh "$ONIX_PILOT_PATH"
 ```
+
+### 8. Script policy controls
+
+- `onix generate --scripts allowed` — keep existing workspace allowlist behavior.
+- `onix generate --scripts none` — skip lifecycle scripts (`--ignore-scripts` equivalent).
+- Any other value (including legacy `all`) is rejected so behavior remains explicit and deterministic.
 
 ### 7. Automated pilot script
 
