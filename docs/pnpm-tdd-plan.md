@@ -36,7 +36,7 @@
 - [x] Runtime credential resolver and secret masking tests (`lib/onix/pnpm/credentials.rb`, `test/pnpm_credentials_test.rb`).
 - [x] Script-policy default/override flow in import and generate (`lib/onix/pnpm/project_config.rb`, `lib/onix/commands/generate.rb`).
 - [x] Deterministic `fetchPnpmDeps` hash strategy (`lib/onix/commands/generate.rb`), including probe-and-parse output hash and environment token injection.
-- [ ] Vite pilot validation and startup latency measurements.
+- [x] Vite pilot validation and startup latency measurements.
 
 ## Engineering Principles
 
@@ -221,7 +221,7 @@ Acceptance:
   - v9 header parse
   - `link:` dependency capture
   - peer suffix key preservation
-- [ ] Full `onix` command execution under Ruby >= 3.1 (blocked in this environment by local Ruby version; command-level check still pending)
+- [x] Full `onix` command execution under Ruby >= 3.1 (validated in `nix develop` pilot run on 2026-02-18).
 
 ## Phase 2: Generate (Red → Green)
 
@@ -277,8 +277,8 @@ Acceptance:
 - [x] Add a runnable Vite pilot runbook in this plan, including expected outputs and failure diagnosis.
 - [x] Add script-backed benchmark workflow for baseline and no-op hydrate timing (`scripts/pilot-pnpm-onix.sh`).
 - [x] Finalize docs in README and `docs/packageset-format.md` for launch.
-- [ ] Execute pilot in `/Users/vsumner/src/github.com/vitejs/vite` and capture first/second-run data.
-- [ ] Confirm no credentials/log leaks from pilot run and document remediation.
+- [x] Execute pilot in `/Users/vsumner/src/github.com/vitejs/vite` and capture first/second-run data.
+- [x] Confirm no credentials/log leaks from pilot run and document remediation.
 
 Acceptance:
 - Vite workspace can be hydrated from onix-built output.
@@ -289,7 +289,19 @@ Acceptance:
   - [x] Separation of concerns verified.
   - [x] KISS constraints respected.
   - [x] DRY opportunities justified or intentionally deferred.
-  - [ ] Systems flow and secret-surface checks passed (execution blocked until pilot path exists).
+  - [x] Systems flow and secret-surface checks passed.
+
+## Pilot Results (2026-02-18)
+
+- Command: `scripts/pilot-pnpm-onix.sh /Users/vsumner/src/github.com/vitejs/vite`
+- Generate duration: `83s`
+- First `onix build vite` (hydrate): `34s`
+- Second `onix build vite` (no-op hydration): `23s`
+- First/second sentinel id:
+  - `sha256-qQ8wy5NcZCL++bICwOU5vDDGuJ1amy8oq57sMEFWJ8Y=/vite/allowed`
+- No-op confirmation: second pass logged `node_modules unchanged`.
+- Hydrated size snapshot: `2.3G node_modules`.
+- Secret scan: no credential matches in pilot output path scan.
 
 ## Phase 5 Runbook (actualized)
 
