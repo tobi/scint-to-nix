@@ -90,14 +90,14 @@ generation — Ruby already provides them.
 | Field | Required | Description |
 |-------|----------|-------------|
 | `package_manager` | no | e.g. `pnpm@10.0.0` from `package.json` |
-| `script_policy` | no | One of `none` (default), `allowed` (workspace allowlist present), `all` (explicit CLI override) |
+| `script_policy` | no | One of `none` (default) or `allowed` (workspace allowlist present / explicit `--scripts allowed`) |
 
 ### Node-specific notes
 
 - `installer: "node"` entries are consumed by the generated `nix/build-node-modules.nix` pipeline.
 - `version` values are preserved verbatim for deterministic peer-suffix keying.
 - `source: "link"` / `source: "file"` entries carry lockfile path targets in `path`.
-- `script_policy` is applied in generated node install phase as either `--ignore-scripts` (`none`) or default pnpm behavior (`allowed`/`all`).
+- `script_policy` is applied in generated node install phase as either `--ignore-scripts` (`none`) or default pnpm behavior (`allowed`).
 
 ## The `installer` field
 

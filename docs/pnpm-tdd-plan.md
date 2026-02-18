@@ -17,7 +17,7 @@
 - Scripts policy:
   - default `allowed` (respect `onlyBuiltDependencies` / `ignoredBuiltDependencies` from `pnpm-workspace.yaml`)
   - fallback to `ignore-scripts` when no allowlist policy is present
-  - CLI override: `--scripts=none|allowed|all`
+  - CLI override: `--scripts=none|allowed`
 - pnpm version policy:
   - pin to lockfile/project `packageManager` major when present
   - fail if lockfile major is newer than the selected pnpm major
@@ -37,6 +37,7 @@
 - [x] Script-policy default/override flow in import and generate (`lib/onix/pnpm/project_config.rb`, `lib/onix/commands/generate.rb`).
 - [x] Deterministic `fetchPnpmDeps` hash strategy (`lib/onix/commands/generate.rb`), including probe-and-parse output hash and environment token injection.
 - [x] Vite pilot validation and startup latency measurements.
+- [x] Tighten script policy surface to `none|allowed` for `onix generate --scripts` input.
 
 ## Engineering Principles
 
@@ -397,9 +398,9 @@ Scope:
 
 Tasks:
 - [ ] Tighten script policy surface:
-  - deprecate/remove `--scripts=all`
-  - keep `none|allowed` only
-  - preserve default `allowed`, fallback `none`
+  - [x] deprecate/remove `--scripts=all`
+  - [x] keep `none|allowed` only
+  - [x] preserve default `allowed`, fallback `none`
 - [ ] Define node overlay contract (parallel to Ruby overlays):
   - location: `overlays/node/<package>.nix`
   - support deps/build tools/env/hooks for known script-heavy/native packages

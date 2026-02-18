@@ -114,7 +114,7 @@ pkgs.stdenv.mkDerivation {
     # Install from the pre-fetched dependency graph.
     # Keep script execution policy aligned with importer policy:
     #   none => ignore all lifecycle scripts
-    #   allowed/all => run lifecycle scripts (pnpm will honor workspace allowlists when set)
+    #   allowed => run lifecycle scripts (pnpm will honor workspace allowlists when set)
     if [ -n "$NIX_NPM_REGISTRY" ]; then
       pnpm install --force --registry="$NIX_NPM_REGISTRY" ${lib.concatStringsSep " " installFlags} ${lib.concatStringsSep " " workspaceFilters}
     else

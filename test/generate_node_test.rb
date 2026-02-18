@@ -366,11 +366,72 @@ class GenerateNodeTest < Minitest::Test
 
       FileUtils.rm_rf(File.join(dir, "nix"))
       Dir.chdir(dir) do
-        @command.run(["--scripts", "all"])
+        @command.run(["--scripts", "allowed"])
       end
 
       project_contents = File.read(File.join(dir, "nix", "vite.nix"))
-      assert_includes project_contents, %(scriptPolicy = "all";)
+      assert_includes project_contents, %(scriptPolicy = "allowed";)
+    end
+  end
+
+  def test_generate_rejects_invalid_script_policy_override
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "vite.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: [
+          Onix::Packageset::Entry.new(
+            installer: "node",
+            name: "vite",
+            version: "5.0.0",
+            source: "pnpm",
+            deps: ["esbuild"],
+          ),
+        ],
+      )
+
+      Dir.chdir(dir) do
+        assert_raises(SystemExit) do
+          @command.run(["--scripts", "all"])
+        end
+      end
+    end
+  end
+
+  def test_generate_legacy_script_policy_all_is_treated_as_allowed
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "vite.jsonl"),
+        meta: Onix::Packageset::Meta.new(
+          ruby: nil,
+          bundler: nil,
+          platforms: [],
+          package_manager: "pnpm@10.0.0",
+          script_policy: "all",
+        ),
+        entries: [
+          Onix::Packageset::Entry.new(
+            installer: "node",
+            name: "vite",
+            version: "5.0.0",
+            source: "pnpm",
+            deps: ["esbuild"],
+          ),
+        ],
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "vite.nix"))
+      assert_includes project_contents, %(scriptPolicy = "allowed";)
     end
   end
 
@@ -395,7 +456,7 @@ class GenerateNodeTest < Minitest::Test
           bundler: nil,
           platforms: [],
           package_manager: "pnpm@10.0.0",
-          script_policy: "all",
+          script_policy: "allowed",
         ),
         entries: entries
       )

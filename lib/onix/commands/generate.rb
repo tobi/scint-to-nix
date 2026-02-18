@@ -34,10 +34,10 @@ module Onix
           when "-j", "--jobs" then jobs = argv.shift.to_i
           when "--scripts"
             value = argv.shift
-            abort "Invalid --scripts value #{value}" unless %w[none allowed all].include?(value)
+            abort "Invalid --scripts value #{value}" unless %w[none allowed].include?(value)
             @script_policy_override = value
           when "--help", "-h"
-            $stderr.puts "Usage: onix generate [-j JOBS] [--scripts none|allowed|all]"
+            $stderr.puts "Usage: onix generate [-j JOBS] [--scripts none|allowed]"
             exit 0
           end
         end
@@ -634,8 +634,13 @@ module Onix
       end
 
       def resolve_node_script_policy(meta)
-        return @script_policy_override if @script_policy_override
-        meta.script_policy || "none"
+        candidate = @script_policy_override || meta.script_policy || "none"
+        return "none" if candidate == "none"
+        return "allowed" if candidate == "allowed"
+        return "allowed" if candidate == "all"
+
+        UI.warn "Unsupported script policy #{candidate.inspect}; defaulting to allowed"
+        "allowed"
       end
 
       def sort_versions(entries)
