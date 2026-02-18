@@ -137,6 +137,7 @@ module Onix
           platforms: [],
           package_manager: package_manager,
           script_policy: script_policy,
+          lockfile_path: File.expand_path(lockfile),
         )
 
         FileUtils.mkdir_p(@project.packagesets_dir)
@@ -340,6 +341,7 @@ module Onix
           ruby: lockdata.ruby_version,
           bundler: lockdata.bundler_version,
           platforms: lockdata.platforms,
+          lockfile_path: File.expand_path(lockfile),
         )
 
         FileUtils.mkdir_p(@project.packagesets_dir)

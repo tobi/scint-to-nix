@@ -45,6 +45,11 @@
   - prefetch expression now normalizes `<project>.pnpm-lock.yaml` to `pnpm-lock.yaml` for `fetchPnpmDeps`
   - `build-node-modules.nix` normalizes lockfile naming for both prefetch and install phases
   - coverage added in `test/generate_node_test.rb`
+- [x] Lockfile discovery drift fix via persisted metadata (2026-02-18):
+  - import now stores `_meta.lockfile_path` for both ruby and pnpm imports
+  - generate prefers `_meta.lockfile_path` before heuristic lockfile candidates
+  - docs updated: `docs/packageset-format.md`
+  - coverage added in `test/pnpm_importer_test.rb` and `test/generate_node_test.rb`
 
 ## Engineering Principles
 

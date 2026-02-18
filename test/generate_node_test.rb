@@ -244,6 +244,45 @@ class GenerateNodeTest < Minitest::Test
     end
   end
 
+  def test_generate_uses_meta_lockfile_path_when_discovery_paths_are_missing
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      external = Dir.mktmpdir
+      lockfile = File.join(external, "custom-lock.pnpm-lock.yaml")
+      File.write(lockfile, "{\n}\n")
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "pnpm-lock",
+          version: "1.0.0",
+          source: "pnpm",
+          deps: ["glob"],
+        )
+      ]
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(
+          ruby: nil,
+          bundler: nil,
+          platforms: [],
+          lockfile_path: lockfile,
+        ),
+        entries: entries
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "workspace.nix"))
+      assert_includes project_contents, File.basename(lockfile)
+    end
+  end
+
   def test_generate_projects_include_pnpm_deps_hash
     Dir.mktmpdir do |dir|
       packagesets_dir = File.join(dir, "packagesets")

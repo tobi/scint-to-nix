@@ -67,7 +67,7 @@ module Onix
       end
     end
 
-    Meta = Struct.new(:ruby, :bundler, :platforms, :package_manager, :script_policy, keyword_init: true) do
+    Meta = Struct.new(:ruby, :bundler, :platforms, :package_manager, :script_policy, :lockfile_path, keyword_init: true) do
       def to_jsonl
         JSON.generate(
           _meta: true,
@@ -76,6 +76,7 @@ module Onix
           platforms: platforms,
           package_manager: package_manager,
           script_policy: script_policy,
+          lockfile_path: lockfile_path,
         )
       end
     end
@@ -106,6 +107,7 @@ module Onix
             platforms: data[:platforms] || [],
             package_manager: data[:package_manager],
             script_policy: data[:script_policy],
+            lockfile_path: data[:lockfile_path],
           )
         else
           entries << Entry.new(

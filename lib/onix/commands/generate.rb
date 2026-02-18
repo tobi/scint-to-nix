@@ -91,8 +91,8 @@ module Onix
         projects.each do |name, entries|
           next unless entries.any? { |e| e.installer == "node" }
 
-          hash = prefetch_pnpm_deps_hash(name, all_meta[name])
-          node_lockfile = find_pnpm_lockfile(name)
+          node_lockfile = resolve_pnpm_lockfile(name, all_meta[name])
+          hash = prefetch_pnpm_deps_hash(name, all_meta[name], node_lockfile)
           unless hash
             UI.fail "Unable to resolve pnpm lockfile hash for #{name}"
             exit 1
@@ -334,8 +334,8 @@ module Onix
         nil
       end
 
-      def prefetch_pnpm_deps_hash(project_name, _meta)
-        lockfile = find_pnpm_lockfile(project_name)
+      def prefetch_pnpm_deps_hash(project_name, meta, lockfile = nil)
+        lockfile ||= resolve_pnpm_lockfile(project_name, meta)
         return nil unless lockfile
 
         out, err, status = Open3.capture3(
@@ -426,16 +426,32 @@ module Onix
         output.scan(/got:\s*(sha256-[A-Za-z0-9+\/=]+)/).flatten.first
       end
 
-      def find_pnpm_lockfile(project_name)
+      def find_pnpm_lockfile(project_name, meta = nil)
         return nil unless @project
 
+        meta_lockfile = meta&.lockfile_path
         candidates = [
+          meta_lockfile && lockfile_candidate(meta_lockfile),
           File.join(@project.root, "pnpm-lock.yaml"),
           File.join(@project.root, "#{project_name}/pnpm-lock.yaml"),
           File.join(@project.root, "#{project_name}.pnpm-lock.yaml"),
-        ].uniq
+        ].compact.uniq
 
         candidates.find { |path| File.file?(path) }
+      end
+
+      def resolve_pnpm_lockfile(project_name, meta)
+        find_pnpm_lockfile(project_name, meta)
+      rescue ArgumentError
+        # Backward-compatible with tests stubbing old single-arg signature.
+        find_pnpm_lockfile(project_name)
+      end
+
+      def lockfile_candidate(path)
+        expanded = File.expand_path(path.to_s)
+        return expanded if path.to_s.start_with?("/")
+
+        File.expand_path(path.to_s, @project.root)
       end
 
       def project_node_paths(pnpm_lockfile)
