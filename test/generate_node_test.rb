@@ -1,0 +1,509 @@
+# frozen_string_literal: true
+
+require_relative "test_helper"
+require_relative "../lib/onix/packageset"
+require_relative "../lib/onix/project"
+require_relative "../lib/onix/commands/generate"
+require_relative "../lib/onix/commands/check"
+
+module Onix
+  module UI
+    class << self
+      def header(*) ; end
+      def info(*) ; end
+      def wrote(*) ; end
+      def done(*) ; end
+      def fail(*) ; end
+      def skip(*) ; end
+      def bold(v) ; v ; end
+      def green(v) ; v ; end
+      def red(v) ; v ; end
+      def amber(v) ; v ; end
+      def dim(v) ; v ; end
+      def format_time(v) ; v ; end
+      def summary(*) ; end
+    end
+
+    Progress = Class.new do
+      def initialize(*)
+      end
+
+      def advance(*)
+      end
+
+      def finish
+end
+  end
+end
+
+class GenerateNodeTest < Minitest::Test
+  class StubProject
+    attr_reader :root
+
+    def initialize(root)
+      @root = root
+    end
+
+    def packagesets_dir
+      File.join(root, "packagesets")
+    end
+
+    def nix_dir
+      File.join(root, "nix")
+    end
+
+    def ruby_dir
+      File.join(nix_dir, "ruby")
+    end
+
+    def node_dir
+      File.join(nix_dir, "node")
+    end
+
+    def overlays_dir
+      File.join(root, "overlays")
+    end
+  end
+
+  def setup
+    @command = Onix::Commands::Generate.new
+    @checker = Onix::Commands::Check.new
+
+    @command.singleton_class.prepend(Module.new do
+      def prefetch_pnpm_deps_hash(*)
+        "sha256-dummy"
+      end
+    end)
+  end
+
+  def test_generate_writes_node_derivations_with_deterministic_sorting
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "dup",
+          version: "2.0.0",
+          source: "pnpm",
+          deps: ["glob"],
+          groups: ["development"],
+        ),
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "dup",
+          version: "1.0.0",
+          source: "pnpm",
+          deps: [],
+        ),
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "file-link",
+          version: "0.1.0",
+          source: "file",
+          path: "vendor/file-link",
+          deps: [],
+        ),
+      ].shuffle
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: entries
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      node_dir = File.join(dir, "nix", "node")
+      workspace_nix = File.join(dir, "nix", "workspace.nix")
+      dup_nix = File.join(node_dir, "dup.nix")
+
+      assert File.exist?(dup_nix), "expected node package file: #{dup_nix}"
+      dup_contents = File.read(dup_nix)
+      assert_operator dup_contents.index(%q("1.0.0" = {)), :<, dup_contents.index(%q("2.0.0" = {)),
+                      "versions must be sorted ascending"
+      assert_includes dup_contents, %(source = "pnpm";)
+
+      assert File.exist?(workspace_nix), "expected project file: #{workspace_nix}"
+      project_contents = File.read(workspace_nix)
+      node_keys = project_contents.scan(/^\s+("[^"]+\/[^"]+") = \{\s*$/).flatten
+      assert_equal ['"dup/1.0.0"', '"dup/2.0.0"', '"file-link/0.1.0"'], node_keys
+      assert_includes project_contents, "nodeModules ="
+      assert_includes project_contents, "projectRoot = ../.;"
+    end
+  end
+
+  def test_generate_creates_scoped_node_package_path
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: [
+          Onix::Packageset::Entry.new(
+            installer: "node",
+            name: "@scope/pkg",
+            version: "1.2.3",
+            source: "pnpm",
+            deps: [],
+          ),
+        ]
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      scoped_nix = File.join(dir, "nix", "node", "@scope", "pkg.nix")
+      assert File.exist?(scoped_nix), "expected scoped node package path: #{scoped_nix}"
+      assert_includes File.read(scoped_nix), %(version = "1.2.3";)
+    end
+  end
+
+  def test_generate_uses_lockfile_directory_for_node_project_paths
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+      workspace_dir = File.join(dir, "workspace")
+      FileUtils.mkdir_p(workspace_dir)
+      File.write(File.join(workspace_dir, "pnpm-lock.yaml"), "{\n}\n")
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "pnpm-lock",
+          version: "1.0.0",
+          source: "pnpm",
+          deps: ["glob"],
+        )
+      ]
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: entries
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "workspace.nix"))
+      assert_includes project_contents, "projectRoot = ../workspace/.;"
+      assert_includes project_contents, "lockfile = ../workspace/pnpm-lock.yaml;"
+    end
+  end
+
+  def test_generate_uses_project_named_lockfile_when_present
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+      lockfile = File.join(dir, "workspace.pnpm-lock.yaml")
+      File.write(lockfile, "{\n}\n")
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "pnpm-lock",
+          version: "1.0.0",
+          source: "pnpm",
+          deps: ["glob"],
+        )
+      ]
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: entries
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "workspace.nix"))
+      assert_includes project_contents, "projectRoot = ../.;"
+      assert_includes project_contents, "lockfile = ../workspace.pnpm-lock.yaml;"
+    end
+  end
+
+  def test_generate_projects_include_pnpm_deps_hash
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "pnpm-lock",
+          version: "1.0.0",
+          source: "pnpm",
+          deps: ["glob"],
+        ),
+      ]
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: entries
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "workspace.nix"))
+      assert_includes project_contents, %(pnpmDepsHash = "sha256-dummy";)
+    end
+  end
+
+
+  def test_generate_keeps_installer_namespaces_for_similar_names
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "ruby",
+          name: "shared",
+          version: "1.0.0",
+          source: "rubygems",
+          remote: "https://rubygems.org",
+          deps: [],
+        ),
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "shared",
+          version: "1.0.0",
+          source: "pnpm",
+          deps: [],
+        ),
+      ]
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "both.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: entries,
+      )
+
+      command = @command
+      def command.nix_prefetch_url(_)
+        "sha256-dummy"
+      end
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      assert File.exist?(File.join(dir, "nix", "ruby", "shared.nix"))
+      assert File.exist?(File.join(dir, "nix", "node", "shared.nix"))
+    end
+  end
+
+  def test_check_reports_node_packages_as_complete_when_node_file_exists
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+      node_nix_dir = File.join(dir, "nix", "node")
+      FileUtils.mkdir_p(node_nix_dir)
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "vite",
+          version: "5.0.0",
+          source: "pnpm",
+          deps: ["esbuild"],
+        )
+      ]
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "vite.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: entries,
+      )
+
+      File.write(File.join(node_nix_dir, "vite.nix"), "# generated node file\n{}\n")
+
+      @checker.instance_variable_set(:@project, StubProject.new(dir))
+      ok, message = @checker.send(:check_packageset_complete)
+      assert ok
+      assert_equal "1 packages all have generated files", message
+    end
+  end
+
+  def test_generate_respects_script_policy_and_cli_override
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "vite",
+          version: "5.0.0",
+          source: "pnpm",
+          deps: ["esbuild"],
+        ),
+      ]
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "vite.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: [], script_policy: "allowed"),
+        entries: entries,
+      )
+
+      Dir.chdir(dir) do
+        @command.run(["--scripts", "none"])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "vite.nix"))
+      assert_includes project_contents, %(scriptPolicy = "none";)
+
+      FileUtils.rm_rf(File.join(dir, "nix"))
+      Dir.chdir(dir) do
+        @command.run(["--scripts", "all"])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "vite.nix"))
+      assert_includes project_contents, %(scriptPolicy = "all";)
+    end
+  end
+
+  def test_generated_artifacts_do_not_contain_registry_tokens
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "vite",
+          version: "5.0.0",
+          source: "pnpm",
+          deps: ["esbuild"],
+        ),
+      ]
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "vite.jsonl"),
+        meta: Onix::Packageset::Meta.new(
+          ruby: nil,
+          bundler: nil,
+          platforms: [],
+          package_manager: "pnpm@10.0.0",
+          script_policy: "all",
+        ),
+        entries: entries
+      )
+
+      with_token = ENV["NPM_TOKEN"]
+      ENV["NPM_TOKEN"] = "secret-token"
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+      ENV["NPM_TOKEN"] = with_token
+
+      contents = File.read(File.join(dir, "nix", "vite.nix"))
+      refute_includes contents, "secret-token"
+      refute_includes contents, "NPM_TOKEN"
+    ensure
+      ENV["NPM_TOKEN"] = with_token
+    end
+  end
+
+  def test_generated_node_builder_has_non_offline_install_command
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      entries = [
+        Onix::Packageset::Entry.new(
+          installer: "node",
+          name: "vite",
+          version: "5.0.0",
+          source: "pnpm",
+          deps: ["esbuild"],
+        ),
+      ]
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "vite.jsonl"),
+        meta: Onix::Packageset::Meta.new(
+          ruby: nil,
+          bundler: nil,
+          platforms: [],
+          package_manager: "pnpm@10.0.0",
+          script_policy: "allowed",
+        ),
+        entries: entries,
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      build_nix = File.read(File.join(dir, "nix", "build-node-modules.nix"))
+      assert_includes build_nix, "pnpm config set manage-package-manager-versions false"
+      refute_includes build_nix, "--offline"
+      assert_includes build_nix, "pnpm install --force"
+
+      project_nix = File.read(File.join(dir, "nix", "vite.nix"))
+      assert_includes project_nix, "scriptPolicy = \"allowed\";"
+    end
+  end
+
+  def test_sort_versions_uses_stable_fallback_for_non_semver_versions
+    versions = [
+      Onix::Packageset::Entry.new(installer: "node", name: "foo", version: "abc", source: "pnpm"),
+      Onix::Packageset::Entry.new(installer: "node", name: "foo", version: "1.0.0", source: "pnpm"),
+      Onix::Packageset::Entry.new(installer: "node", name: "foo", version: "02", source: "pnpm"),
+    ].shuffle
+
+    sorted = @command.send(:sort_versions, versions)
+    version_order = sorted.map(&:version)
+
+    assert_equal %w[1.0.0 02 abc], version_order
+  end
+
+  def test_extract_pnpm_fetch_hash_from_nix_output
+    out = <<~OUTPUT
+      warning: ignoring configure script in ...
+      error: hash mismatch in fixed-output derivation '/nix/store/...':
+      wanted: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      got: sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb=
+    OUTPUT
+
+    hash = @command.send(:extract_pnpm_fetch_hash, out)
+    assert_equal "sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb=", hash
+  end
+
+  def test_prefetch_pnpm_deps_hash_returns_nil_when_lockfile_missing
+    command = Onix::Commands::Generate.new
+    assert_nil command.send(:prefetch_pnpm_deps_hash, "missing", nil)
+  end
+
+  def test_prefetch_pnpm_deps_hash_parses_hash_from_nix_output
+    command = Onix::Commands::Generate.new
+    Dir.mktmpdir do |dir|
+      lockfile = File.join(dir, "pnpm-lock.yaml")
+      File.write(lockfile, "lockfileVersion: '9.0'\n")
+
+      command.define_singleton_method(:find_pnpm_lockfile) { |_| lockfile }
+
+      Open3.stub(:capture3, ->(*) do
+        [
+          "",
+          "error: hash mismatch: wanted: sha256-AAAAAAAA... got: sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb=\n",
+          Struct.new(:success?).new(false),
+        ]
+      end) do
+        result = command.send(:prefetch_pnpm_deps_hash, "workspace", nil)
+        assert_equal "sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb=", result
+      end
+    end
+  end
+end
+end

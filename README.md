@@ -1,6 +1,6 @@
 # onix
 
-Hermetic Ruby packages from `Gemfile.lock`. Import a lockfile, build every gem once, cache forever.
+Hermetic Ruby and pnpm packages from `Gemfile.lock` / `pnpm-lock.yaml`. Import a lockfile, generate deterministic Nix derivations, and build once for cache reuse.
 
 ```
 $ onix import ~/src/rails     # parse Gemfile.lock → packagesets/rails.jsonl
@@ -14,7 +14,7 @@ Bundler solves dependency resolution but not hermetic builds. Nix solves hermeti
 
 - **Lockfile in, nix derivations out.** Your existing `Gemfile.lock` becomes the source of truth.
 - **System libraries only.** Native extensions link against nixpkgs — no vendored copies of openssl, libxml2, sqlite, etc.
-- **One derivation per gem.** Individually cacheable, parallel builds, content-addressed store paths.
+- **One derivation per package family.** Ruby gems and node_modules builds are individually cacheable and content-addressed.
 - **Build once, cache forever.** Same lockfile + same nixpkgs = same store paths. CI and dev share the cache.
 
 ## Install
@@ -40,10 +40,12 @@ Creates the directory structure: `packagesets/`, `overlays/`, `nix/ruby/`.
 
 ```bash
 onix import ~/src/myapp              # reads myapp/Gemfile.lock
+onix import --installer pnpm ~/src/my-app # reads myapp/pnpm-lock.yaml
 onix import --name blog Gemfile.lock # explicit name
 ```
 
-Parses the lockfile and writes a hermetic JSONL packageset to `packagesets/<name>.jsonl`. For git-sourced gems, clones the repo to discover monorepo subdirectories.
+Parses the lockfile and writes a hermetic JSONL packageset to `packagesets/<name>.jsonl`.
+For pnpm projects, entries are marked with `installer: "node"` and consumed by a separate node derivation pipeline.
 
 ### 3. Generate nix derivations
 
@@ -52,10 +54,12 @@ onix generate        # default: 20 parallel prefetch jobs
 onix generate -j 8   # fewer jobs
 ```
 
-Prefetches SHA256 hashes for all gems via `nix-prefetch-url` and `nix-prefetch-git`, then writes:
+Prefetches hashes for Ruby deps via `nix-prefetch-url`/`nix-prefetch-git`, then writes:
 - `nix/ruby/<name>.nix` — one file per gem with all versions and hashes
+- `nix/node/<name>.nix` — one file per node package/version set
 - `nix/<project>.nix` — per-project gem selection, bundlePath, and devShell
 - `nix/build-gem.nix` — wrapper around nixpkgs `buildRubyGem`
+- `nix/build-node-modules.nix` — materializes `node_modules` with offline pnpm install
 - `nix/gem-config.nix` — overlay loader
 
 ### 4. Build
@@ -64,8 +68,11 @@ Prefetches SHA256 hashes for all gems via `nix-prefetch-url` and `nix-prefetch-g
 onix build                    # build all projects
 onix build myapp              # build all gems for one project
 onix build myapp nokogiri     # build a single gem
+onix build myapp node          # build root node_modules for the project
 onix build -k                 # keep going past failures
 ```
+
+For node projects, `onix build` also hydrates `./node_modules` using `rsync --delete`. A fast-path sentinel is stored in `.node_modules_id`.
 
 Pipes through [nix-output-monitor](https://github.com/maralorn/nix-output-monitor) when available. On failure, tells you exactly what to do:
 
@@ -81,6 +88,53 @@ onix check
 ```
 
 Runs `nix-eval`, `packageset-complete`, and `secrets` checks in parallel.
+
+### 6. pnpm Pilot (Vite)
+
+Use this as a concrete phase-1 validation path:
+
+```bash
+export ONIX_PILOT_PATH=/Users/vsumner/src/github.com/vitejs/vite
+cd "$ONIX_PILOT_PATH"
+
+# one-time setup
+onix import .
+onix generate
+onix build vite
+```
+
+Hydration repeatability check:
+
+```bash
+rm -rf node_modules .node_modules_id
+time onix build vite
+
+# second pass should be a fast no-op when derived path is unchanged
+time onix build vite
+```
+
+Expected:
+
+- `node_modules` exists in workspace with `node_modules/.pnpm` populated.
+- `.node_modules_id` contains the source store path.
+- second run should emit `node_modules unchanged` and avoid re-copying files.
+
+Use the helper script (creates markdown-friendly timing output):
+
+```bash
+scripts/pilot-pnpm-onix.sh "$ONIX_PILOT_PATH"
+```
+
+### 7. Automated pilot script
+
+`scripts/pilot-pnpm-onix.sh` performs:
+
+- lockfile and git preflight checks,
+- import/generate/build,
+- first hydration timing,
+- second no-op hydration timing,
+- `.node_modules_id` delta check,
+- minimal secret-surface scan.
 
 ## Using built packages
 
@@ -192,6 +246,8 @@ my-packages/
     ├── ruby/          # Per-gem derivations
     ├── rails.nix      # Per-project entry point
     ├── build-gem.nix
+    ├── build-node-modules.nix
+    ├── node/          # Per-node package metadata
     └── gem-config.nix
 ```
 
@@ -200,6 +256,6 @@ my-packages/
 - **Nix-native fetch.** `generate` prefetches hashes; `build` uses `fetchurl`/`builtins.fetchGit`. No local cache.
 - **System libraries only.** Native extensions link against nixpkgs. Vendored copies are replaced.
 - **Lockfile is truth.** Packagesets are hermetic JSONL parsed once during import.
-- **One derivation per gem.** Individually cacheable, parallel, content-addressed.
+- **One derivation per package set.** Ruby gems and project-level node_modules are cached separately and re-used across builds.
 - **Overlays win.** Manual overrides always take precedence over auto-detection.
 - **Parameterized runtime.** `ruby` flows through every derivation — one argument changes the whole build.

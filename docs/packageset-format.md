@@ -12,12 +12,13 @@ packagesets/<project>.jsonl
 
 **Line 1: metadata**
 ```json
-{"_meta":true,"ruby":"3.4.8","bundler":"2.6.5","platforms":["arm64-darwin","ruby"]}
+{"_meta":true,"ruby":"3.4.8","bundler":"2.6.5","platforms":["arm64-darwin","ruby"],"package_manager":"pnpm@10.0.0","script_policy":"none"}
 ```
 
 **Line 2+: one entry per package**
 ```json
 {"installer":"ruby","name":"rack","version":"3.1.12","source":"rubygems","remote":"https://rubygems.org","deps":["webrick"]}
+{"installer":"node","name":"rimraf","version":"2.7.1","source":"pnpm","deps":["glob"]}
 ```
 
 ## Source types
@@ -71,11 +72,41 @@ for completeness but skipped during nix generation.
 Stdlib gems are built into the Ruby binary. They're skipped during nix
 generation — Ruby already provides them.
 
+### `pnpm` — from a pnpm lockfile
+
+```json
+{"installer":"node","name":"rimraf","version":"2.7.1","source":"pnpm","deps":["glob"]}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `deps` | no | Runtime dependency names |
+| `groups` | no | Dependency scope defaults to `default` |
+| `path` | no | Used for `link:` / `file:` dependencies |
+| `source` | no | One of `pnpm`, `link`, `file` |
+| `version` | yes | Raw value from lockfile, including peer suffixes when present (e.g. `1.0.0(peer@2.0.0)`) |
+`_meta` can also include:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `package_manager` | no | e.g. `pnpm@10.0.0` from `package.json` |
+| `script_policy` | no | One of `none` (default), `allowed` (workspace allowlist present), `all` (explicit CLI override) |
+
+### Node-specific notes
+
+- `installer: "node"` entries are consumed by the generated `nix/build-node-modules.nix` pipeline.
+- `version` values are preserved verbatim for deterministic peer-suffix keying.
+- `source: "link"` / `source: "file"` entries carry lockfile path targets in `path`.
+- `script_policy` is applied in generated node install phase as either `--ignore-scripts` (`none`) or default pnpm behavior (`allowed`/`all`).
+
 ## The `installer` field
 
-Every entry has `"installer":"ruby"`. This identifies which build system
-handles the package. The generate step uses it to select the right builder
-(`build-gem.nix` for Ruby).
+Each entry uses one of these values:
+
+- `"ruby"` — handled by `build-gem.nix` in the Ruby pipeline.
+- `"node"` — handled by node derivations introduced for pnpm.
+
+`generate` selects the right builder from this field.
 
 ## Design principles
 

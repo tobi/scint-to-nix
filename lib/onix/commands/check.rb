@@ -103,7 +103,7 @@ module Onix
       end
 
       # ── packageset-complete ──────────────────────────────────────
-      # Every buildable gem in each packageset has a corresponding nix/ruby/<name>.nix
+      # Every buildable package in each packageset has a generated file.
 
       def check_packageset_complete
         packagesets = Dir.glob(File.join(@project.packagesets_dir, "*.jsonl"))
@@ -117,7 +117,8 @@ module Onix
           entries.each do |e|
             next if e.source == "stdlib" || e.source == "path"
             total += 1
-            nix_file = File.join(@project.ruby_dir, "#{e.name}.nix")
+            base_dir = e.installer == "node" ? @project.node_dir : @project.ruby_dir
+            nix_file = File.join(base_dir, "#{e.name}.nix")
             unless File.exist?(nix_file)
               missing << e.name
             end
@@ -126,9 +127,9 @@ module Onix
 
         if missing.any?
           sample = missing.uniq.first(10).join(", ")
-          [false, "#{missing.uniq.size} gems missing from nix/ruby/ — run `onix generate`\n  #{sample}"]
+          [false, "#{missing.uniq.size} packages missing from generated files — run `onix generate`\n  #{sample}"]
         else
-          [true, "#{total} gems all have nix files"]
+          [true, "#{total} packages all have generated files"]
         end
       end
 

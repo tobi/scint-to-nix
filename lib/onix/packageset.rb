@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "set"
 
 module Onix
   # A packageset is a JSONL file describing every package needed for a project.
@@ -66,9 +67,16 @@ module Onix
       end
     end
 
-    Meta = Struct.new(:ruby, :bundler, :platforms, keyword_init: true) do
+    Meta = Struct.new(:ruby, :bundler, :platforms, :package_manager, :script_policy, keyword_init: true) do
       def to_jsonl
-        JSON.generate({ _meta: true, ruby: ruby, bundler: bundler, platforms: platforms })
+        JSON.generate(
+          _meta: true,
+          ruby: ruby,
+          bundler: bundler,
+          platforms: platforms,
+          package_manager: package_manager,
+          script_policy: script_policy,
+        )
       end
     end
 
@@ -96,6 +104,8 @@ module Onix
             ruby: data[:ruby],
             bundler: data[:bundler],
             platforms: data[:platforms] || [],
+            package_manager: data[:package_manager],
+            script_policy: data[:script_policy],
           )
         else
           entries << Entry.new(

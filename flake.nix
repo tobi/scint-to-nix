@@ -13,6 +13,20 @@
     let
       supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+      shellToolset = system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          ruby = pkgs.ruby;
+        in
+        [
+          ruby
+          pkgs.bundler
+          pkgs.git
+          pkgs.nix-prefetch-git
+          pkgs.nodejs
+          pkgs.pnpm
+          pkgs.rsync
+        ];
     in
     {
       packages = forAllSystems (system:
@@ -45,6 +59,22 @@
                   pkgs.nix-prefetch-git
                 ]}" \
                 --add-flags "$out/exe/onix"
+            '';
+          };
+        }
+      );
+
+      devShells = forAllSystems (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = pkgs.mkShell {
+            name = "onix-dev";
+            packages = shellToolset system;
+            shellHook = ''
+              # Keep dependencies local during development.
+              export BUNDLE_PATH="$PWD/.bundle"
             '';
           };
         }
