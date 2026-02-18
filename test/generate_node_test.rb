@@ -505,5 +505,38 @@ class GenerateNodeTest < Minitest::Test
       end
     end
   end
+
+  def test_pnpm_prefetch_env_forwards_tls_values_and_tokens
+    Dir.mktmpdir do |dir|
+      lockfile = File.join(dir, "pnpm-lock.yaml")
+      File.write(lockfile, "lockfileVersion: '9.0'\n")
+
+      command = Onix::Commands::Generate.new
+      command.instance_variable_set(:@project, Struct.new(:root).new(dir))
+
+      token = ENV["NPM_TOKEN"]
+      ENV["NPM_TOKEN"] = "token"
+      ENV["SSL_CERT_FILE"] = "/tmp/ca.pem"
+      ENV["NODE_EXTRA_CA_CERTS"] = "/tmp/node-extra-ca.pem"
+
+      env = command.send(:pnpm_prefetch_env, lockfile)
+      assert_equal "/tmp/ca.pem", env["SSL_CERT_FILE"]
+      assert_equal "/tmp/node-extra-ca.pem", env["NODE_EXTRA_CA_CERTS"]
+      assert_includes(env["ONIX_NPM_TOKEN_LINES"], "token")
+    ensure
+      ENV["NPM_TOKEN"] = token
+      ENV.delete("SSL_CERT_FILE")
+      ENV.delete("NODE_EXTRA_CA_CERTS")
+    end
+  end
+
+  def test_pnpm_prefetch_npmrc_expr_sets_ca_defaults
+    output = @command.send(:pnpm_prefetch_npmrc_expr)
+
+    assert_includes output, "SSL_CERT_FILE"
+    assert_includes output, "NODE_EXTRA_CA_CERTS"
+    assert_includes output, "NPM_CONFIG_CAFILE"
+    assert_includes output, "ONIX_NPM_TOKEN_LINES"
+  end
 end
 end

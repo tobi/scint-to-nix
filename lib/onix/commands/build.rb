@@ -227,6 +227,7 @@ module Onix
 
       def hydrate_node_modules(store_path, skip_if_unchanged: false)
         source = File.join(store_path, "node_modules")
+        id = node_modules_id(store_path)
         target = File.join(@project.root, "node_modules")
         id_file = File.join(@project.root, ".node_modules_id")
 
@@ -238,7 +239,7 @@ module Onix
 
         FileUtils.mkdir_p(File.dirname(id_file))
 
-        if skip_if_unchanged && File.exist?(id_file) && File.read(id_file).strip == store_path
+        if skip_if_unchanged && File.exist?(id_file) && File.read(id_file).strip == id
           UI.info "node_modules unchanged"
           return
         end
@@ -259,8 +260,15 @@ module Onix
           entries.each { |entry| FileUtils.cp_r(entry, target, preserve: true) }
         end
 
-        File.write(id_file, store_path)
+        FileUtils.chmod_R(0o755, target)
+        File.write(id_file, id)
         UI.done "hydrated node_modules from #{store_path}"
+      end
+
+      def node_modules_id(store_path)
+        marker = File.join(store_path, ".node_modules_id")
+        return File.read(marker).strip if File.exist?(marker)
+        store_path
       end
 
       def rsync_available?

@@ -1,4 +1,4 @@
-{ pkgs, lib, nodePackages, project, lockfile, projectRoot, scriptPolicy ? "none", packageManager ? null, pnpmDepsHash ? "", pnpmWorkspaces ? [ "." ] }:
+{ pkgs, lib, nodePackages, project, lockfile, projectRoot, scriptPolicy ? "none", packageManager ? null, pnpmDepsHash ? "", pnpmWorkspaces ? [ ], workspacePaths ? [ ] }:
 
 let
   safeProject = lib.replaceStrings [ "/" ":" "@" ] [ "_" "_" "_" ] (if project != null then project else "project");
@@ -19,7 +19,7 @@ let
       pnpm config set update-notifier false
     '';
     pnpmInstallFlags = [ "--force" ];
-    pnpmWorkspaces = [ "." ];
+    pnpmWorkspaces = pnpmWorkspaces;
   };
 
 in
@@ -45,7 +45,19 @@ pkgs.stdenv.mkDerivation {
     export HOME="$TMPDIR/pnpm-home"
     export NPM_CONFIG_USERCONFIG="$TMPDIR/onix-npmrc"
     export STORE_PATH="$TMPDIR/pnpm-store"
+    export NODE_PATH=""
     mkdir -p "$HOME" "$STORE_PATH"
+
+    ca_file="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+    if [ -z "''${SSL_CERT_FILE:-}" ] || [ ! -f "''${SSL_CERT_FILE:-}" ]; then
+      export SSL_CERT_FILE="$ca_file"
+    fi
+    if [ -z "''${NODE_EXTRA_CA_CERTS:-}" ] || [ ! -f "''${NODE_EXTRA_CA_CERTS:-}" ]; then
+      export NODE_EXTRA_CA_CERTS="$ca_file"
+    fi
+    if [ -f "$SSL_CERT_FILE" ]; then
+      export NPM_CONFIG_CAFILE="$SSL_CERT_FILE"
+    fi
 
     # Preserve project-local npmrc if present (e.g. registry mirror config).
     if [ -f .npmrc ]; then
@@ -88,9 +100,19 @@ pkgs.stdenv.mkDerivation {
     fi
 
     patchShebangs node_modules/{*,.*}
+    if [ -n "${lib.concatStringsSep " " (map lib.escapeShellArg workspacePaths)}" ]; then
+      mkdir -p "$out"
+      for rel in ${lib.concatStringsSep " " (map lib.escapeShellArg workspacePaths)}; do
+        if [ -e "$PWD/$rel" ]; then
+          mkdir -p "$out/$(dirname "$rel")"
+          cp -a "$PWD/$rel" "$out/$rel"
+        fi
+      done
+    fi
 
     mkdir -p "$out/node_modules"
     cp -a node_modules/. "$out/node_modules/"
+    echo "${pnpmDepsHash}/${project}/${scriptPolicy}" > "$out/.node_modules_id"
 
     runHook postInstall
   '';
