@@ -385,6 +385,49 @@ This prints a compact markdown-ish section with timestamps, durations, and `.nod
 - Copy/rsync mode is mandatory for ESM compatibility; symlink mode is intentionally not used in phase-1.
 - If pilot data indicates slow first-run times, focus on `nix-build` cache health and upstream lockfile drift before changing onix behavior.
 
+## Phase 6: Node Overlay + Codegen Parity (Planned)
+
+Intent:
+- Move pnpm support from lifecycle-script policy control toward onix-native build behavior encoded in generated Nix and explicit overlays.
+
+Scope:
+- Keep workspace-root phase-1 scope.
+- Keep copy/rsync hydration only (no symlink mode).
+- Keep private-registry behavior ephemeral and non-persistent.
+
+Tasks:
+- [ ] Tighten script policy surface:
+  - deprecate/remove `--scripts=all`
+  - keep `none|allowed` only
+  - preserve default `allowed`, fallback `none`
+- [ ] Define node overlay contract (parallel to Ruby overlays):
+  - location: `overlays/node/<package>.nix`
+  - support deps/build tools/env/hooks for known script-heavy/native packages
+  - ensure overlays are deterministic and never receive secrets in generated files
+- [ ] Add node codegen inference in `onix generate`:
+  - infer known build deps/flags from lock/package metadata where deterministic
+  - emit inferred requirements directly in generated Nix when possible
+  - reserve overlays for non-inferable cases
+- [ ] Add node hardening checks in `onix check`:
+  - node completeness and render-validity checks
+  - node secret-surface checks over `packagesets/**`, `nix/**`, and logs
+- [ ] Add integration tests:
+  - script policy behavior (`none` vs `allowed`) without `all`
+  - overlay application path for one fixture package
+  - no-op second hydration assertion with stable sentinel
+
+Acceptance:
+- Node builds for known script-heavy/native packages are handled by generated Nix + overlay contract, not broad lifecycle-script enablement.
+- Script policy surface is reduced to `none|allowed`.
+- Node checks fail fast with actionable errors when overlay/codegen support is missing.
+- Private-registry credentials remain absent from persisted artifacts.
+
+Phase 6 Exit Checklist:
+- [ ] Separation of concerns verified.
+- [ ] KISS constraints respected.
+- [ ] DRY opportunities justified or intentionally deferred.
+- [ ] Systems flow and secret-surface checks passed.
+
 ## Definition of Done
 
 - pnpm workflow works end-to-end for workspace root projects.
