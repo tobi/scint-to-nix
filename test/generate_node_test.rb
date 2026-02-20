@@ -173,6 +173,48 @@ class GenerateNodeTest < Minitest::Test
     end
   end
 
+  def test_generate_normalizes_link_paths_relative_to_importer_paths
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: [
+          Onix::Packageset::Entry.new(
+            installer: "node",
+            name: "pkg-a",
+            version: "link:../../packages/prysk",
+            source: "link",
+            importer: "turborepo-tests/helpers",
+            path: "../../packages/prysk",
+            deps: [],
+          ),
+          Onix::Packageset::Entry.new(
+            installer: "node",
+            name: "pkg-b",
+            version: "link:../turbo-workspaces",
+            source: "link",
+            importer: "packages/turbo-codemod",
+            path: "../turbo-workspaces",
+            deps: [],
+          ),
+        ]
+      )
+
+      Dir.chdir(dir) do
+        @command.run([])
+      end
+
+      project_contents = File.read(File.join(dir, "nix", "workspace.nix"))
+      assert_includes project_contents, 'workspacePaths = [ "packages/prysk" "packages/turbo-codemod" "packages/turbo-workspaces" "turborepo-tests/helpers" ];'
+      workspace_line = project_contents.lines.find { |line| line.include?("workspacePaths = [") }
+      refute_nil workspace_line
+      refute_match(%r{\.\./}, workspace_line)
+    end
+  end
+
   def test_sort_versions_keeps_non_semver_in_input_order
     entries = [
       Onix::Packageset::Entry.new(installer: "node", name: "pkg", version: "file:../b", source: "file"),
@@ -812,7 +854,8 @@ class GenerateNodeTest < Minitest::Test
     assert_includes build_node_modules_nix, "ignoredSourcePrefixes"
     assert_includes build_node_modules_nix, "node_modules"
     assert_includes build_node_modules_nix, ".node_modules_id"
-    assert_includes build_node_modules_nix, 'abs_path="$(cd "$PWD/$rel" 2>/dev/null && pwd)"'
+    assert_includes build_node_modules_nix, 'if ! abs_path="$(cd "$PWD/$rel" 2>/dev/null && pwd)"; then'
+    assert_includes build_node_modules_nix, "Skipping workspace path that resolves to empty: $rel"
     assert_includes build_node_modules_nix, "case \"$abs_path\" in"
     assert_includes build_node_modules_nix, "Skipping workspace path outside project root: $rel"
   end

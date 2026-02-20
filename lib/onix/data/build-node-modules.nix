@@ -296,9 +296,12 @@ pkgs.stdenv.mkDerivation {
     if [ -n "${lib.concatStringsSep " " (map lib.escapeShellArg workspacePaths)}" ]; then
       mkdir -p "$out"
       for rel in ${lib.concatStringsSep " " (map lib.escapeShellArg workspacePaths)}; do
-        abs_path="$(cd "$PWD/$rel" 2>/dev/null && pwd)"
-        if [ -z "$abs_path" ]; then
+        if ! abs_path="$(cd "$PWD/$rel" 2>/dev/null && pwd)"; then
           echo "Skipping workspace path that does not exist: $rel" >&2
+          continue
+        fi
+        if [ -z "$abs_path" ]; then
+          echo "Skipping workspace path that resolves to empty: $rel" >&2
           continue
         fi
         case "$abs_path" in
