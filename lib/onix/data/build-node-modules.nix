@@ -215,6 +215,7 @@ pkgs.stdenv.mkDerivation {
   version = "0";
 
   src = normalizedProjectRoot;
+  dontPatchELF = !pkgs.stdenv.hostPlatform.isLinux;
 
   nativeBuildInputs = [
     pkgs.nodejs

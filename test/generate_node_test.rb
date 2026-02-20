@@ -987,6 +987,7 @@ class GenerateNodeTest < Minitest::Test
     assert_includes build_node_modules_nix, "onix-pnpm-deps-node${toString nodeMajor}-pnpm${toString pnpmMajor}"
     refute_includes build_node_modules_nix, "onix-${safeProject}-pnpm-deps"
     assert_includes build_node_modules_nix, "artifactIdentity"
+    assert_includes build_node_modules_nix, "dontPatchELF = !pkgs.stdenv.hostPlatform.isLinux;"
     assert_includes build_node_modules_nix, "pnpmPackage ="
     assert_includes build_node_modules_nix, "pkgs.pnpm_9 or pkgs.pnpm"
     assert_includes build_node_modules_nix, "pnpm = pnpmPackage;"
