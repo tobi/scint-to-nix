@@ -71,7 +71,10 @@ module Onix
       def enforce_manager_compatible_with(lockfile_version, allow_patch_drift: false)
         patch_drift_override_used = false
 
-        if pnpm_engine && pnpm_engine_exact_version.nil?
+        # When packageManager provides an exact version (e.g. "pnpm@10.17.0"),
+        # a range in engines.pnpm (e.g. "^10") is acceptable — it's just a
+        # compatibility constraint, not the version source of truth.
+        if pnpm_engine && pnpm_engine_exact_version.nil? && package_manager_version.nil?
           raise ArgumentError,
                 "engines.pnpm must pin an exact version (for example 9.6.0); got #{pnpm_engine.inspect}"
         end

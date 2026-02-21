@@ -187,11 +187,12 @@ let
   baseInstallFlags = if isScriptless then [ "--ignore-scripts" ] else [ ];
   installFlags = lib.unique (baseInstallFlags ++ nodeInstallFlags);
   workspaceFilters = map (w: "--filter=${w}") pnpmWorkspaces;
-  pnpmDeps = pkgs.fetchPnpmDeps {
+  fetchPnpmDeps =
+    if pkgs ? fetchPnpmDeps then pkgs.fetchPnpmDeps
+    else pnpmPackage.fetchDeps;
+  pnpmDeps = fetchPnpmDeps {
     pname = "onix-pnpm-deps-node${toString nodeMajor}-pnpm${toString pnpmMajor}";
-    version = "0";
     src = normalizedSourceRoot;
-    pnpm = pnpmPackage;
     fetcherVersion = 3;
     hash = pnpmDepsHash;
     prePnpmInstall = ''
@@ -199,7 +200,7 @@ let
       pnpm config set side-effects-cache false
       pnpm config set update-notifier false
       pnpm config set manage-package-manager-versions false
-      pnpm config set engine-strict true
+      pnpm config set engine-strict false
     ''
     + nodePreBuild
     + nodePostBuild;
@@ -272,7 +273,7 @@ pkgs.stdenv.mkDerivation {
     pnpm config set side-effects-cache false
     pnpm config set update-notifier false
     pnpm config set manage-package-manager-versions false
-    pnpm config set engine-strict true
+    pnpm config set engine-strict false
 
     ${
       if customBuildPhase == null then

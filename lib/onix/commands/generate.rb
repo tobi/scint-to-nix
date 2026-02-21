@@ -406,12 +406,13 @@ module Onix
               else if pnpmMajor == 9 then pkgs.pnpm_9 or pkgs.pnpm
               else if pnpmMajor == 10 then pkgs.pnpm_10 or pkgs.pnpm
               else throw "Unsupported pnpm major ${toString pnpmMajor}; supported majors: 8, 9, 10";
+            fetchPnpmDeps =
+              if pkgs ? fetchPnpmDeps then pkgs.fetchPnpmDeps
+              else pnpmPackage.fetchDeps;
           in
-          pkgs.fetchPnpmDeps {
+          fetchPnpmDeps {
             pname = #{nix_str("onix-#{project_name}-pnpm-deps")};
-            version = "0";
             src = prefetchSrc;
-            pnpm = pnpmPackage;
             fetcherVersion = 3;
             hash = pkgs.lib.fakeHash;
             prePnpmInstall = ''
@@ -420,7 +421,7 @@ module Onix
               pnpm config set side-effects-cache false
               pnpm config set update-notifier false
               pnpm config set manage-package-manager-versions false
-              pnpm config set engine-strict true
+              pnpm config set engine-strict false
             '';
             pnpmInstallFlags = [ ];
             pnpmWorkspaces = [ ];
