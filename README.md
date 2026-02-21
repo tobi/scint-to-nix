@@ -52,11 +52,20 @@ Creates the directory structure: `packagesets/`, `overlays/`, `nix/ruby/`.
 ```bash
 onix import ~/src/myapp              # reads myapp/Gemfile.lock
 onix import --installer pnpm ~/src/my-app # reads myapp/pnpm-lock.yaml
+onix import --installer pnpm --allow-pnpm-patch-drift ~/src/my-app
 onix import --name blog Gemfile.lock # explicit name
 ```
 
 Parses the lockfile and writes a hermetic JSONL packageset to `packagesets/<name>.jsonl`.
 For pnpm projects, entries are marked with `installer: "node"` and consumed by a separate node derivation pipeline.
+
+pnpm policy is strict by default:
+- `engines.pnpm` must be exact (for example `9.6.0`).
+- exact `engines.pnpm` must match `packageManager` exactly.
+- lockfile major compatibility is still enforced.
+
+Use `--allow-pnpm-patch-drift` only to allow exact same-major patch drift between `engines.pnpm` and `packageManager`.
+Major mismatches still fail, and non-exact `engines.pnpm` still fail.
 
 ### 3. Generate nix derivations
 
@@ -74,6 +83,9 @@ Prefetches hashes for Ruby deps via `nix-prefetch-url`/`nix-prefetch-git`, then 
 - `nix/build-node-modules.nix` — materializes `node_modules` with offline pnpm install
 - `nix/gem-config.nix` — overlay loader
 - `nix/node-config.nix` — node overlay loader
+
+For Node workspaces, `generate` also validates required `link:` dependencies early.
+If a required link target does not resolve inside the project root or does not exist, `generate` fails with importer/path diagnostics before any long Nix build.
 
 ### 4. Build
 
@@ -96,6 +108,9 @@ onix hydrate myapp
 ```
 
 Hydration stores a fast-path marker at `TARGET/.onix_node_modules_id`.
+On warm cache, hydrate evaluates `nodeModulesIdentity` from generated project Nix first:
+- if marker matches and `TARGET/node_modules` exists, hydrate exits early without running `nix-build`;
+- `--force` bypasses this check and always rebuilds/hydrates.
 
 Pipes through [nix-output-monitor](https://github.com/maralorn/nix-output-monitor) when available. On failure, tells you exactly what to do:
 
@@ -158,7 +173,7 @@ time onix hydrate vite "$ONIX_PILOT_PATH"
 Expected:
 
 - `node_modules` exists in workspace with `node_modules/.pnpm` populated.
-- `.onix_node_modules_id` in the target workspace contains the source store path.
+- `.onix_node_modules_id` in the target workspace contains the node artifact identity.
 - second run should emit `node_modules unchanged` and avoid re-copying files.
 
 Use the helper script (creates markdown-friendly timing output):

@@ -10,6 +10,7 @@ require "tmpdir"
 require_relative "../pnpm/lockfile"
 require_relative "../pnpm/project_config"
 require_relative "../packageset"
+require_relative "../project"
 
 module Onix
   module Commands
@@ -23,19 +24,21 @@ module Onix
         @project = Project.new
         name_override = nil
         installer_override = nil
+        @allow_pnpm_patch_drift = false
 
         while argv.first&.start_with?("-")
           case argv.shift
           when "--name", "-n" then name_override = argv.shift
           when "--installer", "-i" then installer_override = argv.shift
+          when "--allow-pnpm-patch-drift" then @allow_pnpm_patch_drift = true
           when "--help", "-h"
-            $stderr.puts "Usage: onix import [--installer ruby|pnpm] [--name NAME] <path/to/Gemfile.lock|pnpm-lock.yaml|project>"
+            $stderr.puts "Usage: onix import [--installer ruby|pnpm] [--name NAME] [--allow-pnpm-patch-drift] <path/to/Gemfile.lock|pnpm-lock.yaml|project>"
             exit 0
           end
         end
 
         if argv.empty?
-          $stderr.puts "Usage: onix import [--installer ruby|pnpm] [--name NAME] <path/to/Gemfile.lock|pnpm-lock.yaml|project>"
+          $stderr.puts "Usage: onix import [--installer ruby|pnpm] [--name NAME] [--allow-pnpm-patch-drift] <path/to/Gemfile.lock|pnpm-lock.yaml|project>"
           exit 1
         end
 
@@ -89,7 +92,7 @@ module Onix
             lockfile = path
             installer = "ruby" unless installer
           else
-            if filename.match?(%r{\A.+\.pnpm-lock\.ya?ml\z})
+            if pnpm_lockfile_name?(filename)
               lockfile = path
               installer = "pnpm" unless installer
             elsif File.exist?(path)
@@ -132,10 +135,25 @@ module Onix
         nil
       end
 
+      def pnpm_lockfile_name?(filename)
+        filename == "pnpm-lock.yaml" ||
+          filename == "pnpm-lock.yml" ||
+          filename.match?(%r{\A.+\.pnpm-lock\.ya?ml\z})
+      end
+
       def import_pnpm(lockfile, project_name)
         lockdata = Pnpm::Lockfile.parse(lockfile)
         project_config = Pnpm::ProjectConfig.new(File.dirname(lockfile))
-        project_config.enforce_manager_compatible_with(lockdata.lockfile_version)
+        patch_drift_override_used = project_config.enforce_manager_compatible_with(
+          lockdata.lockfile_version,
+          allow_patch_drift: @allow_pnpm_patch_drift,
+        )
+        if patch_drift_override_used
+          UI.warn(
+            "--allow-pnpm-patch-drift: engines.pnpm #{project_config.pnpm_engine_exact_version} " \
+            "differs from packageManager pnpm@#{project_config.package_manager_version} (same major)"
+          )
+        end
         script_policy = project_config.script_policy
         package_manager = project_config.package_manager
 

@@ -68,27 +68,41 @@ module Onix
         end
       end
 
-      def enforce_manager_compatible_with(lockfile_version)
+      def enforce_manager_compatible_with(lockfile_version, allow_patch_drift: false)
+        patch_drift_override_used = false
+
         if pnpm_engine && pnpm_engine_exact_version.nil?
           raise ArgumentError,
                 "engines.pnpm must pin an exact version (for example 9.6.0); got #{pnpm_engine.inspect}"
         end
 
         if pnpm_engine_exact_version && package_manager_version && pnpm_engine_exact_version != package_manager_version
-          raise ArgumentError,
-                "engines.pnpm #{pnpm_engine_exact_version} must match packageManager pnpm@#{package_manager_version}"
+          if allow_patch_drift
+            engine_major = parse_major(pnpm_engine_exact_version)
+            manager_major = parse_major(package_manager_version)
+            if !engine_major.nil? && engine_major == manager_major
+              patch_drift_override_used = true
+            else
+              raise ArgumentError,
+                    "engines.pnpm #{pnpm_engine_exact_version} must match packageManager pnpm@#{package_manager_version}"
+            end
+          else
+            raise ArgumentError,
+                  "engines.pnpm #{pnpm_engine_exact_version} must match packageManager pnpm@#{package_manager_version}"
+          end
         end
 
         pnpm_major = pnpm_version_major(lockfile_version)
-        return if pnpm_major.nil?
+        unless pnpm_major.nil?
+          lockfile_major = parse_major(lockfile_version)
+          if !lockfile_major.nil? && pnpm_major < lockfile_major
+            raise ArgumentError,
+                  "pnpm major #{pnpm_major} is older than pnpm lockfileVersion #{lockfile_version} " \
+                  "(requires major >= #{lockfile_major})"
+          end
+        end
 
-        lockfile_major = parse_major(lockfile_version)
-        return if lockfile_major.nil?
-        return if pnpm_major >= lockfile_major
-
-        raise ArgumentError,
-              "pnpm major #{pnpm_major} is older than pnpm lockfileVersion #{lockfile_version} " \
-              "(requires major >= #{lockfile_major})"
+        patch_drift_override_used
       end
 
       private

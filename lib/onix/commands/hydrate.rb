@@ -59,6 +59,16 @@ module Onix
 
         UI.header "Hydrate"
         UI.info "#{project} #{UI.dim("→ #{target}")}"
+        if @skip_if_unchanged
+          expected_identity = node_modules_identity_from_project(project)
+          if expected_identity.nil? || expected_identity.empty?
+            UI.warn "Unable to evaluate node_modules identity; continuing with build"
+          elsif node_modules_target_matches_identity?(target, expected_identity)
+            UI.info "node_modules unchanged"
+            return
+          end
+        end
+
         node_store_path = build_node_modules(project)
         return if node_store_path.nil? || node_store_path.empty?
 

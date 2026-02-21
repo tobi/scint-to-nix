@@ -8,8 +8,10 @@ module Onix
     class << self
       def header(*) ; end
       def info(*) ; end
+      def warn(*) ; end
       def wrote(*) ; end
       def done(*) ; end
+      def bold(v) ; v ; end
     end
   end
 end
@@ -61,6 +63,20 @@ class PnpmImporterTest < Minitest::Test
   def test_resolve_lockfile_accepts_custom_pnpm_lockfile_path
     Dir.mktmpdir do |dir|
       lockfile = File.join(dir, "custom.pnpm-lock.yaml")
+      File.write(lockfile, "lockfileVersion: '9.0'\n")
+      File.write(File.join(dir, "package.json"), "{}\n")
+
+      resolved, project_name, installer = @command.send(:resolve_lockfile, lockfile, nil, nil)
+
+      assert_equal "pnpm", installer
+      assert_equal lockfile, resolved
+      assert_equal File.basename(dir), project_name
+    end
+  end
+
+  def test_resolve_lockfile_accepts_standard_pnpm_lockfile_path
+    Dir.mktmpdir do |dir|
+      lockfile = File.join(dir, "pnpm-lock.yaml")
       File.write(lockfile, "lockfileVersion: '9.0'\n")
       File.write(File.join(dir, "package.json"), "{}\n")
 
@@ -176,6 +192,52 @@ class PnpmImporterTest < Minitest::Test
 
       error = assert_raises(ArgumentError) do
         @command.send(:import_pnpm, File.join(dir, "pnpm-lock.yaml"), "simple")
+      end
+      assert_includes error.message, "engines.pnpm"
+      assert_includes error.message, "packageManager"
+    end
+  end
+
+  def test_import_allows_same_major_patch_drift_with_explicit_flag
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "simple", "pnpm-lock.yaml")))
+      File.write(
+        File.join(dir, "package.json"),
+        '{ "packageManager": "pnpm@9.15.9", "engines": { "pnpm": "9.6.0" } }'
+      )
+
+      warnings = []
+      Onix::UI.stub(:warn, ->(msg) { warnings << msg }) do
+        Dir.chdir(dir) do
+          @command.run(["--installer", "pnpm", "--allow-pnpm-patch-drift", "."])
+        end
+      end
+
+      packageset = File.join(dir, "packagesets", "#{File.basename(dir)}.jsonl")
+      assert File.exist?(packageset)
+      meta, entries = Onix::Packageset.read(packageset)
+      assert_equal "pnpm@9.15.9", meta.package_manager
+      assert_equal 9, meta.pnpm_version_major
+      assert entries.any? { |entry| entry.installer == "node" }
+      assert_equal 1, warnings.length
+      assert_includes warnings.first, "--allow-pnpm-patch-drift"
+      assert_includes warnings.first, "engines.pnpm 9.6.0"
+      assert_includes warnings.first, "pnpm@9.15.9"
+    end
+  end
+
+  def test_import_flag_does_not_allow_major_mismatch
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "pnpm-lock.yaml"), File.read(fixture_path("pnpm", "simple", "pnpm-lock.yaml")))
+      File.write(
+        File.join(dir, "package.json"),
+        '{ "packageManager": "pnpm@10.28.0", "engines": { "pnpm": "9.6.0" } }'
+      )
+
+      error = assert_raises(ArgumentError) do
+        Dir.chdir(dir) do
+          @command.run(["--installer", "pnpm", "--allow-pnpm-patch-drift", "."])
+        end
       end
       assert_includes error.message, "engines.pnpm"
       assert_includes error.message, "packageManager"

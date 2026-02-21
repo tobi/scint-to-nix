@@ -13,6 +13,7 @@ module Onix
       def done(*) ; end
       def fail(*) ; end
       def skip(*) ; end
+      def warn(*) ; end
       def bold(v) ; v ; end
       def green(v) ; v ; end
       def red(v) ; v ; end
@@ -130,6 +131,60 @@ module Onix
         end
 
         assert_equal 1, error.status
+      end
+    end
+
+    def test_hydrate_skips_build_when_identity_matches_existing_target
+      Dir.mktmpdir do |dir|
+        index = File.join(dir, "system", "onix-index")
+        target = File.join(dir, "areas", "clients", "admin-web")
+        FileUtils.mkdir_p(index)
+        FileUtils.mkdir_p(File.join(target, "node_modules"))
+        write_node_packageset(index, "workspace")
+        File.write(File.join(target, ".onix_node_modules_id"), "identity-v1\n")
+
+        command = StubHydrate.new
+        command.define_singleton_method(:node_modules_identity_from_project) { |_| "identity-v1" }
+
+        Dir.chdir(index) { command.run(["workspace", target]) }
+
+        assert_equal [], command.commands
+      end
+    end
+
+    def test_hydrate_force_bypasses_identity_short_circuit
+      Dir.mktmpdir do |dir|
+        index = File.join(dir, "system", "onix-index")
+        target = File.join(dir, "areas", "clients", "admin-web")
+        FileUtils.mkdir_p(index)
+        FileUtils.mkdir_p(File.join(target, "node_modules"))
+        write_node_packageset(index, "workspace")
+        File.write(File.join(target, ".onix_node_modules_id"), "identity-v1\n")
+
+        command = StubHydrate.new
+        command.define_singleton_method(:node_modules_identity_from_project) { |_| "identity-v1" }
+
+        Dir.chdir(index) { command.run(["--force", "workspace", target]) }
+
+        assert command.commands.any? { |cmd| cmd.include?("nodeModules") }
+      end
+    end
+
+    def test_hydrate_falls_back_to_build_when_identity_eval_fails
+      Dir.mktmpdir do |dir|
+        index = File.join(dir, "system", "onix-index")
+        target = File.join(dir, "areas", "clients", "admin-web")
+        FileUtils.mkdir_p(index)
+        FileUtils.mkdir_p(File.join(target, "node_modules"))
+        write_node_packageset(index, "workspace")
+        File.write(File.join(target, ".onix_node_modules_id"), "identity-v1\n")
+
+        command = StubHydrate.new
+        command.define_singleton_method(:node_modules_identity_from_project) { |_| nil }
+
+        Dir.chdir(index) { command.run(["workspace", target]) }
+
+        assert command.commands.any? { |cmd| cmd.include?("nodeModules") }
       end
     end
   end

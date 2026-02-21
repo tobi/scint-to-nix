@@ -164,6 +164,11 @@ class GenerateNodeTest < Minitest::Test
         ]
       )
 
+      FileUtils.mkdir_p(File.join(dir, "packages", "prysk"))
+      FileUtils.mkdir_p(File.join(dir, "packages", "turbo-workspaces"))
+      FileUtils.mkdir_p(File.join(dir, "turborepo-tests", "helpers"))
+      FileUtils.mkdir_p(File.join(dir, "packages", "turbo-codemod"))
+
       Dir.chdir(dir) do
         @command.run([])
       end
@@ -203,6 +208,11 @@ class GenerateNodeTest < Minitest::Test
         ]
       )
 
+      FileUtils.mkdir_p(File.join(dir, "packages", "prysk"))
+      FileUtils.mkdir_p(File.join(dir, "packages", "turbo-workspaces"))
+      FileUtils.mkdir_p(File.join(dir, "turborepo-tests", "helpers"))
+      FileUtils.mkdir_p(File.join(dir, "packages", "turbo-codemod"))
+
       Dir.chdir(dir) do
         @command.run([])
       end
@@ -212,6 +222,42 @@ class GenerateNodeTest < Minitest::Test
       workspace_line = project_contents.lines.find { |line| line.include?("workspacePaths = [") }
       refute_nil workspace_line
       refute_match(%r{\.\./}, workspace_line)
+    end
+  end
+
+  def test_generate_fails_early_for_missing_required_link_paths
+    Dir.mktmpdir do |dir|
+      packagesets_dir = File.join(dir, "packagesets")
+      FileUtils.mkdir_p(packagesets_dir)
+
+      Onix::Packageset.write(
+        File.join(packagesets_dir, "workspace.jsonl"),
+        meta: Onix::Packageset::Meta.new(ruby: nil, bundler: nil, platforms: []),
+        entries: [
+          Onix::Packageset::Entry.new(
+            installer: "node",
+            name: "missing-link",
+            version: "link:../../packages/does-not-exist",
+            source: "link",
+            importer: "apps/docs",
+            path: "../../packages/does-not-exist",
+            deps: [],
+          ),
+        ]
+      )
+
+      error = assert_raises(SystemExit) do
+        Dir.chdir(dir) do
+          @command.run([])
+        end
+      end
+
+      assert_equal 1, error.status
+      assert_match(/Unable to resolve required node link paths for workspace/, error.message)
+      assert_match(/importer=apps\/docs/, error.message)
+      assert_match(/raw=\.\.\/\.\.\/packages\/does-not-exist/, error.message)
+      assert_match(/normalized=packages\/does-not-exist/, error.message)
+      assert_match(/reason=path does not exist/, error.message)
     end
   end
 
@@ -389,6 +435,8 @@ class GenerateNodeTest < Minitest::Test
       project_contents = File.read(File.join(dir, "nix", "workspace.nix"))
       assert_includes project_contents, %(pnpmDepsHash = "sha256-dummy";)
       assert_includes project_contents, %(globalDepsKey = "lock=sha256-dummy;pnpm=0;node=0";)
+      assert_includes project_contents, "nodeModulesIdentity = nodeModules.onixIdentity;"
+      assert_includes project_contents, "inherit nodeModulesIdentity;"
     end
   end
 
@@ -987,6 +1035,8 @@ class GenerateNodeTest < Minitest::Test
     assert_includes build_node_modules_nix, "onix-pnpm-deps-node${toString nodeMajor}-pnpm${toString pnpmMajor}"
     refute_includes build_node_modules_nix, "onix-${safeProject}-pnpm-deps"
     assert_includes build_node_modules_nix, "artifactIdentity"
+    assert_includes build_node_modules_nix, "passthru = {"
+    assert_includes build_node_modules_nix, "onixIdentity = artifactIdentity;"
     assert_includes build_node_modules_nix, "dontPatchELF = !pkgs.stdenv.hostPlatform.isLinux;"
     assert_includes build_node_modules_nix, "pnpmPackage ="
     assert_includes build_node_modules_nix, "pkgs.pnpm_9 or pkgs.pnpm"

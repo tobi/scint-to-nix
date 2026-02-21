@@ -362,6 +362,40 @@ module Onix
       end
     end
 
+    def test_node_modules_identity_from_project_parses_eval_output
+      Dir.mktmpdir do |dir|
+        command = Onix::Commands::Build.new
+        command.instance_variable_set(:@project, StubProject.new(dir))
+        FileUtils.mkdir_p(File.join(dir, "nix"))
+        File.write(File.join(dir, "nix", "workspace.nix"), "{}\n")
+        success = Struct.new(:success?).new(true)
+
+        Open3.stub(:capture3, ->(*args) {
+          assert_includes args, "-A"
+          assert_includes args, "nodeModulesIdentity"
+          ["\"identity-abc\"\n", "", success]
+        }) do
+          identity = command.send(:node_modules_identity_from_project, "workspace")
+          assert_equal "identity-abc", identity
+        end
+      end
+    end
+
+    def test_node_modules_identity_from_project_returns_nil_on_eval_failure
+      Dir.mktmpdir do |dir|
+        command = Onix::Commands::Build.new
+        command.instance_variable_set(:@project, StubProject.new(dir))
+        FileUtils.mkdir_p(File.join(dir, "nix"))
+        File.write(File.join(dir, "nix", "workspace.nix"), "{}\n")
+        failure = Struct.new(:success?).new(false)
+
+        Open3.stub(:capture3, ["", "error", failure]) do
+          identity = command.send(:node_modules_identity_from_project, "workspace")
+          assert_nil identity
+        end
+      end
+    end
+
     def test_shellescape_escapes_special_chars_without_corrupting_output
       command = Onix::Commands::Build.new
 

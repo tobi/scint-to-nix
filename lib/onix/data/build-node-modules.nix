@@ -227,6 +227,9 @@ pkgs.stdenv.mkDerivation {
 
   pnpmDeps = pnpmDeps;
   dontBuild = true;
+  passthru = {
+    onixIdentity = artifactIdentity;
+  };
   preBuild = nodePreBuild;
   postBuild = nodePostBuild;
   postInstall = nodePostInstall;

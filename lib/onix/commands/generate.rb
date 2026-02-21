@@ -547,6 +547,8 @@ module Onix
         buildable = entries.reject { |e| e.source == "stdlib" || e.source == "path" }
         nodes = entries.select { |e| e.installer == "node" }
         ruby_nodes = buildable.reject { |e| e.installer == "node" }
+        source_root = node_source_root(pnpm_lockfile)
+        validate_required_node_link_paths!(project_name, nodes, source_root)
         workspace_paths = node_workspace_paths(nodes)
         project_root, lockfile = project_node_paths(pnpm_lockfile)
 
@@ -621,6 +623,7 @@ module Onix
           nix << "    pnpmVersionMajor = #{nix_value(meta.pnpm_version_major)};\n"
           nix << "    workspacePaths = [ #{workspace_paths.map { |path| nix_str(path) }.join(" ")} ];\n" unless workspace_paths.empty?
           nix << "  };\n"
+          nix << "  nodeModulesIdentity = nodeModules.onixIdentity;\n"
         end
         nix << "\n"
         nix << "  bundlePath = pkgs.buildEnv {\n"
@@ -630,6 +633,7 @@ module Onix
         nix << "in gems // {\n"
         nix << "  inherit bundlePath;\n"
         nix << "  inherit nodeModules;\n" if nodes.any?
+        nix << "  inherit nodeModulesIdentity;\n" if nodes.any?
         nix << "  devShell = { buildInputs ? [], shellHook ? \"\", ... }@args:\n"
         nix << "    pkgs.mkShell (builtins.removeAttrs args [\"buildInputs\" \"shellHook\"] // {\n"
         nix << "      name = #{nix_str "#{project_name}-devshell"};\n"
@@ -658,6 +662,58 @@ module Onix
         (importer_paths + link_paths).uniq.sort
       end
 
+      def validate_required_node_link_paths!(project_name, nodes, source_root)
+        errors = nodes.flat_map do |entry|
+          validate_link_entry_paths(entry, source_root)
+        end
+        return if errors.empty?
+
+        lines = ["Unable to resolve required node link paths for #{project_name}:"]
+        errors.sort_by { |error| [error[:name], error[:importer], error[:raw]] }.each do |error|
+          lines << "  #{error[:name]} importer=#{error[:importer]} raw=#{error[:raw]} normalized=#{error[:normalized]} reason=#{error[:reason]}"
+        end
+        abort lines.join("\n")
+      end
+
+      def validate_link_entry_paths(entry, source_root)
+        return [] unless entry.source == "link"
+
+        raw_path = entry.path.to_s.strip
+        return [] if raw_path.empty?
+
+        importers = split_importers(entry.importer)
+        importers = ["."] if importers.empty?
+
+        importers.map do |importer|
+          normalized = normalize_importer_relative_path(raw_path, importer)
+          if normalized.nil?
+            {
+              name: entry.name,
+              importer: importer,
+              raw: raw_path,
+              normalized: "(outside project root)",
+              reason: "outside project root",
+            }
+          elsif !File.exist?(File.expand_path(normalized, source_root))
+            {
+              name: entry.name,
+              importer: importer,
+              raw: raw_path,
+              normalized: normalized,
+              reason: "path does not exist",
+            }
+          end
+        end.compact
+      end
+
+      def node_source_root(pnpm_lockfile)
+        return @project.root if pnpm_lockfile.nil? || pnpm_lockfile.empty?
+
+        File.expand_path(File.dirname(pnpm_lockfile))
+      rescue StandardError
+        @project.root
+      end
+
       def nodes_for_path(nodes, path)
         nodes.select { |entry| entry.path == path }
       end
@@ -669,15 +725,15 @@ module Onix
         importers = nodes.flat_map { |entry| split_importers(entry.importer) }
         importers = ["."] if importers.empty?
 
-        importers.map do |importer|
-          importer_base = importer.nil? || importer.empty? ? "." : importer
-          normalized = begin
-            Pathname.new(importer_base).join(relative).cleanpath.to_s
-          rescue StandardError
-            nil
-          end
-          normalize_project_relative_path(normalized)
-        end.compact
+        importers.map { |importer| normalize_importer_relative_path(relative, importer) }.compact
+      end
+
+      def normalize_importer_relative_path(path, importer)
+        importer_base = importer.nil? || importer.empty? ? "." : importer
+        normalized = Pathname.new(importer_base).join(path.to_s).cleanpath.to_s
+        normalize_project_relative_path(normalized)
+      rescue StandardError
+        nil
       end
 
       def split_importers(importers)

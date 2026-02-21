@@ -3,6 +3,8 @@
 require "fileutils"
 require "tmpdir"
 require "shellwords"
+require "open3"
+require "json"
 require_relative "../packageset"
 require_relative "../project"
 require_relative "../pnpm/credentials"
@@ -284,6 +286,38 @@ module Onix
         marker = File.join(store_path, ".node_modules_id")
         return File.read(marker).strip if File.exist?(marker)
         store_path
+      end
+
+      def node_modules_identity_from_project(project)
+        nix_file = project_nix(project)
+        stdout, _stderr, status = Open3.capture3(
+          "nix-instantiate",
+          "--eval",
+          "--strict",
+          "--json",
+          nix_file,
+          "-A",
+          "nodeModulesIdentity"
+        )
+        return nil unless status.success?
+
+        identity = JSON.parse(stdout)
+        return identity if identity.is_a?(String) && !identity.empty?
+
+        nil
+      rescue Errno::ENOENT, JSON::ParserError
+        nil
+      end
+
+      def node_modules_target_matches_identity?(target_root, expected_identity)
+        target_root = File.expand_path(target_root)
+        id_file = File.join(target_root, ".onix_node_modules_id")
+        node_modules_dir = File.join(target_root, "node_modules")
+        return false unless File.exist?(id_file) && File.directory?(node_modules_dir)
+
+        File.read(id_file).strip == expected_identity.to_s
+      rescue StandardError
+        false
       end
 
       def lockfile_dir_for_project(project)
